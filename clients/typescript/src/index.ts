@@ -4,9 +4,9 @@ import { createInterface } from 'node:readline';
 
 export type Step = { id:string; tool:string; source?:string; action?:string; inputs?:Record<string,unknown>;
   after?:string[]; bindings?:Record<string,{step:string;path?:(string|number)[];file?:string}>; timeout?:number; requirements?:Record<string,number>;
-  optimize?:Record<string,unknown>; point?:Record<string,unknown> };
+  optimize?:Record<string,unknown>; point?:Record<string,unknown>; points?:{id:string;point:Record<string,unknown>;inputs:Record<string,unknown>}[] };
 export type Submission = {run_id:string;request_id:string};
-export type SweepPoint = {step:string;state:string;point:Record<string,unknown>;values:Record<string,unknown>;error?:string};
+export type SweepPoint = {step:string;id:string;state:string;point:Record<string,unknown>;values:Record<string,unknown>;error?:string};
 export type SweepTable = {run_id:string;points:number;states:Record<string,number>;swept:string[];values:string[];rows:SweepPoint[];
   next_offset:number|null;best?:(SweepPoint&{goal:string;path:string})|null;saved?:string|null};
 export type RunStatus = {id:string;state:string;counts:Record<string,number>;next_offset:number|null;
@@ -95,7 +95,7 @@ export class OpticsLab {
   resources(cpu?:number,pools?:Record<string,number>) {return this.call('compute_resources',{...(cpu===undefined?{}:{cpu}),...(pools===undefined?{}:{pools})});}
   submit(steps:Step[],options:{name?:string;request_id?:string;run_id?:string}={}) {return this.call<Submission>('submit_workflow',{steps,...options});}
   /** One calculation: a packaged program (action) or source; sweep runs every combination of inputs as parallel steps, optimize searches inputs inside one process. */
-  calculate(tool:string,options:{action?:string;source?:string;inputs?:Record<string,unknown>;sweep?:Record<string,unknown>;pairing?:'product'|'zip';optimize?:Record<string,unknown>;run_id?:string;name?:string;request_id?:string;timeout?:number}={}) {return this.call<Submission>('submit_calculation',{tool,...options});}
+  calculate(tool:string,options:{action?:string;source?:string;inputs?:Record<string,unknown>;sweep?:Record<string,unknown>;pairing?:'product'|'zip';chunk?:number;optimize?:Record<string,unknown>;run_id?:string;name?:string;request_id?:string;timeout?:number}={}) {return this.call<Submission>('submit_calculation',{tool,...options});}
   /** Swept inputs, state and chosen RESULT values (dotted paths) of every point of a sweep, with the best point. */
   sweep(run_id:string,options:{values?:string[];minimize?:string;maximize?:string;save?:boolean;offset?:number;limit?:number}={}) {return this.call<SweepTable>('sweep_results',{run_id,...options});}
   status(run_id:string,options:{wait?:number;offset?:number;limit?:number;include_results?:boolean;signal?:AbortSignal}={}) {

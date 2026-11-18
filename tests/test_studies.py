@@ -4,6 +4,7 @@ import math
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from optics_photonics import arrays, environments, jobs, optimization, studies  # noqa: E402
@@ -37,6 +38,7 @@ class SweepDefinitionCase(unittest.TestCase):
         self.assertEqual(studies.swept([1, 'a'], 'x'), [1, 'a'])
         self.assertEqual(studies.swept({'start': 0, 'stop': 10, 'points': 6}, 'x'), [0, 2, 4, 6, 8, 10])
         self.assertEqual(studies.swept({'start': 0, 'stop': 1, 'points': 3}, 'x'), [0, 0.5, 1])
+        self.assertEqual(studies.swept({'start': 1.2, 'stop': 2.4, 'points': 49}, 'x')[1], 1.225)
         logarithmic = studies.swept({'start': 1, 'stop': 100, 'points': 3, 'scale': 'log'}, 'x')
         self.assertAlmostEqual(logarithmic[1], 10, places=12)
         with self.assertRaisesRegex(ValueError, 'x: a logarithmic range needs positive start and stop'):
@@ -80,27 +82,35 @@ class SweepDefinitionCase(unittest.TestCase):
 
 
 class SweepRunCase(unittest.TestCase):
-    def test_a_sweep_runs_in_parallel_and_its_table_finds_the_best_point(self):
+    def test_a_sweep_runs_in_groups_and_its_table_finds_the_best_point(self):
         with workspace() as home:
             connect(home)
+            jobs.resources(cpu=2, path=home)
             first = studies.submit('bowl', source=MODEL, inputs={'scale': [2], 'fail_above': 5.5},
                                    sweep={'x': {'start': 0, 'stop': 6, 'points': 13}, 'y': [-2, -1, 0]}, request_id='bowl-1', path=home)
-            self.assertEqual(finish(first['run_id'], home)['counts'], {'succeeded': 36, 'failed': 3})
+            state = finish(first['run_id'], home)
+            # 39 points over 4 x 2 CPU slots: groups of 5, the last of 4, each computed by one process.
+            self.assertEqual(state['counts'], {'succeeded': 8})
+            self.assertEqual([step['id'] for step in state['steps']][:2], ['point-0001-0005', 'point-0006-0010'])
             table = studies.table(first['run_id'], values=['f', 'g.0', 'label'], minimize='f', save=True, limit=5, path=home)
             self.assertEqual((table['points'], table['swept'], table['states']), (39, ['x', 'y'], {'succeeded': 36, 'failed': 3}))
-            self.assertEqual((table['best']['point'], table['best']['values']['f']), ({'x': 3.0, 'y': -1}, 0.0))
+            self.assertEqual((table['best']['point'], table['best']['values']['f'], table['best']['id']), ({'x': 3.0, 'y': -1}, 0.0, 'point-0020'))
             self.assertEqual((table['layout'], table['not_saved']), ('grid', ['label']))
+            failed = studies.table(first['run_id'], offset=36, path=home)['rows'][0]
+            self.assertEqual((failed['id'], failed['step'], failed['state']), ('point-0037', 'point-0036-0039', 'failed'))
+            self.assertIn('ValueError: outside the model', failed['error'])
             folder = Path(home) / 'runs' / first['run_id']
+            self.assertEqual((folder / 'point-0016-0020' / 'attempt-1' / 'point-0020' / 'value.txt').read_text(), '3.0')
             grid = arrays.read(folder / 'sweep.npz', member='f', index=[None, 1])
             self.assertEqual(grid['result_shape'], [13])
             self.assertEqual(grid['values'][6], 0.0)
             self.assertEqual(grid['values'][-1], 'nan')  # x = 6 failed
             self.assertEqual(grid['at'], [{'name': 'y', 'value': -1}])
             self.assertEqual(next(axis['values'] for axis in grid['axes'] if axis['name'] == 'x')[:3], [0, 0.5, 1])
-            # A refinement appended to the run; retrying the same request adds nothing.
+            # A refinement appended to the run continues the numbering; retrying the same request adds nothing.
             for _ in range(2):
                 again = studies.submit('bowl', source=MODEL, inputs={'scale': [2], 'y': -1}, sweep={'x': [2.9, 3.1]},
-                                       run_id=first['run_id'], request_id='bowl-2', path=home)
+                                       run_id=first['run_id'], request_id='bowl-2', chunk=1, path=home)
             self.assertEqual(again['run_id'], first['run_id'])
             finish(first['run_id'], home)
             refined = studies.table(first['run_id'], values=['f'], maximize='f', save=True, offset=39, path=home)
@@ -111,6 +121,26 @@ class SweepRunCase(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'has no sweep points'):
                 single = jobs.submit([{'id': 'one', 'tool': 'bowl', 'source': MODEL, 'inputs': {'x': 1, 'scale': [1]}}], path=home)
                 studies.table(single['run_id'], path=home)
+
+    def test_a_group_reports_its_finished_points_while_running_and_fails_only_when_every_point_fails(self):
+        with workspace() as home:
+            connect(home)
+            slow = 'import time\nif INPUTS["x"] == 2: time.sleep(30)\nRESULT = {"x": INPUTS["x"]}'
+            run = studies.submit('bowl', source=slow, sweep={'x': [1, 2, 3]}, chunk=3, path=home)
+            for _ in range(200):
+                rows = studies.table(run['run_id'], values=['x'], path=home)['rows']
+                if rows[0]['state'] == 'succeeded':
+                    break
+                time.sleep(0.05)
+            self.assertEqual([(row['id'], row['state']) for row in rows], [('point-0001', 'succeeded'), ('point-0002', 'running'),
+                                                                           ('point-0003', 'running')])
+            jobs.cancel(run['run_id'], path=home)
+            finish(run['run_id'], home)
+            broken = studies.submit('bowl', source='RESULT = 1 / 0', sweep={'x': [1, 2]}, chunk=2, path=home)
+            state = finish(broken['run_id'], home)
+            self.assertEqual(state['counts'], {'failed': 1})
+            self.assertIn('All 2 points failed; the first: ZeroDivisionError', state['steps'][0]['error'])
+            self.assertEqual(studies.table(broken['run_id'], path=home)['states'], {'failed': 2})
 
 
 class OptimizationCase(unittest.TestCase):

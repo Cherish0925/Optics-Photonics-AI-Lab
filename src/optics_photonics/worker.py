@@ -28,6 +28,29 @@ def distributions(native=getattr(importlib.metadata, 'packages_distributions', N
     return found
 
 
+def points(items, calculate, output):
+    """Compute the points of a group in turn; points.jsonl records each as it finishes."""
+    records = []
+    with (output/'points.jsonl').open('w', encoding='utf-8') as log:
+        for item in items:
+            folder = output/item['id']
+            folder.mkdir(parents=True, exist_ok=True)
+            entry = {'id': item['id'], 'point': item['point']}
+            try:
+                entry['result'] = calculate(item['inputs'], folder)
+                text = json.dumps(entry, ensure_ascii=False, allow_nan=False)
+            except Exception as error:  # one failed point does not stop the others
+                entry.pop('result', None)
+                entry['error'] = f'{type(error).__name__}: {error}'[-1000:]
+                text = json.dumps(entry, ensure_ascii=False)
+            log.write(text+'\n'); log.flush()
+            records.append(entry)
+    failed = [entry for entry in records if 'error' in entry]
+    if len(failed) == len(records):
+        raise RuntimeError(f"All {len(records)} points failed; the first: {failed[0]['error']}")
+    return {'points': records, 'failed': len(failed)}
+
+
 def execute(tool, request, output):
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -52,15 +75,16 @@ def execute(tool, request, output):
             if namespace['RESULT'] is None:
                 raise ValueError('Set RESULT to the compact JSON result; write arrays and models under OUTPUT_DIR')
             return namespace['RESULT']
+        def calculate(given, folder):
+            if not request.get('optimize'):
+                return program(given, folder)
+            from optics_photonics import optimization
+            spec = None if request.get('source') else programs.catalog().get(tool, {}).get(action)
+            return optimization.run(program, given, request['optimize'], folder, programs.inputs(spec) if spec else None)
         if source:
             (output/'program.py').write_text(source, encoding='utf-8')
             code = compile(source, str(output/'program.py'), 'exec')
-            if request.get('optimize'):
-                from optics_photonics import optimization
-                spec = None if request.get('source') else programs.catalog().get(tool, {}).get(action)
-                result = optimization.run(program, inputs, request['optimize'], output, programs.inputs(spec) if spec else None)
-            else:
-                result = program(inputs, output)
+            result = points(request['points'], calculate, output) if request.get('points') else calculate(inputs, output)
         else:
             if request.get('optimize'):
                 raise ValueError('optimize runs a program given as source in this session, not a session action')

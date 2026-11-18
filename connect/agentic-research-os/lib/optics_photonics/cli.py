@@ -31,7 +31,7 @@ def main(argv=None):
         if name == 'run': run.add_argument('--output'); run.add_argument('--timeout',type=float)
         else:
             run.add_argument('--name',default='Optical research'); run.add_argument('--request-id'); run.add_argument('--timeout',type=float)
-            run.add_argument('--sweep',type=object_argument,help='JSON: input -> values or {start, stop, points}'); run.add_argument('--pairing',choices=('product','zip'),default='product'); run.add_argument('--run-id')
+            run.add_argument('--sweep',type=object_argument,help='JSON: input -> values or {start, stop, points}'); run.add_argument('--pairing',choices=('product','zip'),default='product'); run.add_argument('--chunk',type=int,help='points per process'); run.add_argument('--run-id')
         run.add_argument('--optimize',type=object_argument,help='JSON: {variables, minimize|maximize, method, evaluations}')
     sample = commands.add_parser('sample'); sample.add_argument('tool'); sample.add_argument('program', type=Path)
     sample.add_argument('--task', type=object_argument, required=True); sample.add_argument('--policy', type=object_argument, required=True)

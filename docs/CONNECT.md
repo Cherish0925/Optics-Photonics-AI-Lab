@@ -81,7 +81,7 @@ optics-photonics submit tmm spectrum --run-id RUN_ID --inputs '{"n":[1,1.30,1.52
 optics-photonics run tmm spectrum --inputs "@coating.json" --optimize '{"variables":{"thickness_nm.0":[0,300],"thickness_nm.1":[0,300]},"minimize":"mean.R"}'
 ```
 
-A sweep runs one step per point in parallel; a dotted name such as `thickness_nm.0` sets one element of a list input. `sweep` tabulates the swept inputs and chosen result values of every point, finds the best one and with `--save` writes `sweep.npz` gridded over the swept inputs. `--run-id` appends a finer sweep to the same run. `--optimize` searches the variables within their bounds inside one process, by differential evolution with a Nelder–Mead polish or by Nelder–Mead alone, and keeps the files of the best evaluation in `best/` ([parameter studies](../skills/optical-computation/references/studies.md)).
+A sweep computes its points in parallel, several per process for short programs; a dotted name such as `thickness_nm.0` sets one element of a list input. `sweep` tabulates the swept inputs and chosen result values of every point, finds the best one and with `--save` writes `sweep.npz` gridded over the swept inputs. `--run-id` appends a finer sweep to the same run. `--optimize` searches the variables within their bounds inside one process, by differential evolution with a Nelder–Mead polish or by Nelder–Mead alone, and keeps the files of the best evaluation in `best/` ([parameter studies](../skills/optical-computation/references/studies.md)).
 
 ## Install from a marketplace
 

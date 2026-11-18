@@ -130,7 +130,8 @@ def packaged(step):
     if spec is None:
         programs.source(tool, action)  # names the programs of the tool
     varied = {str(key).split('.')[0] for key in (step.get('optimize') or {}).get('variables', {})}
-    unknown = sorted((set(step.get('inputs', {})) | set(step.get('bindings', {})) | varied) - set(spec['inputs']))
+    given = set(step.get('inputs', {})).union(*(item['inputs'] for item in step.get('points', [])))
+    unknown = sorted((given | set(step.get('bindings', {})) | varied) - set(spec['inputs']))
     if unknown:
         raise ValueError(f"{tool}/{action} has no input {', '.join(unknown)}; it takes: {', '.join(spec['inputs'])}")
 
@@ -150,8 +151,8 @@ def validate(steps, known=()):
         s = dict(item)
         identifier(s.get('id'))
         if s['id'] in graph or s['id'] in known: raise ValueError('Duplicate step ID: '+s['id'])
-        if set(s)-{'id','tool','action','source','inputs','after','bindings','timeout','requirements','optimize','point'}:
-            raise ValueError('A step accepts id, tool, action, source, inputs, after, bindings, requirements, timeout, optimize and point')
+        if set(s)-{'id','tool','action','source','inputs','after','bindings','timeout','requirements','optimize','point','points'}:
+            raise ValueError('A step accepts id, tool, action, source, inputs, after, bindings, requirements, timeout, optimize, point and points')
         if not isinstance(s.get('tool'), str): raise ValueError('Each step needs a software tool ID')
         if not isinstance(s.get('inputs', {}), dict): raise ValueError('inputs must be an object')
         if not isinstance(s.get('after', []), list): raise ValueError('after must be a list of step IDs')
@@ -169,6 +170,9 @@ def validate(steps, known=()):
             elif not isinstance(reference.get('path', []), list): raise ValueError('Binding path must be an array of object keys or array indices')
             if reference['step'] not in s['after']: s['after'].append(reference['step'])
         if not isinstance(s.get('point', {}), dict): raise ValueError('point records the swept inputs of a step as an object')
+        if 'points' in s and (not isinstance(s['points'], list) or not s['points'] or s.get('bindings') or
+                              any(not isinstance(item, dict) or set(item) != {'id','point','inputs'} for item in s['points'])):
+            raise ValueError('points lists {id, point, inputs} computed in turn by one process, without bindings')
         if s.get('optimize') is not None:
             from . import optimization
             optimization.checked(s['optimize'])
@@ -548,7 +552,7 @@ def perform(run_id, row, path, cancellation):
                     row_result = db.execute("SELECT result FROM steps WHERE run_id=? AND id=? AND state='succeeded'",(run_id,key)).fetchone()
                     results[key] = json.loads(row_result[0])
         request = {'action':spec.get('action',''),'source':spec.get('source',''),'inputs':resolved_inputs(spec,results,folders),
-                   **({'optimize':spec['optimize']} if spec.get('optimize') else {})}
+                   **{key:spec[key] for key in ('optimize','points') if spec.get(key)}}
         result = execution.run(spec['tool'],request,output=output,configuration=config,timeout=spec.get('timeout'),cancel=cancellation)
         record = result['record']
         result = {'output':result['output'], **record} if isinstance(record,dict) and 'result' in record else {'output':result['output'],'result':record}

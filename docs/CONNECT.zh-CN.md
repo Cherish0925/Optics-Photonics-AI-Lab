@@ -98,7 +98,7 @@ optics-photonics submit tmm spectrum --run-id RUN_ID --inputs '{"n":[1,1.30,1.52
 optics-photonics run tmm spectrum --inputs "@coating.json" --optimize '{"variables":{"thickness_nm.0":[0,300],"thickness_nm.1":[0,300]},"minimize":"mean.R"}'
 ```
 
-扫描的每个参数点是一个并行步骤；`thickness_nm.0` 这样带点的名称只设置列表输入中的一个元素。`sweep` 列出每个点的扫描输入和选定的结果值，给出最优点；加 `--save` 写出按扫描输入排成网格的 `sweep.npz`。`--run-id` 把更细的扫描追加到同一次运行。`--optimize` 在一个进程内于给定范围搜索变量，方法为差分进化加 Nelder–Mead 精修，或单独使用 Nelder–Mead；最优一次计算的文件保存在 `best/`（[参数研究](../skills/optical-computation/references/studies.md)）。
+扫描的参数点并行计算，程序很快时一个进程依次计算多个点；`thickness_nm.0` 这样带点的名称只设置列表输入中的一个元素。`sweep` 列出每个点的扫描输入和选定的结果值，给出最优点；加 `--save` 写出按扫描输入排成网格的 `sweep.npz`。`--run-id` 把更细的扫描追加到同一次运行。`--optimize` 在一个进程内于给定范围搜索变量，方法为差分进化加 Nelder–Mead 精修，或单独使用 Nelder–Mead；最优一次计算的文件保存在 `best/`（[参数研究](../skills/optical-computation/references/studies.md)）。
 
 ## 从插件市场安装
 

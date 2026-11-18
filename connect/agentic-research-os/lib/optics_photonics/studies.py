@@ -7,7 +7,10 @@ default. Values are a list, or {"start", "stop", "points"} with "scale":
 "log" for logarithmic spacing. pairing "product" runs every combination and
 "zip" pairs the lists element by element. Each point becomes a step point-N
 of the run, which records the swept values as its point; points run in
-parallel within the configured capacity. table() collects chosen result
+parallel within the configured capacity. Points are grouped so that one
+process computes several in turn: by default about four groups per CPU
+slot, so a program that takes milliseconds does not pay a process start
+per point while long ones still fill every slot. table() collects chosen result
 values of every point, finds the best one and can save the study as a
 described array, gridded over the swept inputs when the points form a full
 product.
@@ -38,12 +41,12 @@ def swept(spec, name):
         if scale == 'log':
             if start <= 0 or stop <= 0:
                 raise ValueError(f'{name}: a logarithmic range needs positive start and stop')
-            return [start * (stop / start) ** (i / (count - 1)) for i in range(count)]
+            return [float(f'{start * (stop / start) ** (i / (count - 1)):.12g}') for i in range(count)]
         if scale != 'linear':
             raise ValueError(f'{name}: scale is linear or log')
         if all(type(v) is int for v in (start, stop)) and (stop - start) % (count - 1) == 0:
             return [start + (stop - start) // (count - 1) * i for i in range(count)]
-        return [start + (stop - start) * i / (count - 1) for i in range(count)]
+        return [float(f'{start + (stop - start) * i / (count - 1):.12g}') for i in range(count)]  # 1.225, not 1.2249999999999999
     raise ValueError(f'{name}: give a nonempty list of values or {{"start", "stop", "points"}}')
 
 
@@ -125,7 +128,21 @@ def expand(step, sweep, pairing='product', first=1, defaults=None):
     return steps
 
 
-def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product', optimize=None, name='Optical research',
+def grouped(points, size):
+    """Steps that each compute up to size consecutive points in one process; a single point stays a step of its own."""
+    steps = []
+    for start in range(0, len(points), size):
+        part = points[start:start + size]
+        if len(part) == 1:
+            steps.append(part[0])
+            continue
+        common = {key: value for key, value in part[0].items() if key not in ('id', 'inputs', 'point')}
+        steps.append({**common, 'id': part[0]['id'] + '-' + part[-1]['id'][len('point-'):], 'inputs': {},
+                      'points': [{'id': item['id'], 'point': item['point'], 'inputs': item['inputs']} for item in part]})
+    return steps
+
+
+def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product', optimize=None, chunk=None, name='Optical research',
            request_id=None, run_id=None, timeout=None, requirements=None, path=None):
     """One calculation, or a sweep of it, as steps of a new run or appended to run_id."""
     from . import jobs, programs
@@ -142,11 +159,15 @@ def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product
         steps = [{'id': 'calculate' if number == 1 else f'calculate-{number}', **step}]
     else:
         spec = programs.catalog().get(tool, {}).get(action) if action and not source else None
-        used = [int(found[1]) for found in map(re.compile(r'point-(\d+)$').match, existing) if found]
-        steps = expand(step, sweep, pairing, max(used, default=0) + 1, programs.inputs(spec) if spec else None)
+        # A group step point-0001-0094 holds points 1 to 94.
+        used = [int(found[2] or found[1]) for found in map(re.compile(r'point-(\d+)(?:-(\d+))?$').match, existing) if found]
+        points = expand(step, sweep, pairing, max(used, default=0) + 1, programs.inputs(spec) if spec else None)
+        if chunk is not None and (type(chunk) is not int or chunk < 1):
+            raise ValueError('chunk is a positive number of points per process')
+        steps = grouped(points, chunk or max(1, math.ceil(len(points) / (4 * jobs.resources(path=path)['cpu']))))
     # The call, not its numbered steps, identifies a retried request.
     call = {'tool': tool, 'inputs': step['inputs'], 'action': action, 'source': source, 'sweep': sweep, 'pairing': pairing,
-            'optimize': optimize, 'timeout': timeout, 'requirements': requirements, 'name': name, 'run_id': run_id}
+            'optimize': optimize, 'chunk': chunk, 'timeout': timeout, 'requirements': requirements, 'name': name, 'run_id': run_id}
     return jobs.submit(steps, name=name, request_id=request_id, run_id=run_id, path=path, _payload={'calculation': call})
 
 
@@ -169,28 +190,48 @@ def table(run_id, values=None, minimize=None, maximize=None, save=False, offset=
     with jobs.database(path) as db:
         if not db.execute('SELECT 1 FROM runs WHERE id=?', (run_id,)).fetchone():
             raise ValueError('Unknown run: ' + run_id)
-        rows = db.execute('SELECT id,specification,state,result,error FROM steps WHERE run_id=? ORDER BY rowid', (run_id,)).fetchall()
+        rows = db.execute('SELECT id,specification,state,result,error,attempt FROM steps WHERE run_id=? ORDER BY rowid', (run_id,)).fetchall()
     specs, points = [], []
     for row in rows:
         spec = json.loads(row['specification'])
-        if 'point' not in spec:
-            continue
         result = json.loads(row['result']).get('result') if row['state'] == 'succeeded' and row['result'] else None
-        item = {'step': row['id'], 'state': row['state'], 'point': spec['point'],
-                'values': {key: pick(result, key) if result is not None else None for key in chosen}}
-        if row['error']:
-            item['error'] = row['error'][-300:]
-        points.append(item)
-        specs.append(spec)
+        if 'point' in spec:
+            members = [(row['id'], spec['point'], spec.get('inputs', {}), {'result': result} if result is not None else {})]
+        elif 'points' in spec:
+            done = {entry['id']: entry for entry in (result or {}).get('points', [])}
+            if result is None:  # finished points of a group still running, or stopped
+                log = environments.home(path) / 'runs' / run_id / row['id'] / f"attempt-{row['attempt']}" / 'points.jsonl'
+                try:
+                    lines = log.read_text(encoding='utf-8').splitlines()
+                except OSError:
+                    lines = []
+                for line in lines:
+                    try:
+                        entry = json.loads(line)
+                        done[entry['id']] = entry
+                    except (ValueError, KeyError, TypeError):
+                        pass  # the line being written
+            members = [(item['id'], item['point'], item['inputs'], done.get(item['id'], {})) for item in spec['points']]
+        else:
+            continue
+        for key, point, given, entry in members:
+            state = 'succeeded' if 'result' in entry else 'failed' if 'error' in entry else row['state']
+            item = {'step': row['id'], 'id': key, 'state': state, 'point': point,
+                    'values': {path_: pick(entry['result'], path_) if 'result' in entry else None for path_ in chosen}}
+            error = entry.get('error') or (row['error'] if state != 'succeeded' else None)
+            if error:
+                item['error'] = error[-300:]
+            points.append(item)
+            specs.append((spec, given))
     if not points:
         raise ValueError(f'Run {run_id} has no sweep points; submit_calculation with sweep creates them')
     keys = sorted({key for item in points for key in item['point']})
     # A point of a later sweep over fewer inputs takes the others from its inputs or the program's defaults.
-    for item, spec in zip(points, specs):
+    for item, (spec, given) in zip(points, specs):
         if len(item['point']) < len(keys):
             from . import programs
             program = programs.catalog().get(spec['tool'], {}).get(spec.get('action')) if not spec.get('source') else None
-            known = {**(programs.inputs(program) if program else {}), **spec.get('inputs', {})}
+            known = {**(programs.inputs(program) if program else {}), **given}
             item['point'] = {key: item['point'][key] if key in item['point'] else pick(known, key) for key in keys}
     counts = {}
     for item in points:
@@ -243,7 +284,7 @@ def _save(file, points, keys, chosen, arrays):
                 axes.append({'name': key, 'labels': [v if isinstance(v, str) else json.dumps(v) for v in coordinates]})
     else:
         shape, order = [len(points)], list(range(len(points)))
-        axes = [{'name': 'point', 'labels': [item['step'] for item in points]}]
+        axes = [{'name': 'point', 'labels': [item['id'] for item in points]}]
         for key in keys:
             column = [_number(item['point'].get(key)) for item in points]
             if all(v is not None for v in column):
