@@ -31,6 +31,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `scipy/resonator` | Gaussian eigenmode of a two-mirror or any ABCD resonator: stability, waists, mirror spots, Gouy phase, FSR, transverse mode spacing, TEM_mn offsets | closed-form two-mirror expressions |
 | `scipy/laser_rates` | Semiconductor laser L–I curve and step response | threshold, slope, relaxation frequency |
 | `ceviche/bend` | Inverse design of a waveguide bend: topology optimization by adjoint gradients in 2-D FDFD; density, binary device, field, transmission per iteration | finite-difference gradient; binary device simulated again |
+| `scipy/coupler` | Directional coupler from its even and odd supermodes: transfer length and coupling over length and wavelength; effective and group index of one core | coupled-mode theory, exact as the gap grows |
 | `sax/circuit` | Mach-Zehnder interferometer, all-pass and add-drop ring transmission from component models; resonances, Q, FSR | analytic transfer functions |
 | `finesse/cavity` | Fabry-Perot transmission, reflection and stored power over frequency; linewidth, finesse, buildup | Airy function |
 | `opticomm/ber` | Bit and symbol error rates and GMI of QAM, PSK or PAM over additive noise and phase noise | theoretical BER |
@@ -66,6 +67,18 @@ A file passes the same way: the unit-cell library of `grcwa/metasurface` lays ou
 [{"id": "cells", "tool": "grcwa", "action": "metasurface", "inputs": {}},
  {"id": "lens", "tool": "scipy", "action": "metalens", "after": ["cells"], "inputs": {"focal_um": 30, "aperture_um": 30},
   "bindings": {"library": {"step": "cells", "file": "library.npz"}}}]
+```
+
+A device becomes a circuit: the coupling of a directional coupler and the indices of its waveguide set a ring resonator's response.
+
+```json
+[{"id": "coupler", "tool": "scipy", "action": "coupler", "inputs": {"gap_um": 0.2, "length_um": 5}},
+ {"id": "ring", "tool": "sax", "action": "circuit", "after": ["coupler"],
+  "inputs": {"circuit": "ring", "ring_length_um": 60, "wavelength_um": {"start": 1.5, "stop": 1.6, "points": 20001}},
+  "bindings": {"coupling": {"step": "coupler", "path": ["result", "coupling"]},
+               "neff": {"step": "coupler", "path": ["result", "n_single"]},
+               "ng": {"step": "coupler", "path": ["result", "ng_single"]},
+               "wl0_um": {"step": "coupler", "path": ["result", "centre_wavelength_um"]}}}]
 ```
 
 ## Writing programs

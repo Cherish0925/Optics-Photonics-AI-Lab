@@ -12,11 +12,11 @@
 | --- | --- | --- |
 | OP-01 / OP-02 | MCP 并发、可单独取消的状态等待、增量依赖调度 | 代表性长链和宽图的性能数据 |
 | OP-03 | NPY/NPZ 局部读取及其 PNG 图像、步骤之间传文件位置、按目录列出结果、TypeScript 文件传输 | 持久文件索引及更多科学数据格式 |
-| OP-04 / OP-08 | 数组的单位、坐标与约定；HCIPy → POPPY 光瞳到成像的数据交换；超表面单元 → 超透镜焦斑 | 更多科学量，以及光子电路的跨程序路径 |
+| OP-04 / OP-08 | 数组的单位、坐标与约定；HCIPy → POPPY 光瞳到成像的数据交换；超表面单元 → 超透镜焦斑 | 更多科学量；电路路径中的版图和三维器件求解器 |
 | OP-12 | 已完成 episode 索引、重试与改变进程数后的续接、单独记录求解错误 | 共享数据集及异步学习器集成 |
 | OP-14 / OP-15 | 可移动的原生与便携包、自动选择 Python、按需读取指南、精简 Skills | 随宿主版本演进继续运行实际接入流程 |
 | OP-05 | 50 项开源软件的安装配方（pip 由 uv 安装，conda-forge 由 micromamba 安装），提交时先自动准备环境，一个解释器连接其中所有可用软件 | 独立分发的接入包；卸载与升级 |
-| OP-07 | 29 项软件的 44 个封装程序，写明输入，并与解析极限或另一求解器对照，安装配方工作流在各平台运行它们；refractiveindex.info 折射率数据 | 其余带配方软件的程序（Tidy3D、ceviche、pyGDM2、rayoptics、xrt 等） |
+| OP-07 | 29 项软件的 45 个封装程序，写明输入，并与解析极限或另一求解器对照，安装配方工作流在各平台运行它们；refractiveindex.info 折射率数据 | 其余带配方软件的程序（Tidy3D、ceviche、pyGDM2、rayoptics、xrt 等） |
 | OP-11 | 参数扫描作为并行步骤运行，汇总成表，可追加更细的扫描，`resume_run` 保留已完成的参数点；在一个进程内优化输入（差分进化、Nelder–Mead），边算边保存历史和最优一次计算的文件 | 单个长程序内部的断点；代理模型与多目标搜索 |
 | OP-06 / OP-09 / OP-10 / OP-13 / OP-16 | 保留已有接口 | 完整商业软件研究、远端任务、目录状态 |
 
@@ -95,7 +95,7 @@
 
 ### OP-08 · 跨软件研究程序
 
-0.7.0 已用 HCIPy 和 POPPY 实现场／像差到 PSF 的路径，从 [steps.json](../examples/exchange/steps.json) 启动。周期结构的复透射到有限器件传播由 `grcwa/metasurface` → `scipy/metalens` 完成：单元库（RCWA）在局部周期近似下排布超透镜，角谱传播给出焦斑、Strehl 比和效率（[程序说明](../skills/optical-computation/references/programs.md)）。版图到器件 S 参数再到电路响应的路径继续开发。
+0.7.0 已用 HCIPy 和 POPPY 实现场／像差到 PSF 的路径，从 [steps.json](../examples/exchange/steps.json) 启动。周期结构的复透射到有限器件传播由 `grcwa/metasurface` → `scipy/metalens` 完成：单元库（RCWA）在局部周期近似下排布超透镜，角谱传播给出焦斑、Strehl 比和效率（[程序说明](../skills/optical-computation/references/programs.md)）。器件到电路由 `scipy/coupler` → `sax/circuit` 完成：定向耦合器的超模（二维有效折射率模型）给出耦合系数和波导的有效、群折射率，决定微环的响应。同一几何的 gdsfactory 版图，以及用三维器件求解器替代二维模型，是还缺的两环。
 
 每个转换明确物理近似、单位、采样、相位和参考面。参数、几何与材料可以替换，不把一个算例写死成唯一研究任务。
 

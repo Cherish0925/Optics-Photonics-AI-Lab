@@ -12,11 +12,11 @@ The 0.6.0 integration and the subsequent `data-descriptions` and `host-launch` c
 | --- | --- | --- |
 | OP-01 / OP-02 | Concurrent MCP requests, separately cancellable waits, incremental dependency scheduling | Performance measurements for representative long and wide studies |
 | OP-03 | NPY/NPZ selections and PNG pictures of them, file references between steps, prefix listings, TypeScript file transfer | Persistent file indexing and additional scientific formats |
-| OP-04 / OP-08 | Described arrays, units/coordinates/conventions; HCIPy → POPPY pupil-to-image exchange; metasurface unit cells → metalens focus | More scientific quantities and the photonic-circuit exchange path |
+| OP-04 / OP-08 | Described arrays, units/coordinates/conventions; HCIPy → POPPY pupil-to-image exchange; metasurface unit cells → metalens focus | More scientific quantities; layout and 3-D device solvers in the circuit path |
 | OP-12 | Completed-episode indexes, retry/continuation with changed worker count, separate solver errors | Shared datasets and asynchronous learner integration |
 | OP-14 / OP-15 | Movable native/portable packages, managed Python launch, on-demand guides, concise Skills | Continued native host runs as host releases change |
 | OP-05 | Installation recipes for 50 open tools (pip through uv, conda-forge through micromamba), preparation as the first step of a submission, binding every tool one interpreter provides | Independently distributed integration packages; removal and upgrades |
-| OP-07 | 44 packaged programs for 29 tools with declared inputs and checks against analytic limits or a second solver, run on every platform by the recipes workflow; refractive indices from refractiveindex.info | Programs for the remaining recipe tools (Tidy3D, ceviche, pyGDM2, rayoptics, xrt and others) |
+| OP-07 | 45 packaged programs for 29 tools with declared inputs and checks against analytic limits or a second solver, run on every platform by the recipes workflow; refractive indices from refractiveindex.info | Programs for the remaining recipe tools (Tidy3D, ceviche, pyGDM2, rayoptics, xrt and others) |
 | OP-11 | Sweeps as parallel steps with a result table, appended refinements and `resume_run` that keeps completed points; optimization inside one process (differential evolution, Nelder–Mead) that keeps its history and the best evaluation's files as it goes | Checkpoints inside one long program; surrogate-model and multi-objective search |
 | OP-06 / OP-09 / OP-10 / OP-13 / OP-16 | Existing APIs remain available | Complete native-software research, remote jobs and catalogue status |
 
@@ -89,7 +89,7 @@ Deliver environment preparation, a parameterized research program, scientific ou
 
 ### OP-08 · Research across multiple programs
 
-The fields/aberrations → PSF path is implemented in 0.7.0 with HCIPy and POPPY; run it from [steps.json](../examples/exchange/steps.json). Periodic-structure complex transmission → finite-device propagation runs as `grcwa/metasurface` → `scipy/metalens`: the unit-cell library (RCWA) lays out a metalens under the local periodic approximation, and angular-spectrum propagation gives its focal spot, Strehl ratio and efficiency ([programs](../skills/optical-computation/references/programs.md)). The layout → device S-parameters → circuit response path remains.
+The fields/aberrations → PSF path is implemented in 0.7.0 with HCIPy and POPPY; run it from [steps.json](../examples/exchange/steps.json). Periodic-structure complex transmission → finite-device propagation runs as `grcwa/metasurface` → `scipy/metalens`: the unit-cell library (RCWA) lays out a metalens under the local periodic approximation, and angular-spectrum propagation gives its focal spot, Strehl ratio and efficiency ([programs](../skills/optical-computation/references/programs.md)). Device → circuit runs as `scipy/coupler` → `sax/circuit`: the supermodes of a directional coupler (2-D effective-index model) give its coupling and the indices of its waveguide, which set a ring's response. A mask layout of the same geometry from gdsfactory, and a full 3-D device solver in place of the 2-D model, are the remaining links.
 
 Each conversion states its approximation, units, sampling, phase and reference plane. Geometry, materials and parameters remain replaceable.
 

@@ -56,11 +56,11 @@ class DeclarationCase(unittest.TestCase):
 
     def test_details_list_programs_and_return_one_source(self):
         listed = environments.details('scipy')['execution']
-        self.assertEqual([item['name'] for item in listed['programs']], ['fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes'])
+        self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertTrue(environments.details('scipy', program='nlse')['source'].startswith('"""Pulse propagation'))
-        with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: fiber_modes, fit_gaussian, laser_rates'):
+        with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: coupler, fiber_modes, fit_gaussian'):
             environments.details('scipy', program='fft')
         native = environments.details('lumerical')['execution']
         self.assertEqual(native['programs'], [])
@@ -388,6 +388,26 @@ class CircuitCase(unittest.TestCase):
         loss = 1 - 10 ** (-3.0 * 62.83185307179586e-4 / 10)
         dark = calculate('sax', 'circuit', {'coupling': loss, 'wavelength_um': {'start': 1.545, 'stop': 1.555, 'points': 20001}})
         self.assertGreater(dark['dips'][0]['extinction_db'], 30)
+
+    def test_a_coupler_from_its_supermodes_sets_the_ring_response(self):
+        from support import workspace
+        guide = (Path(__file__).resolve().parents[1] / 'skills/optical-computation/references/programs.md').read_text(encoding='utf-8')
+        steps = json.loads(guide.split('A device becomes a circuit')[1].split('```json')[1].split('```')[0])
+        with workspace() as home:
+            for tool in ('scipy', 'sax'):
+                environments.bind(tool, python=sys.executable, path=home)
+            run = jobs.submit(steps, path=home)['run_id']
+            for _ in range(20):
+                state = jobs.status(run, path=home, wait=25)
+                if state['state'] not in ('queued', 'running'):
+                    break
+            self.assertEqual(state['state'], 'succeeded', state)
+            coupler, ring = (step['result']['result'] for step in state['steps'])
+            self.assertLess(coupler['checks']['cmt_difference'], 0.01)
+            self.assertLess(ring['checks']['analytic_difference'], 1e-10)
+            # The ring's free spectral range is lambda^2 / (ng L) with the coupler's group index, near 1.55 um.
+            self.assertLess(ring['checks']['fsr_error'], 1e-3)
+            self.assertAlmostEqual(ring['fsr_nm'] / (1.55 ** 2 / (coupler['ng_single'] * 60) * 1e3), 1, delta=0.01)
 
 
 @environment('treams')
