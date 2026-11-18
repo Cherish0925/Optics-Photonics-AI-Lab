@@ -143,6 +143,25 @@ class SweepRunCase(unittest.TestCase):
             self.assertEqual(studies.table(broken['run_id'], path=home)['states'], {'failed': 2})
 
 
+class WaitCase(unittest.TestCase):
+    def test_a_submission_that_finishes_within_its_wait_returns_its_result_or_error(self):
+        with workspace() as home:
+            connect(home)
+            done = studies.submit('bowl', {'x': 5, 'scale': [2]}, source=MODEL, wait=25, path=home)
+            self.assertEqual((done['state'], done['result']['f'], done['output']), ('succeeded', 5, 'calculate/attempt-1/'))
+            self.assertIn('value.txt', done['files'])
+            failed = studies.submit('bowl', {'x': 5, 'scale': [2], 'fail_above': 4}, source=MODEL, wait=25, path=home)
+            self.assertEqual(failed['state'], 'failed')
+            self.assertIn('outside the model', failed['error'])
+            # A sweep reports its state and step counts; sweep_results reads its points.
+            swept = studies.submit('bowl', {'scale': [2]}, source=MODEL, sweep={'x': [1, 2, 3]}, wait=25, path=home)
+            self.assertEqual(swept['state'], 'succeeded')
+            self.assertEqual(sum(swept['counts'].values()), len(jobs.step_ids(swept['run_id'], home)))
+            self.assertNotIn('result', swept)
+            with self.assertRaisesRegex(ValueError, 'wait must be between 0 and 25 seconds'):
+                studies.submit('bowl', {'x': 1, 'scale': [2]}, source=MODEL, wait=30, path=home)
+
+
 class OptimizationCase(unittest.TestCase):
     def evaluate(self, inputs, folder):
         namespace = {'INPUTS': inputs, 'OUTPUT_DIR': Path(folder), 'RESULT': None}

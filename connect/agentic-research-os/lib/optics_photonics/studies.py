@@ -143,9 +143,15 @@ def grouped(points, size):
 
 
 def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product', optimize=None, chunk=None, name='Optical research',
-           request_id=None, run_id=None, timeout=None, requirements=None, path=None):
-    """One calculation, or a sweep of it, as steps of a new run or appended to run_id."""
+           request_id=None, run_id=None, timeout=None, requirements=None, wait=0, path=None, cancel=None):
+    """One calculation, or a sweep of it, as steps of a new run or appended to run_id.
+
+    wait (up to 25 seconds) returns the run's state after that time or on completion,
+    and for one calculation its result, files and output folder, or its error.
+    """
     from . import jobs, programs
+    if not isinstance(wait, (int, float)) or isinstance(wait, bool) or not 0 <= wait <= 25:
+        raise ValueError('wait must be between 0 and 25 seconds')
     step = {'tool': tool, 'inputs': {} if inputs is None else inputs}
     for key, value in (('action', action), ('source', source), ('optimize', optimize), ('timeout', timeout),
                        ('requirements', requirements)):
@@ -168,7 +174,10 @@ def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product
     # The call, not its numbered steps, identifies a retried request.
     call = {'tool': tool, 'inputs': step['inputs'], 'action': action, 'source': source, 'sweep': sweep, 'pairing': pairing,
             'optimize': optimize, 'chunk': chunk, 'timeout': timeout, 'requirements': requirements, 'name': name, 'run_id': run_id}
-    return jobs.submit(steps, name=name, request_id=request_id, run_id=run_id, path=path, _payload={'calculation': call})
+    submitted = jobs.submit(steps, name=name, request_id=request_id, run_id=run_id, path=path, _payload={'calculation': call})
+    if not wait:
+        return submitted
+    return {**submitted, **jobs.outcome(submitted['run_id'], steps[0]['id'] if sweep is None else None, wait, path, cancel)}
 
 
 def _number(value):

@@ -101,6 +101,8 @@ test('a sweep runs its points in parallel and its table names the best point',as
   const python=execFileSync(command,['-c','import sys; print(sys.executable)'],{encoding:'utf8'}).trim();  // a binding names an interpreter by its path
   await client.call('bind_environment',{tool:'bowl',python,concurrency:4});
   const source='RESULT = {"f": (INPUTS["x"] - 2) ** 2}';
+  const one=await client.calculate('bowl',{source,inputs:{x:5},wait:20});  // a short calculation answers in the same call
+  assert.deepEqual([one.state,one.result],['succeeded',{f:9}]);
   const {run_id}=await client.calculate('bowl',{source,sweep:{x:{start:0,stop:4,points:9}}});
   assert.equal((await client.wait(run_id,{timeout:30000})).state,'succeeded');
   const table=await client.sweep(run_id,{values:['f'],minimize:'f',save:true});

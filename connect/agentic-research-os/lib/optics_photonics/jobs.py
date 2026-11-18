@@ -367,6 +367,20 @@ def status(run_id, path=None, offset=0, limit=50, include_results=True, wait=0, 
     return result
 
 
+def outcome(run_id, step_id=None, wait=0, path=None, cancel=None):
+    """The state of a run after waiting up to wait seconds, with the result or error of step_id once it has finished."""
+    current = status(run_id, path, limit=1, include_results=False, wait=wait, cancel=cancel)
+    reply = {'state': current['state'], 'counts': current['counts']}
+    if step_id:
+        with database(path) as db:
+            row = db.execute('SELECT state,result,error,attempt FROM steps WHERE run_id=? AND id=?', (run_id, step_id)).fetchone()
+        if row and row['state'] in TERMINAL:
+            record = json.loads(row['result']) if row['result'] else {}
+            reply.update({'output': f"{step_id}/attempt-{row['attempt']}/", **{key: record[key] for key in ('result', 'files') if key in record}})
+            if row['error']: reply['error'] = row['error']
+    return reply
+
+
 def list_runs(state=None, offset=0, limit=20, path=None):
     if offset<0 or not 1<=limit<=200: raise ValueError('Use offset >= 0 and limit between 1 and 200')
     reconcile(path)
