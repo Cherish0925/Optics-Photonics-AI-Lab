@@ -276,8 +276,8 @@ def respond(method, params):
 
 
 SUPPORTED = {'2025-11-25','2025-06-18','2025-03-26','2024-11-05'}
-INSTRUCTIONS = ('Optics and photonics research environment. Flow: software_search and software_details to choose software and '
-                'see its packaged programs; materials for refractive indices; submit_calculation runs a packaged program (action) or '
+INSTRUCTIONS = ('Optics and photonics research environment. Flow: software_search (any language, synonyms and abbreviations; it names '
+                'the packaged program that fits) and software_details to choose software and see its packaged programs; materials for refractive indices; submit_calculation runs a packaged program (action) or '
                 'a complete program (source receives INPUTS and OUTPUT_DIR and sets RESULT), installs the software from its recipe '
                 'when needed, and with sweep or optimize runs a parameter study; its wait returns the result of a short calculation '
                 'in the same call; submit_workflow chains steps; run_status with wait to follow; result_files, read_result, read_array and sweep_results to read results. Runs continue after '
