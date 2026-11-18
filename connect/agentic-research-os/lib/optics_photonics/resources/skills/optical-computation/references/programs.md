@@ -19,9 +19,11 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `hcipy/psf` | PSF with obstruction and Zernike aberrations; Strehl, encircled energy | Airy encircled energy; Maréchal |
 | `poppy/psf` | PSF on a detector with Zernike aberrations; Strehl | HCIPy |
 | `lightpipes/gaussian` | Gaussian beam propagation (Forvard or Fresnel); complex field | w(z) |
+| `diffractio/apertures` | Rayleigh-Sommerfeld diffraction of a slit, double slit or grating from near to far field | Fraunhofer expression |
 | `prysm/mtf` | MTF along x and y with Zernike aberrations; PSF; Strehl | diffraction-limited MTF |
 | `scipy/slab_modes` | Guided modes of any layered slab, TE or TM, by finite differences | symmetric-slab dispersion relation |
 | `scipy/nlse` | Fiber pulse propagation: dispersion, self-phase modulation, third-order dispersion, loss | soliton; dispersive broadening; energy |
+| `laserfun/supercontinuum` | Generalized NLSE with Raman scattering and self-steepening: solitons and supercontinuum | photon-number conservation; Dudley benchmark |
 | `scipy/laser_rates` | Semiconductor laser L–I curve and step response | threshold, slope, relaxation frequency |
 | `sax/circuit` | Mach-Zehnder interferometer, all-pass and add-drop ring transmission from component models; resonances, Q, FSR | analytic transfer functions |
 | `finesse/cavity` | Fabry-Perot transmission, reflection and stored power over frequency; linewidth, finesse, buildup | Airy function |
@@ -32,6 +34,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `qutip/jaynes_cummings` | Emitter–cavity dynamics with losses; dressed states | one-excitation solution |
 | `qutip/resonance_fluorescence` | Mollow spectrum, g²(τ), steady state | analytic population; g²(0) = 0 |
 | `perceval/interference` | Output probabilities of photons in a beam splitter, Fourier or random interferometer, with partial distinguishability and loss | permanents; Hong-Ou-Mandel formula |
+| `strawberry/gaussian_state` | Squeezed, displaced and lossy Gaussian states: quadrature variances, photon statistics, g2(0) | analytic squeezed vacuum |
 | `sympy/fresnel` | Fresnel coefficients derived from the boundary conditions | Brewster identity; energy balance |
 | `sympy/abcd` | Symbolic ABCD matrix of space, lens, space | lens law |
 | `raytracing/abcd` | Paraxial ray transfer through spaces and thin lenses | unit determinant |

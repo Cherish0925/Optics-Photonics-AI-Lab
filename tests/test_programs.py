@@ -323,6 +323,39 @@ class TransferFunctionCase(unittest.TestCase):
         self.assertTrue(all(item['x'] < item['limit'] for item in defocus['mtf_at']))
 
 
+@environment('diffractio')
+class ApertureCase(unittest.TestCase):
+    def test_far_field_patterns_follow_fraunhofer(self):
+        for inputs, limit in (({}, 2e-3), ({'aperture': 'slit', 'distance_mm': [2000]}, 1e-4),
+                              ({'aperture': 'grating', 'distance_mm': [20000], 'window_um': 40000, 'samples': 262144}, 2e-3)):
+            result = calculate('diffractio', 'apertures', inputs)
+            self.assertLess(result['checks']['fraunhofer_difference'], limit, inputs)
+
+
+@environment('laserfun')
+class FiberCase(unittest.TestCase):
+    def test_supercontinuum_conserves_photons_and_a_fundamental_soliton_keeps_its_shape(self):
+        broad = calculate('laserfun', 'supercontinuum')
+        self.assertAlmostEqual(broad['soliton_order'], 8.65, delta=0.01)
+        self.assertLess(broad['checks']['photon_number_error'], 1e-3)
+        self.assertGreater(broad['output_width_nm_30db'], 600)
+        soliton = calculate('laserfun', 'supercontinuum', {'raman': False, 'self_steepening': False, 'fwhm_ps': 1.0, 'wavelength_nm': 1550,
+                                                           'peak_power_w': 1.5535556, 'length_m': 500, 'betas': [-0.02], 'gamma_per_w_m': 0.04,
+                                                           'window_ps': 40, 'points': 4096})
+        self.assertAlmostEqual(soliton['soliton_order'], 1, delta=1e-6)
+        self.assertLess(soliton['checks']['energy_error'], 2e-3)
+        self.assertAlmostEqual(soliton['output_peak_power_w'], 1.5535556, delta=0.01)
+
+
+@environment('strawberryfields')
+class SqueezingCase(unittest.TestCase):
+    def test_squeezed_vacuum_matches_its_analytic_statistics(self):
+        for inputs in ({}, {'transmission': 1.0}, {'squeezing': 0.3, 'transmission': 0.5}):
+            self.assertLess(calculate('strawberry', 'gaussian_state', inputs)['checks']['analytic_difference'], 1e-10)
+        displaced = calculate('strawberry', 'gaussian_state', {'displacement': [1.5, 0], 'squeezing': 0.3})
+        self.assertLess(displaced['mandel_q'], 0)  # amplitude squeezing gives sub-Poissonian light
+
+
 @unittest.skipUnless(SCIENCE and installed('meep'), 'Meep and MPB come from conda-forge')
 class MeepCase(unittest.TestCase):
     def run_program(self, tool, name, inputs):
