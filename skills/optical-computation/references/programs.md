@@ -27,6 +27,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `scipy/second_harmonic` | Second-harmonic generation in a uniaxial crystal: type I, type II or quasi-phase-matching angle or period, walk-off, angle and wavelength acceptance; conversion with pump depletion | literature BBO angle and walk-off; tanh² and sinc² limits |
 | `scipy/nlse` | Fiber pulse propagation: dispersion, self-phase modulation, third-order dispersion, loss | soliton; dispersive broadening; energy |
 | `laserfun/supercontinuum` | Generalized NLSE with Raman scattering and self-steepening: solitons and supercontinuum | photon-number conservation; Dudley benchmark |
+| `scipy/resonator` | Gaussian eigenmode of a two-mirror or any ABCD resonator: stability, waists, mirror spots, Gouy phase, FSR, transverse mode spacing, TEM_mn offsets | closed-form two-mirror expressions |
 | `scipy/laser_rates` | Semiconductor laser L–I curve and step response | threshold, slope, relaxation frequency |
 | `ceviche/bend` | Inverse design of a waveguide bend: topology optimization by adjoint gradients in 2-D FDFD; density, binary device, field, transmission per iteration | finite-difference gradient; binary device simulated again |
 | `sax/circuit` | Mach-Zehnder interferometer, all-pass and add-drop ring transmission from component models; resonances, Q, FSR | analytic transfer functions |

@@ -56,7 +56,7 @@ class DeclarationCase(unittest.TestCase):
 
     def test_details_list_programs_and_return_one_source(self):
         listed = environments.details('scipy')['execution']
-        self.assertEqual([item['name'] for item in listed['programs']], ['fiber_modes', 'fit_gaussian', 'laser_rates', 'nlse', 'second_harmonic', 'slab_modes'])
+        self.assertEqual([item['name'] for item in listed['programs']], ['fiber_modes', 'fit_gaussian', 'laser_rates', 'nlse', 'resonator', 'second_harmonic', 'slab_modes'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertTrue(environments.details('scipy', program='nlse')['source'].startswith('"""Pulse propagation'))
@@ -197,6 +197,19 @@ class ProgramPhysicsCase(unittest.TestCase):
             'aperture_mm': 5, 'fields_deg': [0, 2], 'wavelengths_um': [0.55], 'primary_um': 0.55})
         power = (n - 1) * (1 / r1 - 1 / r2 + (n - 1) * d / (n * r1 * r2))
         self.assertAlmostEqual(singlet['first_order']['efl_mm'], 1 / power, places=9)
+
+    def test_a_resonator_mode_agrees_with_the_two_mirror_formulas(self):
+        # Half-symmetric cavity, g1 g2 = 1/2: mode spacing 1/4 FSR, waist on the flat mirror, sqrt(2) larger spot on the curved one.
+        half = self.run_program('scipy', 'resonator', {})
+        self.assertAlmostEqual(half['transverse_mode_spacing_fsr'], 0.25, places=12)
+        self.assertAlmostEqual(half['spot_mirror2_um'] / half['spot_mirror1_um'], math.sqrt(2), places=12)
+        self.assertAlmostEqual(half['waist_um'], math.sqrt(1.064e-3 * 500 / math.pi) * 1e3, places=9)
+        # Near-concentric, a convex-concave and a lens-guide cavity; the closed forms hold where they apply.
+        for cavity in ({'r1_mm': 260, 'r2_mm': 260}, {'r1_mm': -2000, 'r2_mm': 400, 'length_mm': 300}):
+            self.assertLess(self.run_program('scipy', 'resonator', cavity)['checks']['two_mirror_difference'], 1e-12)
+        guide = self.run_program('scipy', 'resonator', {'elements': [{'space_mm': 250}, {'lens_mm': 500}, {'space_mm': 250}, {'mirror_mm': None}] * 2})
+        self.assertAlmostEqual(guide['transverse_mode_spacing_fsr'], 1 / 3, places=12)   # cos(Gouy) = (A + D) / 2 = -1/2
+        self.assertFalse(self.run_program('scipy', 'resonator', {'r1_mm': 200, 'r2_mm': 200})['stable'])
 
     def test_second_harmonic_phase_matching_and_conversion(self):
         from optics_photonics import materials
