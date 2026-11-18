@@ -56,7 +56,7 @@ class DeclarationCase(unittest.TestCase):
 
     def test_details_list_programs_and_return_one_source(self):
         listed = environments.details('scipy')['execution']
-        self.assertEqual([item['name'] for item in listed['programs']], ['fiber_modes', 'fit_gaussian', 'laser_rates', 'nlse', 'resonator', 'second_harmonic', 'slab_modes'])
+        self.assertEqual([item['name'] for item in listed['programs']], ['fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertTrue(environments.details('scipy', program='nlse')['source'].startswith('"""Pulse propagation'))
@@ -210,6 +210,29 @@ class ProgramPhysicsCase(unittest.TestCase):
         guide = self.run_program('scipy', 'resonator', {'elements': [{'space_mm': 250}, {'lens_mm': 500}, {'space_mm': 250}, {'mirror_mm': None}] * 2})
         self.assertAlmostEqual(guide['transverse_mode_spacing_fsr'], 1 / 3, places=12)   # cos(Gouy) = (A + D) / 2 = -1/2
         self.assertFalse(self.run_program('scipy', 'resonator', {'r1_mm': 200, 'r2_mm': 200})['stable'])
+
+    def test_a_unit_cell_library_becomes_a_metalens_that_focuses(self):
+        ideal = self.run_program('scipy', 'metalens')
+        self.assertAlmostEqual(ideal['airy_ratio'], 1, delta=0.03)       # NA 0.45: within 3 % of 0.514 lambda / NA
+        self.assertAlmostEqual(ideal['strehl'], 1, delta=1e-3)
+        self.assertLess(ideal['checks']['energy_error'], 1e-12)
+        from support import workspace
+        guide = (Path(__file__).resolve().parents[1] / 'skills/optical-computation/references/programs.md').read_text(encoding='utf-8')
+        steps = json.loads(guide.split('A file passes the same way')[1].split('```json')[1].split('```')[0])
+        steps[0]['inputs'] = {'diameters_um': {'start': 0.1, 'stop': 0.5, 'points': 21}, 'orders': 121, 'grid': 128}   # a quicker library
+        with workspace() as home:
+            for tool in ('grcwa', 'scipy'):
+                environments.bind(tool, python=sys.executable, path=home)
+            run = jobs.submit(steps, path=home)['run_id']
+            for _ in range(20):
+                state = jobs.status(run, path=home, wait=25)
+                if state['state'] not in ('queued', 'running'):
+                    break
+            self.assertEqual(state['state'], 'succeeded', state)
+            lens = state['steps'][1]['result']['result']
+            self.assertGreater(lens['strehl'], 0.8)
+            self.assertGreater(lens['focusing_efficiency'], 0.6)
+            self.assertAlmostEqual(lens['airy_ratio'], 1, delta=0.05)
 
     def test_second_harmonic_phase_matching_and_conversion(self):
         from optics_photonics import materials

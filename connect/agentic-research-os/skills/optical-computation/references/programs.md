@@ -27,6 +27,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `scipy/second_harmonic` | Second-harmonic generation in a uniaxial crystal: type I, type II or quasi-phase-matching angle or period, walk-off, angle and wavelength acceptance; conversion with pump depletion | literature BBO angle and walk-off; tanh² and sinc² limits |
 | `scipy/nlse` | Fiber pulse propagation: dispersion, self-phase modulation, third-order dispersion, loss | soliton; dispersive broadening; energy |
 | `laserfun/supercontinuum` | Generalized NLSE with Raman scattering and self-steepening: solitons and supercontinuum | photon-number conservation; Dudley benchmark |
+| `scipy/metalens` | Metalens from a unit-cell library: pillar of each cell by the hyperbolic phase, focal spot by angular-spectrum propagation; FWHM, Strehl ratio, focusing efficiency | Airy width of the ideal lens; energy of the propagation |
 | `scipy/resonator` | Gaussian eigenmode of a two-mirror or any ABCD resonator: stability, waists, mirror spots, Gouy phase, FSR, transverse mode spacing, TEM_mn offsets | closed-form two-mirror expressions |
 | `scipy/laser_rates` | Semiconductor laser L–I curve and step response | threshold, slope, relaxation frequency |
 | `ceviche/bend` | Inverse design of a waveguide bend: topology optimization by adjoint gradients in 2-D FDFD; density, binary device, field, transmission per iteration | finite-difference gradient; binary device simulated again |
@@ -57,6 +58,14 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
  {"id": "pulse", "tool": "scipy", "action": "nlse", "after": ["fiber"], "inputs": {"peak_power_W": 16},
   "bindings": {"beta2_ps2_per_km": {"step": "fiber", "path": ["result", "fundamental", "beta2_ps2_per_km"]},
                "gamma_per_W_km": {"step": "fiber", "path": ["result", "fundamental", "gamma_per_W_km"]}}}]
+```
+
+A file passes the same way: the unit-cell library of `grcwa/metasurface` lays out a metalens and focuses it.
+
+```json
+[{"id": "cells", "tool": "grcwa", "action": "metasurface", "inputs": {}},
+ {"id": "lens", "tool": "scipy", "action": "metalens", "after": ["cells"], "inputs": {"focal_um": 30, "aperture_um": 30},
+  "bindings": {"library": {"step": "cells", "file": "library.npz"}}}]
 ```
 
 ## Writing programs
