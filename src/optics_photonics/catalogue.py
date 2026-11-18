@@ -174,6 +174,13 @@ def search_index():
             index[item['id']] = index.get(item['id'], '') + ' ' + normalized(text)
     for tool, found in programs.catalog().items():
         index[tool] += ' ' + normalized(' '.join(spec['title'] + ' ' + spec['about'] for spec in found.values()))
+    # The pages match typed words as substrings; adding every name of each concept an entry mentions lets
+    # them find synonyms, abbreviations and Chinese terms as software_search does.
+    groups, _ = vocabulary()
+    for tool in index:
+        text = ''.join(ranked_index()[tool])
+        names = {normalized(name) for group in groups if any(phrase(name).search(text) for name in group) for name in group}
+        index[tool] += ' ' + ' '.join(sorted(names - {''}))
     return index
 
 
