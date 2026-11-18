@@ -11,6 +11,7 @@ number, [n, k] with k >= 0 absorbing, or a material from the materials tool.
 The surrounding medium is lossless. Lengths are in nanometres. Results
 converge with lmax; coupling compares the cluster with the same spheres far
 apart. For one sphere the extinction is compared with a separate Mie series.
+Dimers and oligomers of nanoparticles are such clusters.
 """
 import math
 import numpy as np

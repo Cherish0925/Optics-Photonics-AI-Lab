@@ -6,7 +6,9 @@ is a number, [n, k] with k >= 0 absorbing, or a material from the materials
 tool, which brings its measured dispersion. Layers listed in incoherent are
 treated without interference, as a thick substrate is; the others are
 coherent. Power quantities refer to the incident medium; with an absorbing
-incident medium tmm's definitions of R and T apply.
+incident medium tmm's definitions of R and T apply. Anti-reflection coatings,
+Bragg mirrors (quarter-wave stacks), filters and absorbing films are such
+stacks.
 """
 import math
 import numpy as np

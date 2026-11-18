@@ -7,6 +7,8 @@ sphere in a lossless medium, over vacuum wavelength. An index is a number,
 miepython's n - ik form), or a material from the materials tool. With angles,
 the differential scattering cross section of unpolarized light and the
 amplitudes |S1|^2, |S2|^2 (Bohren and Huffman normalization) are saved.
+Nanoparticles, droplets and aerosol particles are such spheres; given as a
+material, a metal sphere shows its localized plasmon resonance.
 """
 import math
 import numpy as np

@@ -35,7 +35,7 @@ optics-photonics connect agentic-research-os --output optics-plugin
 
 ## 一次计算怎么进行
 
-1. **选软件。** `software_search` 和 `software_details` 返回每项软件的物理方法、接口、安装来源和封装程序。目录之外的工具用 `register_software` 加入。
+1. **选软件。** `software_search` 按物理问题查找软件和封装程序，中英文皆可，光学概念的同义词与缩写互相匹配（[词表](data/vocabulary.json)）；`software_details` 返回每项软件的物理方法、接口、安装来源和封装程序。目录之外的工具用 `register_software` 加入。
 2. **连接环境。** 50 项开源软件带安装配方：pip 由 uv 安装，Meep、MPB、FEniCSx、Gmsh、HoloPy 从 conda-forge 安装。提交计算时如果软件还没有环境会先自动安装，`prepare_environment` 可以提前安装；`bind_environment` 复用已有解释器（不写软件 ID 时连接其中所有可用软件）或可执行程序；`discover_native_software` 和 `bind_native_software` 连接本机 COMSOL、Lumerical、OpticStudio、CST 的 SDK（[原生会话](docs/NATIVE.zh-CN.md)）。
 3. **使用实测材料数据。** `materials` 给出 refractiveindex.info 数据库 3576 页（CC0）的 n、k 和文献；SiO2、Si、Au、N-BK7 等常用名称离线可用，其他页面首次使用时下载。
 4. **运行封装程序或自己写程序。** 37 个封装程序覆盖薄膜、光栅、FDTD 膜系与环形谐振腔、光子晶体能带、波导模式、Mie 散射与球簇、点扩散函数与 MTF、高斯光束与孔径衍射、光子回路、法布里-珀罗腔、光纤脉冲与超连续谱、激光器动力学、光通信、太阳能电池、量子光学、压缩光与多光子干涉、Fresnel 公式推导、光线追迹和版图；每个程序都写明输入，并给出与守恒律或解析极限的对照，源码可以取出修改（[程序说明](skills/optical-computation/references/programs.md)）。自己写的 Python 程序接收 `INPUTS` 和 `OUTPUT_DIR`，使用软件完整的原生 API，设置 `RESULT`；可执行程序通过环境变量使用同样的文件。`submit_calculation` 立即返回运行编号；带 `sweep` 时并行计算输入取值的所有组合，由 `sweep_results` 汇总成表并给出最优点；带 `optimize` 时在一个进程内于给定范围中搜索使结果最优的输入（[参数研究](skills/optical-computation/references/studies.md)）；`submit_workflow` 增加依赖或并行的步骤，后一步可以接收前一步的数值，或前一步写出的文件的位置。`data.save` 把数组连同单位、坐标轴和约定一起保存，下一个程序和 `read_array` 都能知道这些数的物理含义（[数据说明](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)）。
