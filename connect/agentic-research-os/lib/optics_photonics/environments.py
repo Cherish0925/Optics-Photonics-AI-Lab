@@ -143,12 +143,13 @@ REPEATED = ('interface', 'sources', 'upstream', 'native_program')
 def details(tool, language='en', path=None, program=None):
     """One software entry with its connection and what it can run; each fact appears once.
 
-    With program, the source of that packaged program, to read or adapt.
+    With program, that packaged program's physics, inputs, results, checks and source, to read or adapt.
     """
     from . import native, programs
     item = software(tool, language, path)
     if program is not None:
-        return {'tool': tool, 'program': program, 'source': programs.source(tool, program),
+        return {'tool': tool, 'program': program, **{k: v for k, v in programs.details(tool, program).items() if k != 'name'},
+                'source': programs.source(tool, program),
                 'adapt': 'Submit an edited copy as source; parameters(PROGRAM, INPUTS) checks the inputs it declares.'}
     if item.get('origin') != 'local':
         # connections.json repeats these catalogue fields so that the file can be read on its own.

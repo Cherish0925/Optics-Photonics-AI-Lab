@@ -59,7 +59,11 @@ class DeclarationCase(unittest.TestCase):
         self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
-        self.assertTrue(environments.details('scipy', program='nlse')['source'].startswith('"""Pulse propagation'))
+        self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
+        one = environments.details('scipy', program='nlse')
+        self.assertTrue(one['source'].startswith('"""Pulse propagation'))
+        self.assertEqual((one['about'], one['inputs']['length_km']['default']),
+                         (programs.catalog()['scipy']['nlse']['about'], nlse['inputs']['length_km']['default']))
         with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: coupler, fiber_modes, fit_gaussian'):
             environments.details('scipy', program='fft')
         native = environments.details('lumerical')['execution']
