@@ -11,7 +11,7 @@
 
 ## 首次连接
 
-执行 `optics-photonics discover`；自定义软件安装位置可追加 `--root /software/location`。它按已知安装目录查找软件并返回 SDK 路径，不启动求解器。`bind-native` 在指定 Python 中检查模块是否可发现，然后保存连接设置；首个计算任务才会建立需要许可的软件会话。
+执行 `optics-photonics discover`；自定义软件安装位置可追加 `--root /software/location`。它按已知安装目录查找软件并返回 SDK 路径，不启动求解器。`bind-native` 在指定 Python 中确认模块可以找到，然后保存连接设置；首个计算任务才会建立需要许可的软件会话。
 
 ```sh
 optics-photonics bind-native lumerical --python /path/to/python --sdk-path /path/to/lumerical/api/python --threads 4
@@ -41,7 +41,7 @@ optics-photonics submit comsol --program research.py --inputs "@inputs.json"
 
 程序获得 `INPUTS`、`OUTPUT_DIR`、`SDK`、`SESSION`、`MODEL`、`PROJECT_FILE` 和 `EXPORT(value, name)`，通过 `RESULT` 返回简洁 JSON。`MODEL` 是光学系统或项目；COMSOL 中为 MPh 模型，通过 `MODEL.java` 使用完整 Java API。工作模型在程序执行前及成功结束后保存。多维数组与复数场由 `EXPORT` 保存为 NPZ，并附 JSON 结构说明；大型数据也可直接使用软件自己的文件格式和流式写入。模型引用的材料、几何和外部数据仍按其项目路径配置。
 
-[原生程序示例](../examples/native)包含 COMSOL 参数扫描、Lumerical 监视器数据提取、OpticStudio MTF 分析与 CST 结果导出，可依据实际研究项目修改。连接器的会话生命周期已通过替代 SDK 的自动检查；本开发环境未运行这些需要许可的商业求解器。正常结束与 Python 异常会关闭本任务持有的会话；强制取消终止工作进程树，树外的厂商服务需按其机制处理。
+[原生程序示例](../examples/native)包含 COMSOL 参数扫描、Lumerical 监视器数据提取、OpticStudio MTF 分析与 CST 结果导出，可依据实际研究项目修改。连接器的会话生命周期已用替代 SDK 自动运行过；本开发环境未运行这些需要许可的商业求解器。正常结束与 Python 异常会关闭本任务持有的会话；强制取消终止工作进程树，树外的厂商服务需按其机制处理。
 
 Agent 与求解器不必位于同一系统。例如，macOS 上的 Agent 可以通过 SSH 启动 Windows 工作站上的 MCP，并使用那台工作站的 OpticStudio。
 
