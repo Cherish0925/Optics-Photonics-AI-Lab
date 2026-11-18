@@ -181,6 +181,23 @@ class ProgramPhysicsCase(unittest.TestCase):
             # N = sqrt(gamma P0 T0^2 / |beta2|) with the fiber's own beta2 and gamma, T0 = 1 ps.
             self.assertAlmostEqual(pulse['soliton_order'], math.sqrt(fundamental['gamma_per_W_km'] * 16 / abs(fundamental['beta2_ps2_per_km'])), places=12)
 
+    def test_a_lens_has_its_paraxial_focal_length_and_third_order_spherical_aberration(self):
+        # Cooke triplet: 50 mm at f/4; chief rays reach f tan(theta); real rays approach the Seidel spherical aberration.
+        triplet = self.run_program('optiland', 'lens')
+        self.assertAlmostEqual(triplet['first_order']['efl_mm'], 50.0, delta=0.01)
+        self.assertAlmostEqual(triplet['first_order']['f_number'], 4.0, delta=1e-3)
+        self.assertAlmostEqual(triplet['spots'][-1]['centroid_y_mm'] / (50.0 * math.tan(math.radians(20))), 1, delta=1e-3)
+        self.assertLess(triplet['checks']['focal_length_difference'], 1e-12)
+        self.assertLess(triplet['checks']['spherical_difference'], 1e-4)
+        # A thick biconvex singlet: the lensmaker's equation.
+        n, r1, r2, d = 1.5, 50.0, -40.0, 6.0
+        singlet = self.run_program('optiland', 'lens', {
+            'surfaces': [{'radius_mm': None, 'thickness_mm': None}, {'radius_mm': r1, 'thickness_mm': d, 'index': n, 'stop': True},
+                         {'radius_mm': r2, 'thickness_mm': 40}, {'radius_mm': None, 'thickness_mm': 0}],
+            'aperture_mm': 5, 'fields_deg': [0, 2], 'wavelengths_um': [0.55], 'primary_um': 0.55})
+        power = (n - 1) * (1 / r1 - 1 / r2 + (n - 1) * d / (n * r1 * r2))
+        self.assertAlmostEqual(singlet['first_order']['efl_mm'], 1 / power, places=9)
+
     def test_second_harmonic_phase_matching_and_conversion(self):
         from optics_photonics import materials
         # BBO, type I (ooe) at 1064 nm: the phase-matching angle 22.8 degrees and walk-off 3.19 degrees of the literature.
@@ -431,6 +448,18 @@ class SqueezingCase(unittest.TestCase):
             self.assertLess(calculate('strawberry', 'gaussian_state', inputs)['checks']['analytic_difference'], 1e-10)
         displaced = calculate('strawberry', 'gaussian_state', {'displacement': [1.5, 0], 'squeezing': 0.3})
         self.assertLess(displaced['mandel_q'], 0)  # amplitude squeezing gives sub-Poissonian light
+
+
+@environment('ceviche')
+class InverseDesignCase(unittest.TestCase):
+    def test_the_adjoint_gradient_is_exact_and_the_bend_learns_to_transmit(self):
+        result = calculate('ceviche', 'bend', {'iterations': 12})
+        self.assertLess(result['checks']['gradient_difference'], 1e-5)
+        transmission = result['transmission']
+        self.assertLess(transmission['start'], 0.1)
+        self.assertGreater(transmission['end'], 0.9)
+        self.assertGreater(transmission['binary'], 0.9)
+        self.assertLess(transmission['binary'], 1 + 1e-6)   # normalized by a straight waveguide: nothing gains power
 
 
 @unittest.skipUnless(SCIENCE and installed('meep'), 'Meep and MPB come from conda-forge')

@@ -27,6 +27,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `scipy/nlse` | Fiber pulse propagation: dispersion, self-phase modulation, third-order dispersion, loss | soliton; dispersive broadening; energy |
 | `laserfun/supercontinuum` | Generalized NLSE with Raman scattering and self-steepening: solitons and supercontinuum | photon-number conservation; Dudley benchmark |
 | `scipy/laser_rates` | Semiconductor laser L–I curve and step response | threshold, slope, relaxation frequency |
+| `ceviche/bend` | Inverse design of a waveguide bend: topology optimization by adjoint gradients in 2-D FDFD; density, binary device, field, transmission per iteration | finite-difference gradient; binary device simulated again |
 | `sax/circuit` | Mach-Zehnder interferometer, all-pass and add-drop ring transmission from component models; resonances, Q, FSR | analytic transfer functions |
 | `finesse/cavity` | Fabry-Perot transmission, reflection and stored power over frequency; linewidth, finesse, buildup | Airy function |
 | `opticomm/ber` | Bit and symbol error rates and GMI of QAM, PSK or PAM over additive noise and phase noise | theoretical BER |
@@ -40,6 +41,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `sympy/fresnel` | Fresnel coefficients derived from the boundary conditions | Brewster identity; energy balance |
 | `sympy/abcd` | Symbolic ABCD matrix of space, lens, space | lens law |
 | `raytracing/abcd` | Paraxial ray transfer through spaces and thin lenses | unit determinant |
+| `optiland/lens` | Lens analysis: focal length, back focus, f-number, pupils; Seidel sums and transverse aberrations per surface; axial colour; real-ray spot radii over field and wavelength | independent paraxial trace; real rays at small aperture; lensmaker's equation |
 | `optiland/trace` | Real rays through a sequential lens prescription | rotational symmetry |
 | `py-pol/polarization` | Jones calculus through polarizers and wave plates; Stokes output | Malus's law |
 | `scikitimage/registration` | Subpixel translation between images | |
