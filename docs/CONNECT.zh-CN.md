@@ -89,6 +89,17 @@ optics-photonics resume RUN_ID
 
 没有依赖的步骤按资源设置并行；后续步骤等待依赖完成。追加步骤保留同一个研究任务。`resume` 保留已完成步骤，重新运行未完成步骤，每次尝试的文件独立保存。云端求解器的任务编号和接续方式由原生程序保存与处理。
 
+### 参数扫描与优化
+
+```sh
+optics-photonics submit tmm spectrum --inputs '{"n":[1,1.38,1.52],"wavelength_nm":[550]}' --sweep '{"thickness_nm.0":{"start":50,"stop":150,"points":21},"n.1":[1.30,1.38,1.46]}'
+optics-photonics sweep RUN_ID --value first.1 --minimize first.1 --save
+optics-photonics submit tmm spectrum --run-id RUN_ID --inputs '{"n":[1,1.30,1.52],"wavelength_nm":[550]}' --sweep '{"thickness_nm.0":{"start":100,"stop":110,"points":21}}'
+optics-photonics run tmm spectrum --inputs "@coating.json" --optimize '{"variables":{"thickness_nm.0":[0,300],"thickness_nm.1":[0,300]},"minimize":"mean.R"}'
+```
+
+扫描的每个参数点是一个并行步骤；`thickness_nm.0` 这样带点的名称只设置列表输入中的一个元素。`sweep` 列出每个点的扫描输入和选定的结果值，给出最优点；加 `--save` 写出按扫描输入排成网格的 `sweep.npz`。`--run-id` 把更细的扫描追加到同一次运行。`--optimize` 在一个进程内于给定范围搜索变量，方法为差分进化加 Nelder–Mead 精修，或单独使用 Nelder–Mead；最优一次计算的文件保存在 `best/`（[参数研究](../skills/optical-computation/references/studies.md)）。
+
 ## 从插件市场安装
 
 | 宿主 | 添加来源与安装 |

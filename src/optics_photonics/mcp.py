@@ -47,7 +47,8 @@ TOOLS = [
     ('prepare_environment', 'Install a tool from its recipe (pip, or conda-forge for software without wheels) into an environment of its own, in the background; returns a run ID. Submissions do this by themselves for a tool without an environment. packages adds requirements such as scipy or h5py to the tool\'s environment; python selects the base interpreter.', schema({'tool':STRING,'packages':{'type':'array','items':STRING},'python':STRING,'request_id':STRING},['tool'])),
     ('bind_environment', 'Connect an existing scientific Python environment or an explicit native executable; installs nothing. Without tool, binds every catalogue or registered tool whose modules the python interpreter has, and keeps tools already connected.', schema({'tool':STRING,'python':STRING,'command':{'type':'array','items':STRING,'minItems':1},'threads':{'type':'integer','minimum':1},'concurrency':{'type':'integer','minimum':1},'cwd':STRING,'requirements':{'type':'object','additionalProperties':{'type':'integer','minimum':1}},'env':{'type':'object','additionalProperties':STRING}})),
     ('compute_resources', 'Read or update shared CPU and named resource capacities (GPU, solver license, memory slots). Requirements are acquired together across all runs; adapters select the actual hardware or license.', schema({'cpu':{'type':'integer','minimum':1},'pools':{'type':'object','additionalProperties':{'type':'integer','minimum':1}}})),
-    ('submit_calculation', 'Start an independent background calculation and return its run ID immediately. action runs a packaged program listed by software_details, with inputs replacing its defaults; source runs a complete native Python program with INPUTS, OUTPUT_DIR and RESULT. A tool without an environment is first installed from its recipe, as step prepare.TOOL of the same run. Reuse request_id when retrying.', schema({'tool':STRING,'inputs':{'type':'object'},'action':STRING,'source':STRING,'name':STRING,'request_id':STRING,'timeout':{'type':'number','exclusiveMinimum':0}},['tool'])),
+    ('submit_calculation', 'Start an independent background calculation and return its run ID immediately. action runs a packaged program listed by software_details, with inputs replacing its defaults; source runs a complete native Python program with INPUTS, OUTPUT_DIR and RESULT. sweep maps inputs (name, or name.0 for one element of a list input) to lists of values or {start, stop, points, scale}: every combination (pairing product) or the lists in step (zip) runs as a parallel step point-N, and sweep_results tabulates them. optimize {variables: {input: [low, high]}, minimize or maximize: dotted RESULT path, method, evaluations} searches the variables inside one process (differential evolution, or nelder-mead from the current inputs) and keeps the best evaluation\'s files. run_id appends to an earlier run. A tool without an environment is first installed from its recipe, as step prepare.TOOL. Reuse request_id when retrying.', schema({'tool':STRING,'inputs':{'type':'object'},'action':STRING,'source':STRING,'sweep':{'type':'object'},'pairing':{'enum':['product','zip']},'optimize':{'type':'object'},'run_id':STRING,'name':STRING,'request_id':STRING,'timeout':{'type':'number','exclusiveMinimum':0}},['tool'])),
+    ('sweep_results', 'Tabulate the points of a sweep: each point\'s swept inputs, state and the RESULT values named in values (dotted paths such as checks.energy_error or R.0). minimize or maximize one value to get the best point. save writes sweep.npz/.json in the run folder, gridded over the swept inputs for a full product, for read_array.', schema({'run_id':STRING,'values':{'type':'array','items':STRING},'minimize':STRING,'maximize':STRING,'save':{'type':'boolean'},'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':1000}},['run_id'])),
     ('sample_episodes', 'Collect complete episodes for learning in parallel worker processes. source defines make_env() with Gymnasium-style reset/step/close and make_policy(seed) returning an action function; task and policy need id and version. Each worker writes samples/trajectory.jsonl, samples/index.jsonl (one line per completed episode) and typed arrays. continue_from lists earlier runs whose completed episodes are not collected again. Details: read_guide episodes.', schema({'tool':STRING, 'source':STRING, 'task':{'type':'object'}, 'policy':{'type':'object'}, 'episodes':{'type':'integer','minimum':1}, 'workers':{'type':'integer','minimum':1}, 'max_steps':{'type':'integer','minimum':1}, 'seed':{'type':'integer','minimum':0}, 'inputs':{'type':'object'}, 'options':{'type':'object'}, 'continue_from':{'type':'array','items':STRING}, 'on_error':{'enum':['stop','continue']}, 'request_id':STRING, 'timeout':{'type':'number','exclusiveMinimum':0}}, ['tool','source','task','policy','episodes'])),
     ('submit_workflow', 'Submit dependent or independent calculation steps in one request. Each step has id, tool, action (a packaged program) or source, inputs, after, optional timeout and bindings. A binding {input_name: {step, path: [keys]}} copies a value from a predecessor result; {input_name: {step, file: "relative/path"}} gives the location of a file or folder that predecessor wrote, for large data. Supply run_id to append a batch to an existing research run.', schema({'steps':{'type':'array','items':{'type':'object'},'minItems':1},'name':STRING,'request_id':STRING,'run_id':STRING},['steps'])),
     ('run_status', 'Read compact execution state. wait (0–25 seconds) waits for completion without repeated calls. Results stay in files by default; include_results returns step values. Calculations continue after disconnection.', schema({'run_id':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':200},'include_results':{'type':'boolean'},'wait':{'type':'number','minimum':0,'maximum':25}},['run_id'])),
@@ -78,9 +79,11 @@ def invoke(name, args, cancellation=None):
     if name == 'prepare_environment': return jobs.prepare(**args)
     if name == 'compute_resources': return jobs.resources(**args)
     if name == 'submit_calculation':
-        data = dict(args)
-        name = data.pop('name','Optics research'); key = data.pop('request_id',None)
-        return jobs.submit([{'id':'calculate',**data}],name=name,request_id=key)
+        from . import studies
+        return studies.submit(**{'name': 'Optics research', **args})
+    if name == 'sweep_results':
+        from . import studies
+        return studies.table(**args)
     if name == 'sample_episodes':
         from . import sampling
         return sampling.submit(**args)
@@ -268,12 +271,13 @@ def respond(method, params):
 
 
 SUPPORTED = {'2025-11-25','2025-06-18','2025-03-26','2024-11-05'}
-INSTRUCTIONS = ('Optics and photonics research environment. Flow: software_search and software_details to choose software; '
-                'bind_environment or prepare_environment to connect it; submit_calculation or submit_workflow with a complete program '
-                '(Python source receives INPUTS and OUTPUT_DIR and sets RESULT); run_status with wait to follow; '
-                'result_files, read_result and read_array to read results. Runs continue after disconnection; list_runs finds them. '
-                'read_guide optical-computation explains execution, read_guide optical-research the choice of model and software. '
-                'Solver installation and licenses remain those of the upstream software.')
+INSTRUCTIONS = ('Optics and photonics research environment. Flow: software_search and software_details to choose software and '
+                'see its packaged programs; materials for refractive indices; submit_calculation runs a packaged program (action) or '
+                'a complete program (source receives INPUTS and OUTPUT_DIR and sets RESULT), installs the software from its recipe '
+                'when needed, and with sweep or optimize runs a parameter study; submit_workflow chains steps; run_status with wait '
+                'to follow; result_files, read_result, read_array and sweep_results to read results. Runs continue after '
+                'disconnection; list_runs finds them. read_guide optical-computation explains execution, read_guide '
+                'optical-research the choice of model and software. Solver installation and licenses remain those of the upstream software.')
 
 
 def serve(input_stream=None, output_stream=None):

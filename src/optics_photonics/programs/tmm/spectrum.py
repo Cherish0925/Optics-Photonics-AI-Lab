@@ -23,7 +23,7 @@ PROGRAM = {
         'polarization': ('s', 's, p or both'),
         'incoherent': ([], 'positions in n (1 = first internal layer) of layers without interference'),
     },
-    'results': 'spectrum.npz/.json with R, T, A over polarization, angle and wavelength; spectrum.csv; the first and last rows',
+    'results': 'spectrum.npz/.json with R, T, A over polarization, angle and wavelength; spectrum.csv; the first and last rows; mean and max of R, T, A over everything computed',
     'checks': 'energy_error: largest |1 - R - T| when every medium is lossless',
 }
 p = parameters(PROGRAM, INPUTS)
@@ -104,5 +104,7 @@ with open(OUTPUT_DIR / 'spectrum.csv', 'w', encoding='utf-8') as stream:
     stream.write(','.join(columns) + '\n')
     stream.writelines(','.join(str(value) for value in row) + '\n' for row in rows)
 RESULT = {'columns': columns, 'samples': len(rows), 'first': rows[0], 'last': rows[-1], 'data': saved['data'],
+          'mean': {'R': float(R.mean()), 'T': float(T.mean()), 'A': float(A.mean())},
+          'max': {'R': float(R.max()), 'T': float(T.max()), 'A': float(A.max())},
           'files': ['spectrum.csv'], 'materials': pages,
           'checks': {'energy_error': float(np.max(np.abs(A))) if lossless else None}}

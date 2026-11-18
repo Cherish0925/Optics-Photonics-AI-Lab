@@ -29,7 +29,10 @@ def main(argv=None):
     for name in ('run','submit'):
         run = commands.add_parser(name); run.add_argument('tool'); run.add_argument('action',nargs='?',default='',help='a packaged program listed by info'); run.add_argument('--inputs',type=object_argument,default={}); run.add_argument('--program',type=Path)
         if name == 'run': run.add_argument('--output'); run.add_argument('--timeout',type=float)
-        else: run.add_argument('--name',default='Optical research'); run.add_argument('--request-id'); run.add_argument('--timeout',type=float)
+        else:
+            run.add_argument('--name',default='Optical research'); run.add_argument('--request-id'); run.add_argument('--timeout',type=float)
+            run.add_argument('--sweep',type=object_argument,help='JSON: input -> values or {start, stop, points}'); run.add_argument('--pairing',choices=('product','zip'),default='product'); run.add_argument('--run-id')
+        run.add_argument('--optimize',type=object_argument,help='JSON: {variables, minimize|maximize, method, evaluations}')
     sample = commands.add_parser('sample'); sample.add_argument('tool'); sample.add_argument('program', type=Path)
     sample.add_argument('--task', type=object_argument, required=True); sample.add_argument('--policy', type=object_argument, required=True)
     sample.add_argument('--episodes', type=int, required=True); sample.add_argument('--workers', type=int, default=1)
@@ -50,6 +53,7 @@ def main(argv=None):
     array=commands.add_parser('array',help='Read part of an NPY array or NPZ member'); array.add_argument('run_id'); array.add_argument('file'); array.add_argument('--member'); array.add_argument('--index',type=json.loads,help='JSON list, e.g. [10, [0, 100, 2]]'); array.add_argument('--max-elements',type=int,default=10000)
     read=commands.add_parser('read'); read.add_argument('run_id'); read.add_argument('file'); read.add_argument('--offset',type=int,default=0); read.add_argument('--limit',type=int,default=16384)
     material=commands.add_parser('materials', help='n and k of a material from the refractiveindex.info database'); material.add_argument('material', nargs='?'); material.add_argument('--query'); material.add_argument('--wavelength', type=float, nargs='+'); material.add_argument('--unit', default='nm'); material.add_argument('--limit', type=int, default=20)
+    sweep=commands.add_parser('sweep',help='Tabulate the points of a sweep'); sweep.add_argument('run_id'); sweep.add_argument('--value',dest='values',action='append',help='dotted RESULT path; repeat for more'); best=sweep.add_mutually_exclusive_group(); best.add_argument('--minimize'); best.add_argument('--maximize'); sweep.add_argument('--save',action='store_true'); sweep.add_argument('--offset',type=int,default=0); sweep.add_argument('--limit',type=int,default=100)
     runs=commands.add_parser('runs'); runs.add_argument('--state'); runs.add_argument('--offset',type=int,default=0); runs.add_argument('--limit',type=int,default=20)
     commands.add_parser('mcp')
     commands.add_parser('tools')
@@ -79,13 +83,21 @@ def main(argv=None):
             request={k:a.pop(k) for k in ('inputs','action')}; request['source']=source
             tool=a.pop('tool')
             if command=='run':
+                optimize=a.pop('optimize')
+                if optimize:
+                    from . import optimization
+                    optimization.checked(optimize); request['optimize']=optimize
                 if request['action'] and not source: jobs.packaged({'tool':tool,**request})
                 result=execution.run(tool,request,**a)
             else:
-                timeout=a.pop('timeout'); result=jobs.submit([{'id':'calculate','tool':tool,**request,'timeout':timeout}],**a)
+                from . import studies
+                result=studies.submit(tool,**request,**a)
         elif command == 'sample':
             from . import sampling
             a['source'] = a.pop('program').read_text(encoding='utf-8'); result = sampling.submit(**a)
+        elif command == 'sweep':
+            from . import studies
+            result=studies.table(**a)
         elif command == 'resources': result=jobs.resources(**a)
         elif command == 'runs': result=jobs.list_runs(**a)
         elif command == 'submit-workflow':

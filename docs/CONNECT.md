@@ -72,6 +72,17 @@ optics-photonics resume RUN_ID
 
 Append preserves the research run. Resume retains successful steps and reruns unfinished steps into separate attempt directories. Provider-specific cloud job IDs and session continuation belong in the native research program. Complete examples appear in the [Chinese guide](CONNECT.zh-CN.md).
 
+### Sweeps and optimization
+
+```sh
+optics-photonics submit tmm spectrum --inputs '{"n":[1,1.38,1.52],"wavelength_nm":[550]}' --sweep '{"thickness_nm.0":{"start":50,"stop":150,"points":21},"n.1":[1.30,1.38,1.46]}'
+optics-photonics sweep RUN_ID --value first.1 --minimize first.1 --save
+optics-photonics submit tmm spectrum --run-id RUN_ID --inputs '{"n":[1,1.30,1.52],"wavelength_nm":[550]}' --sweep '{"thickness_nm.0":{"start":100,"stop":110,"points":21}}'
+optics-photonics run tmm spectrum --inputs "@coating.json" --optimize '{"variables":{"thickness_nm.0":[0,300],"thickness_nm.1":[0,300]},"minimize":"mean.R"}'
+```
+
+A sweep runs one step per point in parallel; a dotted name such as `thickness_nm.0` sets one element of a list input. `sweep` tabulates the swept inputs and chosen result values of every point, finds the best one and with `--save` writes `sweep.npz` gridded over the swept inputs. `--run-id` appends a finer sweep to the same run. `--optimize` searches the variables within their bounds inside one process, by differential evolution with a Nelder–Mead polish or by Nelder–Mead alone, and keeps the files of the best evaluation in `best/` ([parameter studies](../skills/optical-computation/references/studies.md)).
+
 ## Install from a marketplace
 
 | Host | Add source and install |

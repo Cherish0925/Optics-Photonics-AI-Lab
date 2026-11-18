@@ -6,7 +6,7 @@
 
 ## 当前实现 · 0.7.0
 
-0.6.0 的整合及后续 `data-descriptions`、`host-launch` 两项贡献已合入；`environment-recipes`、`materials`、`research-programs` 三项贡献带来 OP-05 和 OP-07 两行。后续开发从以下能力继续：
+0.6.0 的整合及后续 `data-descriptions`、`host-launch` 两项贡献已合入；`environment-recipes`、`materials`、`research-programs`、`parameter-studies` 四项贡献带来 OP-05、OP-07、OP-11 三行。后续开发从以下能力继续：
 
 | 工作 | 已实现 | 继续完善 |
 | --- | --- | --- |
@@ -17,7 +17,8 @@
 | OP-14 / OP-15 | 可移动的原生与便携包、自动选择 Python、按需读取指南、精简 Skills | 随宿主版本演进继续运行实际接入流程 |
 | OP-05 | 50 项开源软件的安装配方（pip 由 uv 安装，conda-forge 由 micromamba 安装），提交时先自动准备环境，一个解释器连接其中所有可用软件 | 独立分发的接入包；卸载与升级 |
 | OP-07 | 18 项软件的 26 个封装程序，写明输入，并与解析极限或另一求解器对照；refractiveindex.info 折射率数据 | 其余带配方软件的程序（SAX、treams、Tidy3D、Solcore、prysm 等） |
-| OP-06 / OP-09–11 / OP-13 / OP-16 | 保留已有接口 | 完整商业软件研究、远端任务、目录状态 |
+| OP-11 | 参数扫描作为并行步骤运行，汇总成表，可追加更细的扫描，`resume_run` 保留已完成的参数点；在一个进程内优化输入（差分进化、Nelder–Mead），边算边保存历史和最优一次计算的文件 | 单个长程序内部的断点；代理模型与多目标搜索 |
+| OP-06 / OP-09 / OP-10 / OP-13 / OP-16 | 保留已有接口 | 完整商业软件研究、远端任务、目录状态 |
 
 软件目录、可运行适配器、完整科学流程分别说明。目录之外的软件仍可通过统一接口注册；每个求解器保留自己的平台及许可要求。
 

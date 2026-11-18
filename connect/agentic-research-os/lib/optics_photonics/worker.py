@@ -46,15 +46,25 @@ def execute(tool, request, output):
     else:
         context = nullcontext({})
     with context as session:
-        namespace = {'__name__': '__main__', '__file__': str(output/'program.py'), 'INPUTS': inputs, 'OUTPUT_DIR': output, 'RESULT': None, **session}
+        def program(given, folder):
+            namespace = {'__name__': '__main__', '__file__': str(output/'program.py'), 'INPUTS': given, 'OUTPUT_DIR': folder, 'RESULT': None, **session}
+            exec(code, namespace)
+            if namespace['RESULT'] is None:
+                raise ValueError('Set RESULT to the compact JSON result; write arrays and models under OUTPUT_DIR')
+            return namespace['RESULT']
         if source:
             (output/'program.py').write_text(source, encoding='utf-8')
-            exec(compile(source, str(output/'program.py'), 'exec'), namespace)
-            result = namespace['RESULT']
-            if result is None:
-                raise ValueError('Set RESULT to the compact JSON result; write arrays and models under OUTPUT_DIR')
+            code = compile(source, str(output/'program.py'), 'exec')
+            if request.get('optimize'):
+                from optics_photonics import optimization
+                spec = None if request.get('source') else programs.catalog().get(tool, {}).get(action)
+                result = optimization.run(program, inputs, request['optimize'], output, programs.inputs(spec) if spec else None)
+            else:
+                result = program(inputs, output)
         else:
-            result = native.calculate(tool, action, inputs, namespace)
+            if request.get('optimize'):
+                raise ValueError('optimize runs a program given as source in this session, not a session action')
+            result = native.calculate(tool, action, inputs, {'INPUTS': inputs, 'OUTPUT_DIR': output, 'RESULT': None, **session})
     # Distribution names are taken from the active interpreter, including native-program dependencies.
     versions = {}
     package_map = distributions()
