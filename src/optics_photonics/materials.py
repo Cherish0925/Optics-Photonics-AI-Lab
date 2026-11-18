@@ -114,6 +114,12 @@ def parse(text):
     return page
 
 
+@lru_cache(maxsize=128)
+def _parsed(file):
+    """A page file parsed once per process; a program evaluating indices wavelength by wavelength reads it once."""
+    return parse(Path(file).read_text(encoding='utf-8'))
+
+
 def _download(row, target):
     url = SOURCE.format(commit=index()['commit'], path=urllib.parse.quote(row['data']))
     with urllib.request.urlopen(url, timeout=60) as response:
@@ -136,7 +142,7 @@ def page(material, path=None):
         file = home(path) / 'materials' / index()['commit'][:12] / row['data']
         if not file.is_file():
             _download(row, file)
-    record = parse(file.read_text(encoding='utf-8'))
+    record = _parsed(str(file))
     ranges = [piece_range(piece) for piece in record['data'] if piece.get('type', '').split()[0] in ('formula', 'tabulated')]
     low = max(r[0] for r in ranges)
     high = min(r[1] for r in ranges)

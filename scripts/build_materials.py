@@ -36,6 +36,8 @@ COMMON = {
     'ZnSe': 'main/ZnSe/Connolly',
     'LiNbO3-o': 'main/LiNbO3/Zelmon-o',
     'LiNbO3-e': 'main/LiNbO3/Zelmon-e',
+    'BBO-o': 'main/BaB2O4/Tamosauskas-o',              # beta barium borate 0.188-5.2
+    'BBO-e': 'main/BaB2O4/Tamosauskas-e',
     'diamond': 'main/C/Phillip',
     'SiC': 'main/SiC/Larruquert',
     'Si': 'main/Si/Green-2008',                        # 0.25-1.45, absorbing

@@ -1,6 +1,7 @@
 """Refractive index data from the refractiveindex.info database, offline and downloaded."""
 import io
 import json
+import math
 from pathlib import Path
 import sys
 import unittest
@@ -63,6 +64,17 @@ class MaterialCase(unittest.TestCase):
             self.assertEqual(len(requested), 1)
             self.assertIn(materials.index()['commit'], requested[0])
             self.assertTrue(any(Path(home, 'materials').rglob('Ghosh-o.yml')))
+
+    def test_a_page_is_parsed_once_however_often_it_is_evaluated(self):
+        materials._parsed.cache_clear()
+        with patch.object(materials, 'parse', wraps=materials.parse) as parse:
+            values = [materials.index_at('BBO-e', wavelength / 100) for wavelength in range(40, 120)]
+        self.assertEqual(parse.call_count, 1)
+        self.assertEqual(len(set(values)), 80)
+        # Type I phase matching of 1064 nm in beta barium borate: n_o(1064) = n_e(532, 22.8 degrees).
+        no, ne = materials.index_at('BBO-o', 1.064).real, materials.index_at('BBO-e', 0.532).real
+        no2 = materials.index_at('BBO-o', 0.532).real
+        self.assertAlmostEqual(math.degrees(math.asin(math.sqrt((no ** -2 - no2 ** -2) / (ne ** -2 - no2 ** -2)))), 22.8, delta=0.1)
 
     def test_every_bundled_page_parses_and_evaluates_across_its_range(self):
         record = materials.index()
