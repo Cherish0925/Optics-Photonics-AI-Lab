@@ -164,6 +164,23 @@ class ProgramPhysicsCase(unittest.TestCase):
                                                               'vector': False})['first']
         self.assertAlmostEqual(multimode['guided_modes'] / (multimode['V'] ** 2 / 2), 1, delta=0.05)
 
+    def test_the_fiber_feeds_its_dispersion_and_nonlinearity_to_a_pulse_propagation(self):
+        from support import workspace
+        guide = (Path(__file__).resolve().parents[1] / 'skills/optical-computation/references/programs.md').read_text(encoding='utf-8')
+        steps = json.loads(guide.split('**Chaining programs.**')[1].split('```json')[1].split('```')[0])
+        with workspace() as home:
+            environments.bind('scipy', python=sys.executable, path=home)
+            run = jobs.submit(steps, path=home)['run_id']
+            for _ in range(20):
+                state = jobs.status(run, path=home, wait=25)
+                if state['state'] not in ('queued', 'running'):
+                    break
+            self.assertEqual(state['state'], 'succeeded', state)
+            fiber, pulse = (step['result']['result'] for step in state['steps'])
+            fundamental = fiber['fundamental']
+            # N = sqrt(gamma P0 T0^2 / |beta2|) with the fiber's own beta2 and gamma, T0 = 1 ps.
+            self.assertAlmostEqual(pulse['soliton_order'], math.sqrt(fundamental['gamma_per_W_km'] * 16 / abs(fundamental['beta2_ps2_per_km'])), places=12)
+
     def test_second_harmonic_phase_matching_and_conversion(self):
         from optics_photonics import materials
         # BBO, type I (ooe) at 1064 nm: the phase-matching angle 22.8 degrees and walk-off 3.19 degrees of the literature.

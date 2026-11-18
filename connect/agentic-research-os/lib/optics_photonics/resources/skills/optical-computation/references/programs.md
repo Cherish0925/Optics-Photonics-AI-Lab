@@ -46,6 +46,15 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `gdsfactory/waveguide` | Waveguide layout with ports, GDSII | KLayout readback |
 | `klayout/layout` | Rectangles to GDSII | |
 
+**Chaining programs.** One program's RESULT feeds another's inputs through `bindings` in `submit_workflow`. The fundamental mode of a fiber gives the dispersion and nonlinearity of a pulse propagation:
+
+```json
+[{"id": "fiber", "tool": "scipy", "action": "fiber_modes", "inputs": {"wavelength_nm": [1550]}},
+ {"id": "pulse", "tool": "scipy", "action": "nlse", "after": ["fiber"], "inputs": {"peak_power_W": 16},
+  "bindings": {"beta2_ps2_per_km": {"step": "fiber", "path": ["result", "fundamental", "beta2_ps2_per_km"]},
+               "gamma_per_W_km": {"step": "fiber", "path": ["result", "fundamental", "gamma_per_W_km"]}}}]
+```
+
 ## Writing programs
 
 **Python.** The submitted `source` runs once in the interpreter bound to the tool. It receives `INPUTS` (the step inputs with bound values) and `OUTPUT_DIR` (a `pathlib.Path` owned by this attempt), and must set `RESULT` to compact JSON. Everything else is the software's own API. Write arrays as NPY or NPZ, and models, meshes and plots in their native formats, under OUTPUT_DIR; `read_array` and `result_files` then show them without loading whole files. Record units, coordinate frames, sign and normalization conventions with the data. Each attempt of a step has its own directory `STEP/attempt-N/`, so parallel steps never share files.
