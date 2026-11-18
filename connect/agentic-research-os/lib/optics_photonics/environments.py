@@ -175,8 +175,10 @@ def inspect(python, modules, distributions, timeout=60):
     """Which modules an interpreter finds and which distribution versions it has, in one subprocess."""
     # Resolving a venv's symlink would select the base interpreter and lose its packages.
     interpreter = os.path.abspath(os.path.expanduser(str(python or sys.executable)))
+    # No child reads the server's stdin: on Windows a child that inherits the MCP pipe waits
+    # at start-up for the server's pending read of it, which ends only with the next request.
     result = subprocess.run([interpreter, '-c', INSPECT, json.dumps(modules), json.dumps(distributions)],
-                            capture_output=True, text=True, timeout=timeout)
+                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout)
     if result.returncode:
         raise RuntimeError(result.stderr.strip()[-2000:] or 'Could not inspect this interpreter')
     # Packages may print while they load or exit (Meep reports its run time); the reply carries a marker.
@@ -375,7 +377,7 @@ def install(command, conda_root=None):
     env = dict(os.environ)
     if conda_root and 'MAMBA_ROOT_PREFIX' not in env:
         env['MAMBA_ROOT_PREFIX'] = str(conda_root)
-    result = subprocess.run(command, stdout=sys.stderr, stderr=subprocess.PIPE, text=True, env=env)
+    result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=sys.stderr, stderr=subprocess.PIPE, text=True, env=env)
     if result.returncode:
         sys.stderr.write(result.stderr)
         raise RuntimeError(f"{Path(command[0]).name} {' '.join(command[1:3])} failed with code {result.returncode}: "
@@ -464,7 +466,7 @@ def prepare(tool, *, path=None, python=None, packages=None):
         connection = bind(tool, python=executable, path=path, **settings)
         if item['conda']:
             # conda-forge packages may not carry the metadata that pip reads; ask the installer.
-            listed = subprocess.run([conda(path), 'list', '-p', str(prefix), '--json'], capture_output=True, text=True,
+            listed = subprocess.run([conda(path), 'list', '-p', str(prefix), '--json'], stdin=subprocess.DEVNULL, capture_output=True, text=True,
                                     env={**os.environ, 'MAMBA_ROOT_PREFIX': os.environ.get('MAMBA_ROOT_PREFIX', str(home(path) / 'conda'))})
             names = {re.split(r'[<>=! ]', spec)[0] for spec in item['conda']}
             if not listed.returncode:

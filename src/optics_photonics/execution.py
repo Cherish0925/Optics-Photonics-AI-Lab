@@ -22,7 +22,7 @@ def stop_process(process):
         return
     if os.name == 'nt':
         subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
     else:
         try: os.killpg(process.pid, signal.SIGTERM)
         except ProcessLookupError: return

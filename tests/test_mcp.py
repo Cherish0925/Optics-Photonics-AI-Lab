@@ -174,5 +174,32 @@ class ConcurrentRequestsCase(unittest.TestCase):
         self.assertIn('already in progress', message['error']['message'])
 
 
+class ChildInputCase(unittest.TestCase):
+    """While the server reads its stdin, a Windows child holding that pipe waits until the next request arrives."""
+
+    def test_binding_an_interpreter_answers_while_the_server_reads_its_input(self):
+        with tempfile.TemporaryDirectory() as folder:
+            environments.register('bowl', 'Bowl', 'A standard-library model', modules=['json'], path=folder)
+            session = Session(folder)
+            try:
+                session.call('bind', 'bind_environment', {'tool': 'bowl', 'python': sys.executable})
+                message, _ = session.reply()
+                self.assertFalse(message['result']['isError'], message)
+            finally:
+                session.release()
+
+    def test_every_child_process_states_its_standard_input(self):
+        import ast
+        package = Path(SRC) / 'optics_photonics'
+        unstated = []
+        for file in sorted(package.rglob('*.py')):
+            for node in ast.walk(ast.parse(file.read_text(encoding='utf-8'))):
+                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name)
+                        and node.func.value.id == 'subprocess' and node.func.attr in ('run', 'Popen', 'call', 'check_call', 'check_output')
+                        and not any(keyword.arg in ('stdin', 'input') for keyword in node.keywords)):
+                    unstated.append(f'{file.relative_to(package)}:{node.lineno}')
+        self.assertEqual(unstated, [])
+
+
 if __name__ == '__main__':
     unittest.main()
