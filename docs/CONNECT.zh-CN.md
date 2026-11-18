@@ -46,7 +46,7 @@ optics-photonics resources --cpu 8
 - **platforms**：wheel 不覆盖所有平台时，配方列出可安装的 conda 平台名，例如 Raysect 只有 `linux-64`；在其他平台上报错并说明。
 - **manual**：商业软件和需要编译器或厂商安装程序的软件（Lumerical、COMSOL、OpticStudio、CST、JCMsuite、openEMS、PyNX、SMUTHI）按各自说明安装后再连接；`installation_note` 记录需要注意的地方，例如 PyPI 上同名但无关的 `meep`、`pynx`。
 
-提交计算时如果软件还没有环境，会先安装：同一次运行多一个 `prepare.TOOL` 步骤，成功后计算开始。环境只建立一次，再次准备只补装缺少的部分；两个运行同时准备同一个环境时依次进行。`prepare TOOL --package scipy`（MCP 中为 `packages`）向已准备的环境添加依赖，并保留其他设置。新准备的软件每个进程一个线程，进程数只受共享 CPU 额度限制；`bind_environment` 可以修改这两项。安装的版本（包括 conda-forge 包的版本）记录在环境连接中。[scripts/check_recipes.py](../scripts/check_recipes.py) 在临时目录中为本平台准备全部配方并逐项报告。
+提交计算时如果软件还没有环境，会先安装：同一次运行多一个 `prepare.TOOL` 步骤，成功后计算开始。环境只建立一次，再次准备只补装缺少的部分；两个运行同时准备同一个环境时依次进行。`prepare TOOL --package scipy`（MCP 中为 `packages`）向已准备的环境添加依赖，并保留其他设置。新准备的软件每个进程一个线程，进程数只受共享 CPU 额度限制；`bind_environment` 可以修改这两项。安装的版本（包括 conda-forge 包的版本）记录在环境连接中。[scripts/check_recipes.py](../scripts/check_recipes.py) 在临时目录中为本平台准备全部配方并逐项报告；加 `--programs` 时接着用默认输入运行每个软件的全部封装程序，并报告对照结果。
 
 原生 Python 程序接收 `INPUTS`、`OUTPUT_DIR`，并将简洁结果赋给 `RESULT`。程序可以使用完整 API，保留同一软件会话，运行优化、迭代和参数扫描。数组、场、网格和模型写入 `OUTPUT_DIR`。
 

@@ -1185,7 +1185,8 @@
       "solcore"
     ],
     "pip": [
-      "solcore==5.10.0"
+      "solcore==5.10.0",
+      "numpy<2.4"
     ],
     "platforms": [
       "linux-64",
@@ -1805,7 +1806,8 @@
       "treams"
     ],
     "pip": [
-      "treams==0.4.7"
+      "treams==0.4.7",
+      "numpy<2; sys_platform == 'win32'"
     ],
     "python": "<3.14",
     "platforms": [

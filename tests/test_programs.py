@@ -228,6 +228,101 @@ class ProgramPhysicsCase(unittest.TestCase):
         self.assertEqual({port['name'] for port in result['ports']}, {'o1', 'o2'})
 
 
+def environment(module):
+    """Cases for a tool whose recipe installs it in an environment of its own; they run in that environment."""
+    return unittest.skipUnless(SCIENCE and installed(module), module + ' is installed in its own environment')
+
+
+def calculate(tool, name, inputs=None):
+    with tempfile.TemporaryDirectory() as folder:
+        return programs.run(tool, name, inputs or {}, folder)
+
+
+@environment('sax')
+class CircuitCase(unittest.TestCase):
+    def test_rings_and_interferometer_follow_their_transfer_functions(self):
+        for circuit in ('ring', 'add_drop', 'mzi'):
+            result = calculate('sax', 'circuit', {'circuit': circuit, 'wavelength_um': {'start': 1.5, 'stop': 1.6, 'points': 8001}})
+            self.assertLess(result['checks']['analytic_difference'], 1e-10, circuit)
+            self.assertLess(result['checks']['fsr_error'], 1e-3, circuit)
+        # Critical coupling: the coupled power equals the round-trip loss and the through port goes dark.
+        loss = 1 - 10 ** (-3.0 * 62.83185307179586e-4 / 10)
+        dark = calculate('sax', 'circuit', {'coupling': loss, 'wavelength_um': {'start': 1.545, 'stop': 1.555, 'points': 20001}})
+        self.assertGreater(dark['dips'][0]['extinction_db'], 30)
+
+
+@environment('treams')
+class ClusterCase(unittest.TestCase):
+    def test_one_sphere_matches_the_mie_series_and_distant_spheres_do_not_couple(self):
+        single = calculate('treams', 'cluster', {'spheres': [{'radius_nm': 250, 'index': 1.5}], 'wavelength_nm': [600], 'lmax': 8})
+        self.assertLess(single['checks']['mie_difference'], 1e-10)
+        self.assertAlmostEqual(single['first']['Cext'] / (math.pi * 250 ** 2), 2.840477, places=5)
+        apart = calculate('treams', 'cluster', {'spheres': [{'radius_nm': 100, 'index': 1.5, 'position_nm': [0, 0, -5e4]},
+                                                            {'radius_nm': 100, 'index': 1.5, 'position_nm': [0, 0, 5e4]}],
+                                                'wavelength_nm': [600], 'average': False})
+        self.assertAlmostEqual(apart['first']['coupling'], 1, delta=1e-3)
+        dimer = calculate('treams', 'cluster')
+        self.assertLess(dimer['checks']['energy_error'], 1e-10)
+
+
+@environment('solcore')
+class SolarCellCase(unittest.TestCase):
+    def test_detailed_balance_peaks_near_1_34_ev(self):
+        result = calculate('solcore', 'detailed_balance', {'band_gap_ev': {'start': 1.30, 'stop': 1.40, 'points': 11}})
+        self.assertEqual(result['best']['band_gap_ev'], 1.34)
+        self.assertAlmostEqual(result['best']['efficiency'], 0.331, delta=2e-3)
+        self.assertAlmostEqual(result['best_back_mirror']['efficiency'], 0.337, delta=2e-3)
+        self.assertLess(result['checks']['jsc_difference'], 5e-3)
+        self.assertLess(result['checks']['voc_difference'], 5e-3)
+
+
+@environment('optic')
+class CommunicationCase(unittest.TestCase):
+    def test_error_rates_follow_theory(self):
+        qpsk = calculate('opticomm', 'ber', {'modulation': 'psk', 'order': 4, 'ebn0_db': [0, 4, 8]})
+        bits = 2 * 200000
+        for measured, ebn0 in zip(qpsk['ber'], (0, 4, 8)):
+            expected = 0.5 * math.erfc(math.sqrt(10 ** (ebn0 / 10)))  # exact for Gray-coded QPSK
+            self.assertLess(abs(measured - expected), 4 * math.sqrt(expected / bits), ebn0)  # four standard deviations of the count
+        qam = calculate('opticomm', 'ber', {'ebn0_db': [6, 8, 10]})
+        self.assertLess(qam['checks']['theory_difference'], 0.05)
+
+
+@environment('finesse')
+class CavityCase(unittest.TestCase):
+    def test_cavities_follow_the_airy_function(self):
+        for inputs in ({}, {'input_mirror': {'R': 0.9, 'T': 0.1}, 'end_mirror': {'R': 0.8, 'T': 0.15}, 'length_m': 0.1},
+                       {'input_mirror': {'R': 0.5, 'T': 0.5}, 'end_mirror': {'R': 0.5, 'T': 0.5}}):
+            result = calculate('finesse', 'cavity', inputs)
+            self.assertLess(result['checks']['airy_difference'], 1e-12)
+            self.assertLess(result['checks']['finesse_error'], 1e-4)
+        symmetric = calculate('finesse', 'cavity')
+        self.assertAlmostEqual(symmetric['buildup'], 100, places=6)
+        self.assertAlmostEqual(symmetric['fsr_hz'], 299792458 / 2, places=3)
+
+
+@environment('perceval')
+class PhotonCase(unittest.TestCase):
+    def test_two_photon_interference_and_permanents(self):
+        hom = calculate('perceval', 'interference')
+        self.assertAlmostEqual(hom['coincidence'], 0, places=12)
+        partial = calculate('perceval', 'interference', {'indistinguishability': 0.9, 'reflectivity': 0.3})
+        self.assertLess(partial['checks']['hom_difference'], 1e-12)
+        for inputs in ({'interferometer': 'fourier', 'input_state': [1, 1, 1]},
+                       {'interferometer': 'haar', 'input_state': [2, 1, 0, 1], 'seed': 3}):
+            self.assertLess(calculate('perceval', 'interference', inputs)['checks']['permanent_difference'], 1e-12)
+
+
+@environment('prysm')
+class TransferFunctionCase(unittest.TestCase):
+    def test_mtf_reaches_the_diffraction_limit_and_loses_contrast_with_aberration(self):
+        perfect = calculate('prysm', 'mtf', {'samples': 512})
+        self.assertLess(perfect['checks']['diffraction_limit_difference'], 2e-4)
+        defocus = calculate('prysm', 'mtf', {'zernike_rms_nm': {'4': 25}})
+        self.assertAlmostEqual(defocus['strehl'], math.exp(-(2 * math.pi * 25 / 550) ** 2), delta=2e-3)
+        self.assertTrue(all(item['x'] < item['limit'] for item in defocus['mtf_at']))
+
+
 @unittest.skipUnless(SCIENCE and installed('meep'), 'Meep and MPB come from conda-forge')
 class MeepCase(unittest.TestCase):
     def run_program(self, tool, name, inputs):
@@ -249,6 +344,17 @@ class MeepCase(unittest.TestCase):
         gap = bands['gaps']['tm'][0]
         self.assertAlmostEqual(gap['from'], 0.3225, delta=2e-3)
         self.assertAlmostEqual(gap['to'], 0.4425, delta=2e-3)
+
+    def test_a_core_filling_the_cell_is_the_analytic_slab_mode(self):
+        slab = 2.8477847997093733  # TE0 of 220 nm silicon in silica at 1.55 um, from the slab dispersion relation
+        errors = [self.run_program('mpb', 'waveguide', {'width_um': 1.0, 'cell_um': [1.0, 3.0], 'modes': 1, 'resolution': res})['modes'][0]['neff'] - slab
+                  for res in (32, 64)]
+        self.assertAlmostEqual(errors[0] / errors[1], 4, delta=0.3)
+        self.assertLess(abs(errors[1]), 4e-3)
+        strip = self.run_program('mpb', 'waveguide', {})
+        self.assertGreater(strip['modes'][0]['te_fraction'], 0.95)
+        self.assertLess(strip['modes'][1]['te_fraction'], 0.1)
+        self.assertLess(strip['checks']['edge_energy'], 1e-2)
 
 
 if __name__ == '__main__':

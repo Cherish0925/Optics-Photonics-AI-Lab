@@ -12,18 +12,26 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `meep/stack` | R, T of a layered stack by FDTD | transfer matrix, second-order convergence |
 | `meep/ring` | Ring-resonator modes: frequency, Q by Harminv; final field | Meep tutorial values |
 | `mpb/bands` | Bands and complete gaps of 2-D lattices of rods or holes, TE and TM | rod-lattice TM gap 0.3225–0.4425 |
+| `mpb/waveguide` | Guided modes of a strip or rib waveguide: effective and group index, polarization, mode intensity | analytic slab mode, second-order convergence |
 | `legume/bands` | Bands of 2-D crystals (plane waves) and slabs (guided modes) | MPB |
+| `treams/cluster` | Scattering, extinction and absorption of sphere clusters with multiple scattering; orientation averages | Mie series; energy balance |
 | `miepython/sphere` | Mie efficiencies, cross sections, asymmetry, angular pattern | Rayleigh limit; angular integral |
 | `hcipy/psf` | PSF with obstruction and Zernike aberrations; Strehl, encircled energy | Airy encircled energy; Maréchal |
 | `poppy/psf` | PSF on a detector with Zernike aberrations; Strehl | HCIPy |
 | `lightpipes/gaussian` | Gaussian beam propagation (Forvard or Fresnel); complex field | w(z) |
+| `prysm/mtf` | MTF along x and y with Zernike aberrations; PSF; Strehl | diffraction-limited MTF |
 | `scipy/slab_modes` | Guided modes of any layered slab, TE or TM, by finite differences | symmetric-slab dispersion relation |
 | `scipy/nlse` | Fiber pulse propagation: dispersion, self-phase modulation, third-order dispersion, loss | soliton; dispersive broadening; energy |
 | `scipy/laser_rates` | Semiconductor laser L–I curve and step response | threshold, slope, relaxation frequency |
+| `sax/circuit` | Mach-Zehnder interferometer, all-pass and add-drop ring transmission from component models; resonances, Q, FSR | analytic transfer functions |
+| `finesse/cavity` | Fabry-Perot transmission, reflection and stored power over frequency; linewidth, finesse, buildup | Airy function |
+| `opticomm/ber` | Bit and symbol error rates and GMI of QAM, PSK or PAM over additive noise and phase noise | theoretical BER |
+| `solcore/detailed_balance` | Detailed-balance solar-cell efficiency, Voc, Jsc and fill factor over band gap | currents integrated from the spectrum and Planck's law |
 | `scipy/fit_gaussian` | Least-squares Gaussian fit | residual |
 | `qutip/rabi` | Rabi oscillation of a two-level system | sin²(Ωt/2) |
 | `qutip/jaynes_cummings` | Emitter–cavity dynamics with losses; dressed states | one-excitation solution |
 | `qutip/resonance_fluorescence` | Mollow spectrum, g²(τ), steady state | analytic population; g²(0) = 0 |
+| `perceval/interference` | Output probabilities of photons in a beam splitter, Fourier or random interferometer, with partial distinguishability and loss | permanents; Hong-Ou-Mandel formula |
 | `sympy/fresnel` | Fresnel coefficients derived from the boundary conditions | Brewster identity; energy balance |
 | `sympy/abcd` | Symbolic ABCD matrix of space, lens, space | lens law |
 | `raytracing/abcd` | Paraxial ray transfer through spaces and thin lenses | unit determinant |

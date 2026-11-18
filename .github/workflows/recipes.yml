@@ -5,6 +5,8 @@ on:
     paths:
       - data/connections.json
       - src/optics_photonics/environments.py
+      - src/optics_photonics/programs/**
+      - src/optics_photonics/worker.py
       - scripts/check_recipes.py
 permissions:
   contents: read
@@ -21,5 +23,5 @@ jobs:
         with:
           python-version: '3.12'
       - uses: astral-sh/setup-uv@v6
-      - name: Prepare every recipe for this platform
-        run: python scripts/check_recipes.py --jobs 4
+      - name: Prepare every recipe for this platform and run its packaged programs
+        run: python scripts/check_recipes.py --jobs 4 --programs
