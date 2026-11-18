@@ -227,6 +227,15 @@ class ProgramPhysicsCase(unittest.TestCase):
         self.assertGreater(type2['angle_deg'], bbo['angle_deg'])
         self.assertIsNone(type2['efficiency'])
 
+    def test_a_pillar_metasurface_covers_two_pi_with_high_transmission(self):
+        library = self.run_program('grcwa', 'metasurface', {'diameters_um': {'start': 0.1, 'stop': 0.5, 'points': 21}, 'orders': 121, 'grid': 128})
+        self.assertTrue(library['checks']['single_order'])
+        self.assertLess(library['checks']['energy_error'], 1e-10)
+        self.assertLess(library['checks']['fresnel_difference'], 1e-12)   # no pillars: the bare interface
+        self.assertGreater(library['phase_coverage_rad'], 2 * math.pi)
+        self.assertGreater(library['library_mean_transmission'], 0.85)
+        self.assertEqual([entry['phase_rad'] for entry in library['library']], [2 * math.pi * k / 8 for k in range(8)])
+
     def test_mie_scattering_reaches_the_rayleigh_limit_and_integrates_to_the_cross_section(self):
         import numpy as np
         lossless = self.run_program('miepython', 'sphere', {'index': [1.5, 0], 'diameter_nm': 200, 'wavelength_nm': [450, 550, 650]})

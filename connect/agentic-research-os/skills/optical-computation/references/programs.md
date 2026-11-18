@@ -9,6 +9,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `tmm/spectrum` | R, T, A of a planar multilayer over wavelength, angle and polarization; coherent or incoherent layers | energy balance; RCWA; quarter-wave coating |
 | `grcwa/film` | R, T of uniform layers by RCWA | transfer matrix |
 | `grcwa/grating` | Efficiency per diffraction order of a lamellar grating, TE and TM | energy balance; uniform-layer and effective-medium limits |
+| `grcwa/metasurface` | Zeroth-order transmission and phase of a lattice of round pillars over diameter; phase coverage and a library of diameters for 2π/levels steps | energy balance; Fresnel transmission without pillars |
 | `meep/stack` | R, T of a layered stack by FDTD | transfer matrix, second-order convergence |
 | `meep/ring` | Ring-resonator modes: frequency, Q by Harminv; final field | Meep tutorial values |
 | `mpb/bands` | Bands and complete gaps of 2-D lattices of rods or holes, TE and TM | rod-lattice TM gap 0.3225–0.4425 |
