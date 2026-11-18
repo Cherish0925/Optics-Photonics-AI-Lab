@@ -191,6 +191,52 @@ def start_worker(run_id, path=None):
     threading.Thread(target=process.wait,daemon=True).start()
 
 
+def deferred():
+    """The environment of a calculation waiting for its tool's preparation step; the binding is read when it starts.
+
+    Admission uses these settings, which match those of a newly prepared
+    environment: one thread per process, and as many processes as CPU capacity allows.
+    """
+    return {'kind':'prepared','threads':1,'concurrency':cores(),'cwd':None,'requirements':{},'env':{}}
+
+
+def setup(tool, path=None, **inputs):
+    """A step that prepares a tool's environment, and the environment that runs it."""
+    step = {'id':'prepare.'+tool,'tool':tool,'inputs':{'tool':tool,'home':str(environments.home(path)),**inputs},'after':[]}
+    config = {'kind':'command','command':[sys.executable,'-B',str(Path(__file__).with_name('setup_worker.py'))],
+              'threads':1,'concurrency':1,'cwd':None,'requirements':{},'env':{}}
+    return step, config
+
+
+def provisioned(steps, known, path=None):
+    """Put a preparation step in front of the calculations of each tool that has no environment yet.
+
+    A tool with an installation recipe for this platform is prepared once per
+    run, by a step named prepare.TOOL; its calculations start after it. A
+    tool without a recipe keeps the reason in the error.
+    """
+    configured = environments.read(path)['tools']
+    overrides, added = {}, []
+    for spec in steps:
+        tool = spec['tool']
+        if tool in configured:
+            continue
+        key = 'prepare.'+tool
+        if spec['id'] == key:
+            raise ValueError(key+' names the step that prepares '+tool+'; use another step ID')
+        if key not in known and key not in overrides:
+            try:
+                environments.installable(tool, path)
+            except ValueError as reason:
+                raise ValueError('No environment is connected for '+tool+'. '+str(reason)) from None
+            step, config = setup(tool, path, if_missing=True)
+            added.append(step); overrides[key] = config
+        if key not in spec['after']:
+            spec['after'] = [*spec['after'], key]
+        overrides[spec['id']] = deferred()
+    return added+steps, overrides
+
+
 def submit(steps, name='Optical research', request_id=None, run_id=None, path=None, _environments=None):
     key = request_id or str(uuid.uuid4())
     payload = encoded({'steps':steps,'name':name,'run_id':run_id})
@@ -207,10 +253,12 @@ def submit(steps, name='Optical research', request_id=None, run_id=None, path=No
             if existing and existing['cancel']: raise ValueError('Resume the cancelled run before appending steps')
             known = {r[0] for r in db.execute('SELECT id FROM steps WHERE run_id=?', (result_id,))}
             checked = validate(steps, known)
+            if _environments is None:
+                checked, _environments = provisioned(checked, known, path)
             capacity = db.execute("SELECT value FROM settings WHERE key='cpu'").fetchone()[0]
             prepared = []
             for spec in checked:
-                environment = (_environments or {}).get(spec['tool']) or execution.binding(spec['tool'], path)
+                environment = _environments.get(spec['id']) or execution.binding(spec['tool'], path)
                 if environment['threads'] > capacity:
                     raise ValueError(f"{spec['tool']} requests {environment['threads']} CPU threads; configured capacity is {capacity}")
                 limits = dict(db.execute('SELECT name,capacity FROM pools'))
@@ -229,11 +277,13 @@ def submit(steps, name='Optical research', request_id=None, run_id=None, path=No
     return {'run_id':result_id, 'request_id':key}
 
 
-def prepare(tool, python=None, request_id=None, path=None):
-    if not environments.software(tool, path=path)['connection'].get('pip'):
-        raise ValueError('Use this software’s native installer, then bind its environment')
-    config={'kind':'command','command':[sys.executable,'-B',str(Path(__file__).with_name('setup_worker.py'))],'threads':1,'concurrency':1,'cwd':None}
-    return submit([{'id':'install','tool':tool,'inputs':{'tool':tool,'python':python,'home':str(environments.home(path))}}],name='Prepare '+tool,request_id=request_id,path=path,_environments={tool:config})
+def prepare(tool, python=None, packages=None, request_id=None, path=None):
+    """Install a tool's recipe and extra packages in the background; returns the run of one prepare step."""
+    configured = environments.read(path)['tools'].get(tool)
+    if not (packages and configured and configured.get('managed')):
+        environments.installable(tool, path)
+    step, config = setup(tool, path, python=python, packages=packages or [])
+    return submit([step],name='Prepare '+tool,request_id=request_id,path=path,_environments={step['id']:config})
 
 
 def reconcile(path=None):
@@ -450,6 +500,8 @@ def perform(run_id, row, path, cancellation):
     spec, config = json.loads(row['specification']), json.loads(row['environment'])
     output = environments.home(path)/'runs'/run_id/row['id']/('attempt-'+str(row['attempt']))
     try:
+        if config['kind'] == 'prepared':
+            config = execution.binding(spec['tool'], path)
         with database(path) as db:
             results, folders = {}, {}
             for reference in spec.get('bindings', {}).values():

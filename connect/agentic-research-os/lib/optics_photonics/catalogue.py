@@ -123,6 +123,7 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         missing = [] if count == len(terms) else [term for term, weight in zip(terms, weights) if not weight]
         matches.append({k: item[k] for k in ('id', 'name', 'group', 'cats', 'summary')} |
                        {'connection': connection['kind'], 'operations': connection.get('operations', []),
+                        'install': 'conda' if connection.get('conda') else 'pip' if connection.get('pip') else 'manual',
                         'upstream_mcp': item['mcp']['kind']} | ({'missing': missing} if missing else {}))
     return {'total': len(matches), 'items': matches[offset:offset + limit],
             'next_offset': offset + limit if offset + limit < len(matches) else None}

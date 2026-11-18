@@ -30,7 +30,18 @@ optics-photonics resources --cpu 8
 optics-photonics run tmm --program research.py --inputs "@inputs.json"
 ```
 
-`prepare` installs a documented recipe into a separate environment. `bind` reuses an existing one. `threads` sets common numerical-library thread limits; `concurrency` limits simultaneous processes for one software. Total CPU capacity is shared by background runs. Configure MPI, GPUs, vendor licenses and cluster queues in the solver's native launcher.
+`prepare` installs a tool from its recipe into an environment of its own under `OPTICS_HOME/environments`. `bind` reuses an existing interpreter; `bind --python PATH` without a tool connects every catalogue or registered tool that interpreter provides and keeps tools already connected. `threads` sets common numerical-library thread limits; `concurrency` limits simultaneous processes for one software. Total CPU capacity is shared by background runs. Configure MPI, GPUs, vendor licenses and cluster queues in the solver's native launcher.
+
+### Installation recipes
+
+50 open tools carry a recipe in [connections.json](../data/connections.json); `software_search` shows each tool's route as `install`: `pip`, `conda` or `manual`.
+
+- **pip.** Pinned requirements, including a fixed commit for tools published only on GitHub (laserfun, PtyPy, py-fmas). With [uv](https://docs.astral.sh/uv/) on the PATH the environment is created by uv, which also provides the Python version a recipe states (PoPPy and GDSFactory need 3.12, Strawberry Fields below 3.12); without uv the connector's own Python and pip are used.
+- **conda.** Software without usable wheels comes from conda-forge: Meep and MPB (one shared environment; no Windows build), FEniCSx, Gmsh and HoloPy. The installer is `OPTICS_CONDA`, or micromamba, mamba or conda on the PATH; otherwise the official micromamba release for this platform is downloaded once into `OPTICS_HOME/bin` and checked against its published SHA-256.
+- **platforms.** A recipe lists the conda platform names it installs on when wheels do not cover all of them, for example Raysect only on `linux-64`. Elsewhere the error states the platforms.
+- **manual.** Commercial software and tools whose installation needs a compiler or a vendor installer (Lumerical, COMSOL, OpticStudio, CST, JCMsuite, openEMS, PyNX, SMUTHI) are installed with their own instructions and then bound. `installation_note` records what to watch for, such as the unrelated PyPI packages named `meep` and `pynx`.
+
+A submission for a tool without an environment installs it first: the run gains a step `prepare.TOOL`, and the calculation starts when it succeeds. An environment is created once; preparing again only adds what is missing, and two runs preparing the same environment wait for each other. `prepare TOOL --package scipy` (MCP: `packages`) adds requirements to a prepared environment and keeps its other settings. A newly prepared tool runs one thread per process and as many processes as the CPU capacity allows; `bind_environment` changes both. Installed versions, including conda-forge package versions, are recorded in the binding. [scripts/check_recipes.py](../scripts/check_recipes.py) prepares every recipe for this platform in a scratch home and reports each result.
 
 A Python program receives `INPUTS` and `OUTPUT_DIR`, and sets `RESULT` to compact JSON. It can use the complete upstream API, retain a live solver session and perform arbitrary optimization or iteration. Save arrays, meshes and models under OUTPUT_DIR. Native program examples are in [examples/programs](../examples/programs).
 
@@ -103,7 +114,7 @@ optics-photonics connect agentic-research-os --output optics-plugin
 | Qiushi | Research OS editions use its native package; other editions use `connect qiushi` for MCP or command access. |
 | Other MCP hosts | `connect mcp`; register the stdio command in the host's format. |
 
-MCP provides software search, environment preparation/binding, resource settings, submission, history, status, cancellation, resumption and result access. `prepare_environment` installs a listed recipe in the background and returns a run ID; successful installation registers the environment. Two Skills and their references supply operating and scientific guidance on demand; `read_guide` returns any of them to a host that does not load Skills.
+MCP provides software search, environment preparation/binding, resource settings, submission, history, status, cancellation, resumption and result access. `prepare_environment` installs a tool's recipe in the background and returns a run ID; successful installation registers the environment. A submission for a tool without an environment does this itself. Two Skills and their references supply operating and scientific guidance on demand; `read_guide` returns any of them to a host that does not load Skills.
 
 Computations run on the MCP host. SSH can launch the stdio server on a workstation with the scientific software: `ssh -T USER@HOST /path/to/python -m optics_photonics mcp`. `read_result` returns bounded text/binary contents and `read_array` part of an NPY/NPZ array. `download_result` copies to a path on the MCP host. The TypeScript client's `download` transfers a file's content through the connection; SSH/SFTP remains an option for very large remote files.
 
@@ -134,7 +145,7 @@ Host format sources: [Codex](https://developers.openai.com/plugins/build/plugins
 
 ## Add a research tool outside the catalogue
 
-Register its local description, then bind its installed environment. The published catalogue remains unchanged.
+Register its local description, then bind its installed environment, or give it a recipe (`pip`, `conda`, `python`, `platforms`) so that `prepare_environment` and submissions install it. The published catalogue remains unchanged.
 
 ```python
 import sys

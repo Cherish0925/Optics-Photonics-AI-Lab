@@ -411,8 +411,13 @@
     "modules": [
       "tidy3d"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "tidy3d==2.12.2"
+    ],
+    "python": "<3.15",
+    "distributions": [
+      "tidy3d"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://docs.flexcompute.com/projects/tidy3d/en/stable/faq/docs/faq/How-is-using-Tidy3D-billed.html",
@@ -435,7 +440,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Simulations run on the Flexcompute cloud and need an account and API key; model building and local plugins run without one."
   },
   "ipkiss": {
     "kind": "python",
@@ -842,8 +848,12 @@
     "modules": [
       "ptypy"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "ptypy @ git+https://github.com/ptycho/ptypy@3e20c916ae78ef84c1654437d80e8f4b5586ed1a"
+    ],
+    "distributions": [
+      "ptypy"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/ptycho/ptypy",
@@ -863,7 +873,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "PtyPy is installed from its GitHub repository at a fixed commit; it is not on PyPI. MPI and GPU engines need their own libraries."
   },
   "meep": {
     "kind": "python",
@@ -871,6 +882,15 @@
       "meep"
     ],
     "pip": [],
+    "conda": [
+      "pymeep"
+    ],
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-64",
+      "osx-arm64"
+    ],
     "distributions": [],
     "operations": [],
     "native_program": true,
@@ -892,7 +912,7 @@
     },
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
-    "installation_note": "Install the scientific Meep distribution from its official instructions, not the unrelated PyPI package named meep."
+    "installation_note": "Meep and MPB come from the conda-forge package pymeep, which has no Windows build; use WSL there. The PyPI package named meep is unrelated."
   },
   "mpb": {
     "kind": "python",
@@ -900,6 +920,16 @@
       "meep.mpb"
     ],
     "pip": [],
+    "conda": [
+      "pymeep"
+    ],
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-64",
+      "osx-arm64"
+    ],
+    "environment_of": "meep",
     "distributions": [],
     "operations": [],
     "native_program": true,
@@ -921,15 +951,27 @@
     },
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
-    "installation_note": "Install the scientific Meep distribution from its official instructions, not the unrelated PyPI package named meep."
+    "installation_note": "MPB is part of the conda-forge package pymeep and shares the Meep environment; there is no Windows build. The PyPI package named meep is unrelated."
   },
   "fdtdx": {
     "kind": "python",
     "modules": [
       "fdtdx"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "fdtdx==0.6.3"
+    ],
+    "python": ">=3.11,<3.15",
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "fdtdx",
+      "jax"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/ymahlau/fdtdx",
@@ -977,7 +1019,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Build openEMS and its Python bindings with the project installer; there is no PyPI or conda-forge package."
   },
   "s4": {
     "kind": "native",
@@ -1010,8 +1053,21 @@
     "modules": [
       "torcwa"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "torcwa==0.1.4.2",
+      "torch==2.15.0"
+    ],
+    "python": ">=3.11",
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "torcwa",
+      "torch"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/kch3782/torcwa",
@@ -1031,7 +1087,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "The PyPI build of PyTorch for Linux includes CUDA libraries and takes several gigabytes."
   },
   "grcwa": {
     "kind": "python",
@@ -1106,8 +1163,12 @@
     "modules": [
       "ceviche"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "ceviche==0.1.3"
+    ],
+    "distributions": [
+      "ceviche"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/fancompute/ceviche",
@@ -1171,8 +1232,18 @@
     "modules": [
       "solcore"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "solcore==5.10.0"
+    ],
+    "platforms": [
+      "linux-64",
+      "osx-64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "solcore"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/qpv-research-group/solcore5",
@@ -1200,8 +1271,13 @@
     "modules": [
       "rayoptics"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "rayoptics==0.9.10"
+    ],
+    "python": ">=3.12",
+    "distributions": [
+      "rayoptics"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/mjhoptics/ray-optics",
@@ -1231,6 +1307,7 @@
     "pip": [
       "optiland==0.6.3"
     ],
+    "python": ">=3.11",
     "distributions": [
       "optiland"
     ],
@@ -1262,8 +1339,15 @@
     "modules": [
       "raysect"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "raysect==0.9.1"
+    ],
+    "platforms": [
+      "linux-64"
+    ],
+    "distributions": [
+      "raysect"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/raysect/source",
@@ -1283,7 +1367,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Raysect publishes wheels for Linux x86-64 only; elsewhere pip compiles it, which needs a C compiler and Cython."
   },
   "raytracing": {
     "kind": "python",
@@ -1293,6 +1378,7 @@
     "pip": [
       "raytracing==1.4.7"
     ],
+    "python": ">=3.10",
     "distributions": [
       "raytracing"
     ],
@@ -1361,6 +1447,7 @@
     "pip": [
       "poppy==1.2.0"
     ],
+    "python": ">=3.12",
     "distributions": [
       "poppy"
     ],
@@ -1426,8 +1513,13 @@
     "modules": [
       "prysm"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "prysm==0.21.1",
+      "setuptools<81"
+    ],
+    "distributions": [
+      "prysm"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/brandondube/prysm",
@@ -1455,8 +1547,12 @@
     "modules": [
       "diffractio"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "diffractio==1.0.0"
+    ],
+    "distributions": [
+      "diffractio"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/optbrea/diffractio",
@@ -1483,8 +1579,21 @@
     "modules": [
       "torchoptics"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "torchoptics==1.0.2",
+      "torch==2.15.0"
+    ],
+    "python": ">=3.11",
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "torchoptics",
+      "torch"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/MatthewFilipovich/torchoptics",
@@ -1504,15 +1613,29 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "The PyPI build of PyTorch for Linux includes CUDA libraries and takes several gigabytes."
   },
   "waveprop": {
     "kind": "python",
     "modules": [
       "waveprop"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "waveprop==0.0.12",
+      "torch==2.15.0"
+    ],
+    "python": ">=3.11",
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "waveprop",
+      "torch"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/ebezzam/waveprop",
@@ -1532,7 +1655,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "waveprop depends on PyTorch; the PyPI build for Linux includes CUDA libraries and takes several gigabytes."
   },
   "gdsfactory": {
     "kind": "python",
@@ -1542,6 +1666,7 @@
     "pip": [
       "gdsfactory==9.51.0"
     ],
+    "python": ">=3.12,<3.15",
     "distributions": [
       "gdsfactory"
     ],
@@ -1609,8 +1734,20 @@
     "modules": [
       "sax"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "sax==0.18.2"
+    ],
+    "python": ">=3.12",
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "sax",
+      "jax"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/flaport/sax",
@@ -1718,6 +1855,7 @@
     "pip": [
       "miepython==3.3.1"
     ],
+    "python": ">=3.11",
     "distributions": [
       "miepython"
     ],
@@ -1749,8 +1887,18 @@
     "modules": [
       "treams"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "treams==0.4.7"
+    ],
+    "python": "<3.14",
+    "platforms": [
+      "linux-64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "treams"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/tfp-photonics/treams",
@@ -1798,15 +1946,21 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "pip install smuthi compiles Fortran code and needs gfortran; there is no conda-forge build."
   },
   "pygdm": {
     "kind": "python",
     "modules": [
       "pyGDM2"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "pyGDM2==1.1.12",
+      "six"
+    ],
+    "distributions": [
+      "pyGDM2"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://wiechapeter.gitlab.io/",
@@ -1837,6 +1991,7 @@
     "pip": [
       "qutip==5.3.1"
     ],
+    "python": ">=3.11",
     "distributions": [
       "qutip"
     ],
@@ -1894,8 +2049,14 @@
     "modules": [
       "perceval"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "perceval-quandela==1.3.1",
+      "drawsvg<2.4.1"
+    ],
+    "python": "<3.15",
+    "distributions": [
+      "perceval-quandela"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/Quandela/Perceval",
@@ -1915,15 +2076,23 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "drawsvg 2.4.1 and later fail to import with Perceval 1.3.1, so the recipe keeps an earlier drawsvg."
   },
   "strawberry": {
     "kind": "python",
     "modules": [
       "strawberryfields"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "strawberryfields==0.23.0",
+      "setuptools<81",
+      "scipy<1.14"
+    ],
+    "python": ">=3.10,<3.12",
+    "distributions": [
+      "strawberryfields"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/XanaduAI/strawberryfields",
@@ -1943,7 +2112,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Strawberry Fields 0.23.0 is the last release; it needs pkg_resources and scipy.integrate.simps, removed in setuptools 81 and SciPy 1.14."
   },
   "luna": {
     "kind": "native",
@@ -1976,8 +2146,12 @@
     "modules": [
       "fmas"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "py-fmas @ git+https://github.com/omelchert/py-fmas@241d942fe0cd6a49001b1bf110dd32bccc86bb16"
+    ],
+    "distributions": [
+      "py-fmas"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/omelchert/py-fmas",
@@ -1997,15 +2171,23 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "py-fmas is installed from its GitHub repository at a fixed commit; it is not on PyPI."
   },
   "laserfun": {
     "kind": "python",
     "modules": [
       "laserfun"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "laserfun @ git+https://github.com/laserfun/laserfun@641afa4e71a0ec8caeaeef54bd687e4ca6ecab5a",
+      "numpy",
+      "scipy",
+      "matplotlib"
+    ],
+    "distributions": [
+      "laserfun"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/laserfun/laserfun",
@@ -2025,15 +2207,20 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "laserfun is installed from its GitHub repository at a fixed commit; it is not on PyPI."
   },
   "opticomm": {
     "kind": "python",
     "modules": [
       "optic"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "OptiCommPy==0.11.0"
+    ],
+    "distributions": [
+      "OptiCommPy"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/edsonportosilva/OptiCommPy",
@@ -2060,8 +2247,18 @@
     "modules": [
       "finesse"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "finesse==3.0.2",
+      "ipython"
+    ],
+    "python": ">=3.11",
+    "platforms": [
+      "linux-64",
+      "osx-arm64"
+    ],
+    "distributions": [
+      "finesse"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://finesse.ifosim.org/docs/latest/",
@@ -2082,7 +2279,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Finesse 3.0.2 imports IPython and publishes wheels for Linux x86-64 and macOS arm64; elsewhere pip compiles it from source."
   },
   "rezonator": {
     "kind": "manual",
@@ -2168,6 +2366,15 @@
       "holopy"
     ],
     "pip": [],
+    "conda": [
+      "holopy"
+    ],
+    "python": "==3.9",
+    "platforms": [
+      "linux-64",
+      "osx-64",
+      "win-64"
+    ],
     "distributions": [],
     "operations": [],
     "native_program": true,
@@ -2188,15 +2395,20 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "HoloPy comes from conda-forge, whose newest build (3.5.0) is for Python 3.9; the PyPI release lacks its compiled scattering code."
   },
   "pydhm": {
     "kind": "python",
     "modules": [
       "pyDHM"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "pyDHM==1.0.5"
+    ],
+    "distributions": [
+      "pyDHM"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/catrujilla/pyDHM",
@@ -2246,15 +2458,26 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Install PyNX following pynx.esrf.fr; the PyPI package named pynx is an unrelated web-server tool."
   },
   "mitsuba": {
     "kind": "python",
     "modules": [
       "mitsuba"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "mitsuba==3.9.1"
+    ],
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "mitsuba"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/mitsuba-renderer/mitsuba3",
@@ -2333,8 +2556,12 @@
     "modules": [
       "shadow4"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "shadow4==0.2.1"
+    ],
+    "distributions": [
+      "shadow4"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/oasys-kit/shadow4",
@@ -2362,8 +2589,12 @@
     "modules": [
       "xrt"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "xrt==1.6.2"
+    ],
+    "distributions": [
+      "xrt"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/kklmn/xrt",
@@ -2444,7 +2675,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Install SageMath from its installer or conda-forge (Linux and macOS), then bind its Python; it takes several gigabytes."
   },
   "freecad": {
     "kind": "python",
@@ -2472,7 +2704,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Install FreeCAD from its installer or conda-forge, then bind the Python that imports FreeCAD; the conda-forge environment takes several gigabytes."
   },
   "gmsh": {
     "kind": "python",
@@ -2480,6 +2713,9 @@
       "gmsh"
     ],
     "pip": [],
+    "conda": [
+      "python-gmsh"
+    ],
     "distributions": [],
     "operations": [],
     "native_program": true,
@@ -2500,7 +2736,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "Gmsh comes from conda-forge with its graphics libraries; the PyPI wheel needs libGLU on Linux."
   },
   "scikitimage": {
     "kind": "python",
@@ -2510,6 +2747,7 @@
     "pip": [
       "scikit-image==0.26.0"
     ],
+    "python": ">=3.11",
     "distributions": [
       "scikit-image"
     ],
@@ -2541,8 +2779,13 @@
     "modules": [
       "napari"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "napari==0.10.0"
+    ],
+    "python": ">=3.11",
+    "distributions": [
+      "napari"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/napari/napari",
@@ -2562,7 +2805,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "The viewer window needs a Qt binding such as PyQt6; prepare_environment with packages [\"pyqt6\"] adds it."
   },
   "refractiveindex": {
     "kind": "data",
@@ -2597,6 +2841,9 @@
       "dolfinx"
     ],
     "pip": [],
+    "conda": [
+      "fenics-dolfinx"
+    ],
     "distributions": [],
     "operations": [],
     "native_program": true,
@@ -2624,8 +2871,18 @@
     "modules": [
       "ngsolve"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "ngsolve==6.2.2608"
+    ],
+    "platforms": [
+      "linux-64",
+      "osx-64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "ngsolve"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://github.com/NGSolve/ngsolve",
@@ -2686,8 +2943,20 @@
     "modules": [
       "jax"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "jax==0.12.0.1"
+    ],
+    "python": ">=3.12",
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "jax",
+      "jaxlib"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://docs.jax.dev/en/latest/",
@@ -2714,8 +2983,19 @@
     "modules": [
       "torch"
     ],
-    "pip": [],
-    "distributions": [],
+    "pip": [
+      "torch==2.15.0"
+    ],
+    "python": ">=3.11",
+    "platforms": [
+      "linux-64",
+      "linux-aarch64",
+      "osx-arm64",
+      "win-64"
+    ],
+    "distributions": [
+      "torch"
+    ],
     "operations": [],
     "native_program": true,
     "installation": "https://pytorch.org/",
@@ -2735,7 +3015,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "The PyPI build of PyTorch for Linux includes CUDA libraries and takes several gigabytes."
   },
   "py-pol": {
     "kind": "python",

@@ -35,7 +35,18 @@ optics-photonics environments
 optics-photonics resources --cpu 8
 ```
 
-`threads` 设置常见数值库的线程数；`concurrency` 设置同一软件的并行进程数；`resources` 设置这台计算机上所有后台研究任务共享的 CPU 额度。MPI、GPU、商业许可证和集群队列使用求解器自己的启动配置。
+`threads` 设置常见数值库的线程数；`concurrency` 设置同一软件的并行进程数；`resources` 设置这台计算机上所有后台研究任务共享的 CPU 额度。MPI、GPU、商业许可证和集群队列使用求解器自己的启动配置。`bind --python PATH` 不写软件 ID 时，连接这个解释器里能导入的所有目录软件和本地登记软件，已经连接的软件保持原环境。
+
+### 安装配方
+
+[connections.json](../data/connections.json) 中有 50 项开源软件带安装配方；`software_search` 的 `install` 字段给出方式：`pip`、`conda` 或 `manual`。
+
+- **pip**：固定版本的依赖；只在 GitHub 发布的软件（laserfun、PtyPy、py-fmas）固定到某次提交。PATH 中有 [uv](https://docs.astral.sh/uv/) 时由 uv 建立环境，并提供配方要求的 Python 版本（PoPPy、GDSFactory 需要 3.12，Strawberry Fields 需要低于 3.12）；没有 uv 时使用连接程序自身的 Python 和 pip。
+- **conda**：没有可用 wheel 的软件从 conda-forge 安装：Meep 与 MPB（共用一个环境，没有 Windows 版本）、FEniCSx、Gmsh、HoloPy。安装程序依次取 `OPTICS_CONDA`、PATH 中的 micromamba、mamba、conda；都没有时下载本平台的官方 micromamba 到 `OPTICS_HOME/bin`，并核对其公布的 SHA-256。
+- **platforms**：wheel 不覆盖所有平台时，配方列出可安装的 conda 平台名，例如 Raysect 只有 `linux-64`；在其他平台上报错并说明。
+- **manual**：商业软件和需要编译器或厂商安装程序的软件（Lumerical、COMSOL、OpticStudio、CST、JCMsuite、openEMS、PyNX、SMUTHI）按各自说明安装后再连接；`installation_note` 记录需要注意的地方，例如 PyPI 上同名但无关的 `meep`、`pynx`。
+
+提交计算时如果软件还没有环境，会先安装：同一次运行多一个 `prepare.TOOL` 步骤，成功后计算开始。环境只建立一次，再次准备只补装缺少的部分；两个运行同时准备同一个环境时依次进行。`prepare TOOL --package scipy`（MCP 中为 `packages`）向已准备的环境添加依赖，并保留其他设置。新准备的软件每个进程一个线程，进程数只受共享 CPU 额度限制；`bind_environment` 可以修改这两项。安装的版本（包括 conda-forge 包的版本）记录在环境连接中。[scripts/check_recipes.py](../scripts/check_recipes.py) 在临时目录中为本平台准备全部配方并逐项报告。
 
 原生 Python 程序接收 `INPUTS`、`OUTPUT_DIR`，并将简洁结果赋给 `RESULT`。程序可以使用完整 API，保留同一软件会话，运行优化、迭代和参数扫描。数组、场、网格和模型写入 `OUTPUT_DIR`。
 
@@ -90,7 +101,7 @@ Research OS 包携带连接器、目录与 Skills，使用宿主自带的 Python
 Codex/Claude 的 GitHub 插件及 DeepSeek 包通过 [uv](https://docs.astral.sh/uv/getting-started/installation/) 选择 Python 3.10+，缺少时下载。执行端安装一次 uv 即可；已有 Python 时，也可以直接用它生成下面的宿主包。
 Codex 使用插件相对工作目录，Claude 使用自己的插件路径变量。
 `connect portable`、`connect codex --managed-python` 和 `connect claude --managed-python` 生成可跨机器移动的包；不带该选项的本机包保留选定的 Python 路径。
-科学软件通过 `prepare_environment` 准备，或通过 `bind_environment` / `bind_native_software` 接入。
+科学软件通过 `prepare_environment` 准备，或通过 `bind_environment` / `bind_native_software` 接入；提交计算时如果该软件还没有环境，会先按安装配方自动准备。
 
 更新时在 Research OS 刷新来源，安装其新修订。Codex 使用
 `codex plugin marketplace upgrade optics-photonics` 刷新来源并安装更新；Claude 使用
@@ -115,7 +126,7 @@ optics-photonics connect agentic-research-os --output optics-plugin
 | Qiushi | 研究系统版本使用其原生插件包；其他版本使用 `connect qiushi` 生成的 MCP 或命令入口。 |
 | 其他 MCP 宿主 | `connect mcp`，按宿主格式注册 stdio 命令。 |
 
-MCP 包含软件检索、环境准备、连接、资源设置、提交、任务查询、取消、继续、文件读取与下载。`prepare_environment` 在后台安装已有配方，返回任务编号；安装完成后软件环境自动登记。操作方法和研究方法由两个 Skills 及其参考文件按需提供；不加载 Skills 的宿主用 `read_guide` 读取其中任何一份。
+MCP 包含软件检索、环境准备、连接、资源设置、提交、任务查询、取消、继续、文件读取与下载。`prepare_environment` 在后台按配方安装，返回任务编号；安装完成后软件环境自动登记。提交计算时如果软件还没有环境，会自动先安装。操作方法和研究方法由两个 Skills 及其参考文件按需提供；不加载 Skills 的宿主用 `read_guide` 读取其中任何一份。
 
 计算发生在 MCP 服务所在的计算机。远程机器可通过 SSH 启动 stdio 服务，保持连接程序与科学环境在同一台机器：`ssh -T USER@HOST /path/to/python -m optics_photonics mcp`。`read_result` 把内容传回 Agent，`read_array` 传回 NPY/NPZ 数组的一部分；`download_result` 写入服务所在机器的目标路径。TypeScript 客户端的 `download` 通过连接把文件内容传到客户端所在的机器；特别大的远端文件仍可用 SSH/SFTP 取回。
 
@@ -133,7 +144,7 @@ MCP 包含软件检索、环境准备、连接、资源设置、提交、任务�
 
 ## 接入目录之外的研究工具
 
-通过 `register_software` 登记本地软件的名称、用途、Python 模块与资料来源，再用 `bind_environment` 连接已经安装的解释器或可执行程序。`registered_software` 列出本地工具，`software_details` 读取其说明。目录中的已有软件 ID 保持原有含义。
+通过 `register_software` 登记本地软件的名称、用途、Python 模块与资料来源，再用 `bind_environment` 连接已经安装的解释器或可执行程序；也可以给出安装配方（`pip`、`conda`、`python`、`platforms`），由 `prepare_environment` 和提交计算自动安装。`registered_software` 列出本地工具，`software_details` 读取其说明。目录中的已有软件 ID 保持原有含义。
 
 Python 示例：
 
