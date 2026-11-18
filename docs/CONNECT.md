@@ -57,9 +57,10 @@ optics-photonics files RUN_ID
 optics-photonics read RUN_ID calculate/attempt-1/result.json
 optics-photonics download RUN_ID calculate/attempt-1/spectrum.csv spectrum.csv
 optics-photonics array RUN_ID calculate/attempt-1/field.npz --member field --index "[[0, null, 4], 128]"
+optics-photonics array RUN_ID calculate/attempt-1/psf.npz --member psf --image psf.png --scale log
 ```
 
-Submission returns immediately. The independent worker continues when the submitting CLI or MCP process exits. Reuse `request-id` for retries of the same submission. Written files can be read while the run is active. `files --prefix STEP/` lists one step, and `array` returns part of an NPY or NPZ array without loading the file.
+Submission returns immediately. The independent worker continues when the submitting CLI or MCP process exits. Reuse `request-id` for retries of the same submission. Written files can be read while the run is active. `files --prefix STEP/` lists one step, and `array` returns part of an NPY or NPZ array without loading the file; `--image FILE.png` draws that part as lines or a map with axes and a color bar (`--part phase` for complex fields, `--scale log` for decades).
 
 A workflow is an array of steps with `id`, `tool`, `inputs`, `action` or `source`, optional `after`, `bindings` and `timeout`. Independent steps run within resource limits. A binding such as `{"value":{"step":"solve","path":["result","R"]}}` copies a predecessor result into the input named `value` and adds the dependency. For large data, `{"field":{"step":"solve","file":"field.npz"}}` sets the input `field` to the location of a file or folder that step wrote; the reference stays relative to the run and is resolved on the computing host when the step starts.
 

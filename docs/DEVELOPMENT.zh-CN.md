@@ -6,12 +6,12 @@
 
 ## 当前实现 · 0.7.0
 
-0.6.0 的整合及后续 `data-descriptions`、`host-launch` 两项贡献已合入；`environment-recipes`、`materials`、`research-programs`、`parameter-studies` 四项贡献带来 OP-05、OP-07、OP-11 三行。后续开发从以下能力继续：
+0.6.0 的整合及后续 `data-descriptions`、`host-launch` 两项贡献已合入；`environment-recipes`、`materials`、`research-programs`、`parameter-studies`、`array-pictures` 五项贡献带来 OP-05、OP-07、OP-11 三行和 OP-03 的图像。后续开发从以下能力继续：
 
 | 工作 | 已实现 | 继续完善 |
 | --- | --- | --- |
 | OP-01 / OP-02 | MCP 并发、可单独取消的状态等待、增量依赖调度 | 代表性长链和宽图的性能数据 |
-| OP-03 | NPY/NPZ 局部读取、步骤之间传文件位置、按目录列出结果、TypeScript 文件传输 | 持久文件索引及更多科学数据格式 |
+| OP-03 | NPY/NPZ 局部读取及其 PNG 图像、步骤之间传文件位置、按目录列出结果、TypeScript 文件传输 | 持久文件索引及更多科学数据格式 |
 | OP-04 / OP-08 | 数组的单位、坐标与约定，以及 HCIPy → POPPY 光瞳到成像的数据交换 | 更多科学量，以及周期结构、光子电路两条跨程序路径 |
 | OP-12 | 已完成 episode 索引、重试与改变进程数后的续接、单独记录求解错误 | 共享数据集及异步学习器集成 |
 | OP-14 / OP-15 | 可移动的原生与便携包、自动选择 Python、按需读取指南、精简 Skills | 随宿主版本演进继续运行实际接入流程 |

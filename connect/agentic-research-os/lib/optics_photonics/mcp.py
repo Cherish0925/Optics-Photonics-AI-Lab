@@ -1,4 +1,5 @@
 """Dependency-free MCP stdio server. Calculations run independently in the background."""
+import base64
 from concurrent.futures import ThreadPoolExecutor
 import json
 import math
@@ -54,7 +55,7 @@ TOOLS = [
     ('run_status', 'Read compact execution state. wait (0–25 seconds) waits for completion without repeated calls. Results stay in files by default; include_results returns step values. Calculations continue after disconnection.', schema({'run_id':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':200},'include_results':{'type':'boolean'},'wait':{'type':'number','minimum':0,'maximum':25}},['run_id'])),
     ('cancel_run', 'Cancel a research run and its active calculations.', schema({'run_id':STRING},['run_id'])),
     ('result_files', 'List files written so far by a research run, including running calculations. prefix such as "solve/attempt-1/" limits the listing to one step or folder. NPY/NPZ entries include dtype and shape, and the quantity, unit and axis names a program saved with them.', schema({'run_id':STRING,'prefix':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':500}},['run_id'])),
-    ('read_array', 'Read part of an NPY array or NPZ member without loading the whole file. index has one entry per leading axis: an integer selects a position and drops the axis; [start, stop, step] keeps it (Python slice rules, null for open ends); null keeps the whole axis. Beyond max_elements long axes are thinned by uniform steps while short axes (ports, components) stay whole; selection reports the steps used. Complex data returns real and imag; non-finite values are "nan", "inf", "-inf". When the program described the array, the reply adds description (quantity, unit, conventions), axes (coordinates and units of the returned values) and at (the position of each axis fixed by an integer).', schema({'run_id':STRING,'file':STRING,'member':STRING,'index':{'type':'array','items':{'anyOf':[{'type':'integer'},{'type':'null'},{'type':'array','items':{'type':['integer','null']},'minItems':1,'maxItems':3}]}},'max_elements':{'type':'integer','minimum':1,'maximum':100000}},['run_id','file'])),
+    ('read_array', 'Read part of an NPY array or NPZ member without loading the whole file. index has one entry per leading axis: an integer selects a position and drops the axis; [start, stop, step] keeps it (Python slice rules, null for open ends); null keeps the whole axis. Beyond max_elements long axes are thinned by uniform steps while short axes (ports, components) stay whole; selection reports the steps used. Complex data returns real and imag; non-finite values are "nan", "inf", "-inf". When the program described the array, the reply adds description (quantity, unit, conventions), axes (coordinates and units of the returned values) and at (the position of each axis fixed by an integer). image draws a one- or two-dimensional selection as a PNG (auto: lines for one axis or a short second one, otherwise a map with a color bar; line; map) and returns the extremes and their positions instead of the values; part draws abs, real, imag, phase or power of complex values and scale log draws log10.', schema({'run_id':STRING,'file':STRING,'member':STRING,'index':{'type':'array','items':{'anyOf':[{'type':'integer'},{'type':'null'},{'type':'array','items':{'type':['integer','null']},'minItems':1,'maxItems':3}]}},'max_elements':{'type':'integer','minimum':1,'maximum':100000},'image':{'enum':['auto','line','map']},'part':{'enum':['abs','real','imag','phase','power']},'scale':{'enum':['linear','log']}},['run_id','file'])),
     ('download_result', 'Copy a result file to a new destination on the MCP host computer. From another computer, read its content with read_result or read_array.', schema({'run_id':STRING,'file':STRING,'destination':STRING},['run_id','file','destination'])),
     ('read_result', 'Read a bounded byte range of a result or log. Text returns UTF-8; binary returns base64. Use read_array for NPY/NPZ data.', schema({'run_id':STRING,'file':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':65536}},['run_id','file'])),
     ('list_runs', 'Find previous and active research runs after reconnecting.', schema({'state':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':200}})),
@@ -244,7 +245,11 @@ def tool_result(params, cancellation=None):
         value = invoke(name, arguments(name, args, spec), cancellation)
         if isinstance(value, str):  # Markdown guidance is returned as written
             return {'content':[{'type':'text','text':value}], 'structuredContent':{'text':value}, 'isError':False}
-        return {'content':[{'type':'text','text':json.dumps(value,ensure_ascii=False,allow_nan=False)}], 'structuredContent':value, 'isError':False}
+        picture = value.pop('_image', None) if isinstance(value, dict) else None
+        content = [{'type':'text','text':json.dumps(value,ensure_ascii=False,allow_nan=False)}]
+        if picture is not None:
+            content.insert(0, {'type':'image','data':base64.b64encode(picture).decode('ascii'),'mimeType':'image/png'})
+        return {'content':content, 'structuredContent':value, 'isError':False}
     except Exception as error:
         return {'content':[{'type':'text','text':str(error) or type(error).__name__}], 'isError':True}
 

@@ -66,9 +66,10 @@ optics-photonics files RUN_ID
 optics-photonics read RUN_ID calculate/attempt-1/result.json
 optics-photonics download RUN_ID calculate/attempt-1/spectrum.csv spectrum.csv
 optics-photonics array RUN_ID calculate/attempt-1/field.npz --member field --index "[[0, null, 4], 128]"
+optics-photonics array RUN_ID calculate/attempt-1/psf.npz --member psf --image psf.png --scale log
 ```
 
-提交后立即返回任务编号。后台进程继续执行，CLI 或 MCP 关闭不会结束计算。再次提交同一请求时沿用 `request-id`，会返回原任务。运行期间已经写出的文件可以直接读取。`files --prefix STEP/` 只列某一步的文件，`array` 读取 NPY 或 NPZ 数组的一部分，不需要载入整个文件。
+提交后立即返回任务编号。后台进程继续执行，CLI 或 MCP 关闭不会结束计算。再次提交同一请求时沿用 `request-id`，会返回原任务。运行期间已经写出的文件可以直接读取。`files --prefix STEP/` 只列某一步的文件，`array` 读取 NPY 或 NPZ 数组的一部分，不需要载入整个文件；加 `--image 文件.png` 时把这部分画成曲线或带坐标轴和色标的二维图（复数场用 `--part phase`，跨数量级用 `--scale log`）。
 
 工作流是 JSON 数组。每一步包含 `id`、`tool`、`inputs`，以及 `action` 或 `source`。`after` 指定前置步骤；`bindings` 把前一步结果写入下一步输入，并自动建立依赖。数组、网格、模型这类大数据按文件传递：`{"field":{"step":"solve","file":"field.npz"}}` 把输入 `field` 设为该步骤写出的文件或文件夹在计算机器上的位置；引用相对于本次运行保存，步骤开始时才解析成路径。例如：
 

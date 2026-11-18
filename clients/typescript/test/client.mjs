@@ -103,8 +103,11 @@ test('a sweep runs its points in parallel and its table names the best point',as
   const source='RESULT = {"f": (INPUTS["x"] - 2) ** 2}';
   const {run_id}=await client.calculate('bowl',{source,sweep:{x:{start:0,stop:4,points:9}}});
   assert.equal((await client.wait(run_id,{timeout:30000})).state,'succeeded');
-  const table=await client.sweep(run_id,{values:['f'],minimize:'f'});
+  const table=await client.sweep(run_id,{values:['f'],minimize:'f',save:true});
   assert.equal(table.points,9);
   assert.deepEqual(table.best?.point,{x:2});
+  const {png,summary}=await client.picture(run_id,'sweep.npz',{member:'f'});
+  assert.deepEqual([...png.subarray(1,4)],[80,78,71]);
+  assert.deepEqual(summary.at_min,{x:2});
  }finally{client.close();await rm(home,{recursive:true,force:true,maxRetries:20,retryDelay:50});}
 });

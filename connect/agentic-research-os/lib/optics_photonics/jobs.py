@@ -513,9 +513,21 @@ def read_result(run_id, file, offset=0, limit=16384, path=None):
     return {'file':file,'offset':offset,'encoding':format,'data':data,'next_offset':offset+len(content) if offset+len(content)<source.stat().st_size else None}
 
 
-def read_array(run_id, file, member=None, index=None, max_elements=10000, path=None):
-    """Read part of an NPY array or NPZ member from a run; see arrays.read."""
-    return {'run_id':run_id, 'file':file, **arrays.read(file_path(run_id, file, path), member=member, index=index, max_elements=max_elements)}
+def read_array(run_id, file, member=None, index=None, max_elements=None, image=None, part=None, scale='linear', path=None):
+    """Read part of an NPY array or NPZ member from a run; see arrays.read.
+
+    With image (auto, line or map) the selection is drawn as a PNG, returned
+    under '_image' with a summary (extremes and their positions) in place of
+    the values; part and scale choose what is drawn (see pictures.picture).
+    """
+    selection = arrays.read(file_path(run_id, file, path), member=member, index=index,
+                            max_elements=max_elements or (arrays.LIMIT if image else 10000))
+    if not image:
+        return {'run_id':run_id, 'file':file, **selection}
+    from . import pictures
+    png, summary = pictures.picture(selection, kind=image, part=part, scale=scale)
+    kept = {key: value for key, value in selection.items() if key not in ('values', 'real', 'imag')}
+    return {'run_id':run_id, 'file':file, **kept, 'summary':summary, '_image':png}
 
 
 def resolved_inputs(spec, results, folders):

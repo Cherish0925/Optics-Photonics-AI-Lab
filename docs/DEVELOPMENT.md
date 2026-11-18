@@ -6,12 +6,12 @@ The objective is to let researchers and agents connect real computing environmen
 
 ## Current implementation · 0.7.0
 
-The 0.6.0 integration and the subsequent `data-descriptions` and `host-launch` contributions are integrated; the `environment-recipes`, `materials`, `research-programs` and `parameter-studies` contributions add the OP-05, OP-07 and OP-11 rows. Subsequent work starts from these capabilities:
+The 0.6.0 integration and the subsequent `data-descriptions` and `host-launch` contributions are integrated; the `environment-recipes`, `materials`, `research-programs`, `parameter-studies` and `array-pictures` contributions add the OP-05, OP-07 and OP-11 rows and the pictures of OP-03. Subsequent work starts from these capabilities:
 
 | Work | Implemented | Remaining |
 | --- | --- | --- |
 | OP-01 / OP-02 | Concurrent MCP requests, separately cancellable waits, incremental dependency scheduling | Performance measurements for representative long and wide studies |
-| OP-03 | NPY/NPZ selections, file references between steps, prefix listings, TypeScript file transfer | Persistent file indexing and additional scientific formats |
+| OP-03 | NPY/NPZ selections and PNG pictures of them, file references between steps, prefix listings, TypeScript file transfer | Persistent file indexing and additional scientific formats |
 | OP-04 / OP-08 | Described arrays, units/coordinates/conventions and HCIPy → POPPY pupil-to-image exchange | More scientific quantities and the periodic-structure and photonic-circuit exchange paths |
 | OP-12 | Completed-episode indexes, retry/continuation with changed worker count, separate solver errors | Shared datasets and asynchronous learner integration |
 | OP-14 / OP-15 | Movable native/portable packages, managed Python launch, on-demand guides, concise Skills | Continued native host runs as host releases change |

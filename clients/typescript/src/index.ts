@@ -115,6 +115,13 @@ export class OpticsLab {
   files(run_id:string,offset=0,limit=100,prefix=''){return this.call('result_files',{run_id,offset,limit,...(prefix?{prefix}:{})});}
   /** Part of an NPY array or NPZ member; index entries are positions or [start, stop, step]. */
   array(run_id:string,file:string,options:{member?:string;index?:(number|null|(number|null)[])[];max_elements?:number}={}){return this.call('read_array',{run_id,file,...options});}
+  /** A PNG of a one- or two-dimensional selection (lines or a map with a color bar) and the extremes with their positions. */
+  async picture(run_id:string,file:string,options:{member?:string;index?:(number|null|(number|null)[])[];max_elements?:number;image?:'auto'|'line'|'map';part?:'abs'|'real'|'imag'|'phase'|'power';scale?:'linear'|'log'}={}):Promise<{png:Buffer;summary:Record<string,unknown>}> {
+    const result=await this.request('tools/call',{name:'read_array',arguments:{run_id,file,image:'auto',...options}});
+    if(result.isError) throw new Error(result.content?.map((c:{text?:string})=>c.text??'').join('\n')||'Optics operation failed');
+    const image=result.content.find((c:{type:string})=>c.type==='image');
+    return {png:Buffer.from(image.data,'base64'),summary:result.structuredContent.summary};
+  }
   read(run_id:string,file:string,offset=0,limit=16384){return this.call('read_result',{run_id,file,offset,limit});}
   /** Copy a result file to this computer; the server may run elsewhere, for example over SSH. */
   async download(run_id:string,file:string,destination:string,options:RequestOptions={}):Promise<{path:string;bytes:number}> {

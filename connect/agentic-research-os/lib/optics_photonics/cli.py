@@ -50,7 +50,7 @@ def main(argv=None):
         if name == 'status':
             item.add_argument('--wait',type=float,default=0); item.add_argument('--summary',dest='include_results',action='store_false')
     download=commands.add_parser('download'); download.add_argument('run_id'); download.add_argument('file'); download.add_argument('destination')
-    array=commands.add_parser('array',help='Read part of an NPY array or NPZ member'); array.add_argument('run_id'); array.add_argument('file'); array.add_argument('--member'); array.add_argument('--index',type=json.loads,help='JSON list, e.g. [10, [0, 100, 2]]'); array.add_argument('--max-elements',type=int,default=10000)
+    array=commands.add_parser('array',help='Read part of an NPY array or NPZ member'); array.add_argument('run_id'); array.add_argument('file'); array.add_argument('--member'); array.add_argument('--index',type=json.loads,help='JSON list, e.g. [10, [0, 100, 2]]'); array.add_argument('--max-elements',type=int); array.add_argument('--image',metavar='PNG',type=Path,help='draw the selection to this PNG file'); array.add_argument('--kind',choices=('auto','line','map'),default='auto'); array.add_argument('--part',choices=('abs','real','imag','phase','power')); array.add_argument('--scale',choices=('linear','log'),default='linear')
     read=commands.add_parser('read'); read.add_argument('run_id'); read.add_argument('file'); read.add_argument('--offset',type=int,default=0); read.add_argument('--limit',type=int,default=16384)
     material=commands.add_parser('materials', help='n and k of a material from the refractiveindex.info database'); material.add_argument('material', nargs='?'); material.add_argument('--query'); material.add_argument('--wavelength', type=float, nargs='+'); material.add_argument('--unit', default='nm'); material.add_argument('--limit', type=int, default=20)
     sweep=commands.add_parser('sweep',help='Tabulate the points of a sweep'); sweep.add_argument('run_id'); sweep.add_argument('--value',dest='values',action='append',help='dotted RESULT path; repeat for more'); best=sweep.add_mutually_exclusive_group(); best.add_argument('--minimize'); best.add_argument('--maximize'); sweep.add_argument('--save',action='store_true'); sweep.add_argument('--offset',type=int,default=0); sweep.add_argument('--limit',type=int,default=100)
@@ -106,8 +106,13 @@ def main(argv=None):
                 # A step may name its program file beside the workflow file instead of carrying the source text.
                 if isinstance(step,dict) and 'program' in step: step['source']=(file.parent/step.pop('program')).read_text(encoding='utf-8')
             result=jobs.submit(steps,**a)
-        elif command in ('status','files','cancel','resume','download','read','array'):
-            result=getattr(jobs, {'read':'read_result','array':'read_array'}.get(command,command))(**a)
+        elif command == 'array':
+            target, kind = a.pop('image'), a.pop('kind')
+            result=jobs.read_array(**a, image=kind if target else None)
+            if target:
+                target.write_bytes(result.pop('_image')); result['image']=str(target)
+        elif command in ('status','files','cancel','resume','download','read'):
+            result=getattr(jobs, {'read':'read_result'}.get(command,command))(**a)
         elif command == 'connect':
             from .packages import package
             result=package(a.pop('output'),**a)
