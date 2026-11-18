@@ -76,6 +76,16 @@ class MaterialCase(unittest.TestCase):
         no2 = materials.index_at('BBO-o', 0.532).real
         self.assertAlmostEqual(math.degrees(math.asin(math.sqrt((no ** -2 - no2 ** -2) / (ne ** -2 - no2 ** -2)))), 22.8, delta=0.1)
 
+    def test_dispersion_formulas_give_group_index_and_group_velocity_dispersion(self):
+        # refractiveindex.info's values for fused silica (Malitson) and N-BK7 at 800 nm, and silica's D at 1550 nm.
+        silica = materials.lookup('SiO2', wavelength=[800, 1550], dispersion=True)
+        self.assertAlmostEqual(silica['group_index'][0], 1.4671, delta=1e-4)
+        self.assertAlmostEqual(silica['gvd_fs2_per_mm'][0], 36.16, delta=0.02)
+        self.assertAlmostEqual(silica['dispersion_ps_per_nm_km'][1], 21.9, delta=0.05)
+        self.assertAlmostEqual(materials.lookup('N-BK7', wavelength=800, dispersion=True)['gvd_fs2_per_mm'][0], 44.65, delta=0.02)
+        # Linear interpolation of a table has no second derivative to report.
+        self.assertEqual(materials.lookup('Au', wavelength=600, dispersion=True)['group_index'], [None])
+
     def test_every_bundled_page_parses_and_evaluates_across_its_range(self):
         record = materials.index()
         for name, key in record['common'].items():

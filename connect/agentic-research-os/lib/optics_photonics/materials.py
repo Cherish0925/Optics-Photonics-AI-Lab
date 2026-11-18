@@ -249,8 +249,34 @@ def index_at(material, wavelength_um, path=None):
     return result[0] if isinstance(wavelength_um, (int, float)) else result
 
 
-def lookup(material=None, query=None, wavelength=None, unit='nm', limit=20, path=None):
-    """The materials tool: search pages, or evaluate n and k of one material at wavelengths in unit."""
+C = 299792458.0
+
+
+def group_dispersion(material, wavelength_um, path=None):
+    """Group index n - lambda dn/dlambda, group velocity dispersion in fs^2/mm and dispersion parameter D in ps/(nm km)
+    at each wavelength in micrometres, from central differences of a dispersion formula; None where the page is tabulated
+    or a wavelength lies at the edge of its range."""
+    record = page(material, path)
+    values = [wavelength_um] if isinstance(wavelength_um, (int, float)) else list(wavelength_um)
+    formula = all(piece.get('type', '').startswith('formula') or piece.get('type') == 'tabulated k' for piece in record['data'])
+    low, high = record['range_um']
+    found = {'group_index': [], 'gvd_fs2_per_mm': [], 'dispersion_ps_per_nm_km': []}
+    for x in values:
+        step = min(x * 1e-3, x - low, high - x)
+        if not formula or step < x * 1e-6:
+            for key in found: found[key].append(None)
+            continue
+        below, centre, above = nk(material, [x - step, x, x + step], path)['n']
+        first, second = (above - below) / (2 * step), (above - 2 * centre + below) / step ** 2   # 1/um, 1/um^2
+        found['group_index'].append(centre - x * first)
+        found['gvd_fs2_per_mm'].append(x ** 3 * second * 1e21 / (2 * math.pi * C ** 2))
+        found['dispersion_ps_per_nm_km'].append(-x * second * 1e12 / C)
+    return found
+
+
+def lookup(material=None, query=None, wavelength=None, unit='nm', limit=20, dispersion=False, path=None):
+    """The materials tool: search pages, or evaluate n and k of one material at wavelengths in unit,
+    with dispersion also the group index, group velocity dispersion and dispersion parameter."""
     if material is None:
         if query is None:
             record = index()
@@ -268,7 +294,10 @@ def lookup(material=None, query=None, wavelength=None, unit='nm', limit=20, path
     micrometres = [convert(float(v), unit, 'um') for v in values]
     result = nk(material, micrometres, path)
     record = result['page']
-    return {'id': record['id'], 'book': record['book'], 'page': record['page'], 'wavelength': values, 'unit': unit,
-            'n': result['n'], 'k': result['k'], 'range_um': record['range_um'], 'references': record['references'],
-            'conditions': record['conditions'], 'convention': 'n + ik, k >= 0 absorbs; vacuum wavelength',
-            'source': record['source']}
+    reply = {'id': record['id'], 'book': record['book'], 'page': record['page'], 'wavelength': values, 'unit': unit,
+             'n': result['n'], 'k': result['k'], 'range_um': record['range_um'], 'references': record['references'],
+             'conditions': record['conditions'], 'convention': 'n + ik, k >= 0 absorbs; vacuum wavelength',
+             'source': record['source']}
+    if dispersion:
+        reply.update(group_dispersion(material, micrometres, path))
+    return reply
