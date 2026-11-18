@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'src'))
-from optics_photonics import catalogue, environments, execution, operations
+from optics_photonics import catalogue, environments, execution
 from optics_photonics.mcp import serve
 from optics_photonics.packages import package, HOSTS
 
@@ -33,8 +33,6 @@ class ConnectionTests(unittest.TestCase):
             if record['pip']:
                 self.assertTrue(record['modules'])
                 self.assertTrue(record['distributions'])
-            if record['operations']:
-                self.assertIn(row['id'], operations.EXAMPLES)
 
     def test_catalogue_pagination_and_domain_selection(self):
         a = catalogue.search(domain='film',limit=2)
@@ -80,7 +78,7 @@ class ConnectionTests(unittest.TestCase):
         # Tool calls complete independently; replies are matched by request ID.
         messages=sorted((json.loads(s) for s in out.getvalue().splitlines()),key=lambda m:m['id'])
         self.assertEqual([m['id'] for m in messages],[1,2,3,4])
-        self.assertEqual(messages[1]['result']['structuredContent']['execution']['operations'][0]['name'],'spectrum')
+        self.assertEqual(messages[1]['result']['structuredContent']['execution']['programs'][0]['name'],'spectrum')
         self.assertTrue(messages[2]['result']['isError'])
         self.assertEqual(messages[-1]['result'],{})
 

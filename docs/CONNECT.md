@@ -19,7 +19,7 @@ Use these inputs:
 {"n":[1,1.45,1.52],"thickness_nm":[100],"wavelength_nm":[450,550,650]}
 ```
 
-The result includes the output directory, scientific result and software versions; the spectrum is saved as CSV. A release wheel can be installed without Git. Every command also works through `python -m optics_photonics`.
+The result includes the output directory, scientific result and software versions; the spectrum is saved as `spectrum.npz` with units and axes, and as CSV. `info tmm` lists the packaged programs of a tool with each input's default and meaning, and `info tmm --program spectrum` prints a program's source, which can be edited and submitted with `--program`. Inputs not given keep their defaults; an unknown input name is rejected. A release wheel can be installed without Git. Every command also works through `python -m optics_photonics`.
 
 ## Environments and complete programs
 
@@ -124,7 +124,7 @@ Install a new wheel or tag and generate a new plugin directory to update. Config
 
 ## Software and extension model
 
-The bilingual catalogue separates commercial, open-source and restricted tools. Each connection retains primary interface documentation and upstream MCP/Skill sources. Filter executed calculations in the interactive guide. `software_details` gives native APIs, installation recipes, runnable inputs and physical conventions.
+The bilingual catalogue separates commercial, open-source and restricted tools. Each connection retains primary interface documentation and upstream MCP/Skill sources. The interactive guide filters tools with packaged programs. `software_details` gives native APIs, installation recipes and each packaged program's physics, inputs and checks.
 
 Extend software through a connection record, environment and native program using the same job/file interface. Vendor SDKs, GUI applications, MPI and cloud services retain their own launch/session requirements. Exchange units, coordinates, sampling, normalization and material sources alongside fields, spectra, S-parameters and models.
 

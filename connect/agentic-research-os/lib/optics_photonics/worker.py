@@ -10,9 +10,8 @@ from contextlib import nullcontext
 
 if __package__ in (None, ''):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from optics_photonics import __version__
+from optics_photonics import __version__, programs
 from optics_photonics.catalogue import software
-from optics_photonics.operations import calculate
 
 
 def distributions(native=getattr(importlib.metadata, 'packages_distributions', None)):
@@ -37,8 +36,10 @@ def execute(tool, request, output):
         raise ValueError('inputs must be a JSON object')
     (output/'inputs.json').write_text(json.dumps(request, ensure_ascii=False, indent=2, allow_nan=False)+'\n', encoding='utf-8')
     started = time.time()
-    source = request.get('source', '')
+    source, action = request.get('source', ''), request.get('action', '')
     native_path = os.environ.get('OPTICS_NATIVE_CONNECTION')
+    if not source and not native_path:
+        source = programs.source(tool, action)  # a packaged program runs like a submitted one
     if native_path:
         from optics_photonics import native
         context = native.session(json.loads(Path(native_path).read_text(encoding='utf-8')), inputs, output)
@@ -52,10 +53,8 @@ def execute(tool, request, output):
             result = namespace['RESULT']
             if result is None:
                 raise ValueError('Set RESULT to the compact JSON result; write arrays and models under OUTPUT_DIR')
-        elif native_path:
-            result = native.calculate(tool, request.get('action', ''), inputs, namespace)
         else:
-            result = calculate(tool, request.get('action', ''), inputs, output)
+            result = native.calculate(tool, action, inputs, namespace)
     # Distribution names are taken from the active interpreter, including native-program dependencies.
     versions = {}
     package_map = distributions()
@@ -63,7 +62,7 @@ def execute(tool, request, output):
         for distribution in package_map.get(module, []):
             try: versions[distribution] = importlib.metadata.version(distribution)
             except importlib.metadata.PackageNotFoundError: pass
-    record = {'software': tool, 'operation': 'program' if source else request.get('action'),
+    record = {'software': tool, 'operation': 'program' if request.get('source') else action,
               'result': result, 'elapsed_s': time.time()-started,
               'environment': {'python': platform.python_version(), 'platform': platform.platform(), 'versions': versions, 'connector': __version__},
               'files': sorted(str(p.relative_to(output)) for p in output.rglob('*') if p.is_file() and p.name not in {'result.json','stdout.txt','stderr.txt','progress.json'})}

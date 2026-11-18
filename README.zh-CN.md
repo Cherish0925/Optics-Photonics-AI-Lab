@@ -35,14 +35,14 @@ optics-photonics connect agentic-research-os --output optics-plugin
 
 ## 一次计算怎么进行
 
-1. **选软件。** `software_search` 和 `software_details` 返回每项软件的物理方法、接口、安装来源和内置计算。目录之外的工具用 `register_software` 加入。
+1. **选软件。** `software_search` 和 `software_details` 返回每项软件的物理方法、接口、安装来源和封装程序。目录之外的工具用 `register_software` 加入。
 2. **连接环境。** 50 项开源软件带安装配方：pip 由 uv 安装，Meep、MPB、FEniCSx、Gmsh、HoloPy 从 conda-forge 安装。提交计算时如果软件还没有环境会先自动安装，`prepare_environment` 可以提前安装；`bind_environment` 复用已有解释器（不写软件 ID 时连接其中所有可用软件）或可执行程序；`discover_native_software` 和 `bind_native_software` 连接本机 COMSOL、Lumerical、OpticStudio、CST 的 SDK（[原生会话](docs/NATIVE.zh-CN.md)）。
 3. **使用实测材料数据。** `materials` 给出 refractiveindex.info 数据库 3576 页（CC0）的 n、k 和文献；SiO2、Si、Au、N-BK7 等常用名称离线可用，其他页面首次使用时下载。
-4. **提交完整程序。** Python 程序接收 `INPUTS` 和 `OUTPUT_DIR`，使用软件完整的原生 API，设置 `RESULT`；可执行程序通过环境变量使用同样的文件。`submit_calculation` 立即返回运行编号；`submit_workflow` 增加依赖或并行的步骤，后一步可以接收前一步的数值，或前一步写出的文件的位置。`data.save` 把数组连同单位、坐标轴和约定一起保存，下一个程序和 `read_array` 都能知道这些数的物理含义（[数据说明](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)）。
+4. **运行封装程序或自己写程序。** 26 个封装程序覆盖薄膜、光栅、FDTD 膜系与环形谐振腔、光子晶体能带、Mie 散射、点扩散函数、高斯光束、波导模式、光纤脉冲、激光器动力学、量子光学、Fresnel 公式推导、光线追迹和版图；每个程序都写明输入，并给出与守恒律或解析极限的对照，源码可以取出修改（[程序说明](skills/optical-computation/references/programs.md)）。自己写的 Python 程序接收 `INPUTS` 和 `OUTPUT_DIR`，使用软件完整的原生 API，设置 `RESULT`；可执行程序通过环境变量使用同样的文件。`submit_calculation` 立即返回运行编号；`submit_workflow` 增加依赖或并行的步骤，后一步可以接收前一步的数值，或前一步写出的文件的位置。`data.save` 把数组连同单位、坐标轴和约定一起保存，下一个程序和 `read_array` 都能知道这些数的物理含义（[数据说明](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)）。
 5. **继续与取回结果。** `run_status` 每次最多等待 25 秒，等待期间同一连接上的其他请求照常返回。运行不随连接断开而停止，用 `list_runs` 重新找到。`result_files`、`read_result`、`read_array` 分别返回文件列表、字节片段和 NPY/NPZ 数组的局部。`resume_run` 重跑未完成步骤，保留已完成步骤。
 6. **采集 episode。** `sample_episodes` 在并行的软件进程中运行 Gymnasium 形式的环境，保存种子、动作、观测和奖励，供学习使用；中断或追加的采集会接着进行，不重复已完成的 episode（[接口说明](docs/LEARNING.md)）。
 
-同样的操作也有 `optics-photonics` 命令、Python 接口和 TypeScript 客户端。16 个开源库的内置计算已实际运行；四个商业软件的会话适配器只用 SDK 替身运行过，尚未在有许可证的求解器上运行。
+同样的操作也有 `optics-photonics` 命令、Python 接口和 TypeScript 客户端。每个封装程序都已运行并与解析结果或另一求解器对照，Meep 和 MPB 的程序在 conda-forge 环境中运行；四个商业软件的会话适配器只用 SDK 替身运行过，尚未在有许可证的求解器上运行。
 
 ## 运行机制
 

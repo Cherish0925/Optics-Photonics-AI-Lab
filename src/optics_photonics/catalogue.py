@@ -6,6 +6,8 @@ import re
 import unicodedata
 from pathlib import Path
 
+from . import programs
+
 
 def resources():
     installed = Path(__file__).parent / 'resources'
@@ -122,7 +124,7 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         connection = connections()[item['id']]
         missing = [] if count == len(terms) else [term for term, weight in zip(terms, weights) if not weight]
         matches.append({k: item[k] for k in ('id', 'name', 'group', 'cats', 'summary')} |
-                       {'connection': connection['kind'], 'operations': connection.get('operations', []),
+                       {'connection': connection['kind'], 'programs': list(programs.catalog().get(item['id'], {})),
                         'install': 'conda' if connection.get('conda') else 'pip' if connection.get('pip') else 'manual',
                         'upstream_mcp': item['mcp']['kind']} | ({'missing': missing} if missing else {}))
     return {'total': len(matches), 'items': matches[offset:offset + limit],

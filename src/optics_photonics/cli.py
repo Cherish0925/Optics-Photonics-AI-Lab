@@ -18,7 +18,7 @@ def main(argv=None):
     parser.add_argument('--version', action='version', version=__version__)
     commands = parser.add_subparsers(dest='command', required=True)
     search = commands.add_parser('search'); search.add_argument('query', nargs='?', default=''); search.add_argument('--domain'); search.add_argument('--license-group', choices=('open','paid','limited')); search.add_argument('--limit',type=int,default=20); search.add_argument('--offset',type=int,default=0); search.add_argument('--language',choices=('zh','en'),default='en')
-    info = commands.add_parser('info'); info.add_argument('tool'); info.add_argument('--language',choices=('zh','en'),default='en')
+    info = commands.add_parser('info'); info.add_argument('tool'); info.add_argument('--language',choices=('zh','en'),default='en'); info.add_argument('--program', help='print the source of this packaged program')
     register = commands.add_parser('register-software'); register.add_argument('definition', type=object_argument)
     commands.add_parser('registered-software')
     env = commands.add_parser('environments')
@@ -27,7 +27,7 @@ def main(argv=None):
     bind = commands.add_parser('bind'); bind.add_argument('tool', nargs='?', help='omit to bind every tool the interpreter provides'); choice=bind.add_mutually_exclusive_group(required=True); choice.add_argument('--python'); choice.add_argument('--command-json',type=object_argument); bind.add_argument('--threads',type=int,default=1); bind.add_argument('--concurrency',type=int,default=1); bind.add_argument('--cwd'); bind.add_argument('--requirements',type=object_argument); bind.add_argument('--env',type=object_argument)
     prep = commands.add_parser('prepare'); prep.add_argument('tool'); prep.add_argument('--python'); prep.add_argument('--package', dest='packages', action='append', help='an extra requirement; repeat for more')
     for name in ('run','submit'):
-        run = commands.add_parser(name); run.add_argument('tool'); run.add_argument('action',nargs='?',default=''); run.add_argument('--inputs',type=object_argument,default={}); run.add_argument('--program',type=Path)
+        run = commands.add_parser(name); run.add_argument('tool'); run.add_argument('action',nargs='?',default='',help='a packaged program listed by info'); run.add_argument('--inputs',type=object_argument,default={}); run.add_argument('--program',type=Path)
         if name == 'run': run.add_argument('--output'); run.add_argument('--timeout',type=float)
         else: run.add_argument('--name',default='Optical research'); run.add_argument('--request-id'); run.add_argument('--timeout',type=float)
     sample = commands.add_parser('sample'); sample.add_argument('tool'); sample.add_argument('program', type=Path)
@@ -63,7 +63,9 @@ def main(argv=None):
             from . import materials
             if a['wavelength'] and len(a['wavelength']) == 1: a['wavelength'] = a['wavelength'][0]
             result=materials.lookup(**a)
-        elif command == 'info': result=environments.details(**a)
+        elif command == 'info':
+            result=environments.details(**a)
+            if a['program']: print(result['source'], end=''); return
         elif command == 'register-software': result=environments.register(**a['definition'])
         elif command == 'registered-software': result={'software':environments.registered()}
         elif command == 'environments': result={'environments':environments.available()}
@@ -76,7 +78,9 @@ def main(argv=None):
             source=a.pop('program'); source=source.read_text(encoding='utf-8') if source else ''
             request={k:a.pop(k) for k in ('inputs','action')}; request['source']=source
             tool=a.pop('tool')
-            if command=='run': result=execution.run(tool,request,**a)
+            if command=='run':
+                if request['action'] and not source: jobs.packaged({'tool':tool,**request})
+                result=execution.run(tool,request,**a)
             else:
                 timeout=a.pop('timeout'); result=jobs.submit([{'id':'calculate','tool':tool,**request,'timeout':timeout}],**a)
         elif command == 'sample':

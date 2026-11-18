@@ -125,7 +125,7 @@ def register(tool, name, description, *, kind='python', modules=None, distributi
             raise ValueError('platforms takes names from: ' + ', '.join(PLATFORMS))
         recipe_fields['platforms'] = platforms
     definition = {'id': tool, 'name': name, 'summary': description, 'origin': 'local',
-                  'connection': {'kind': kind, 'operations': [], **values, **recipe_fields}}
+                  'connection': {'kind': kind, **values, **recipe_fields}}
     update('software', tool, definition, path)
     return definition
 
@@ -137,17 +137,25 @@ def software(tool, language='en', path=None):
     return catalogue_software(tool, language)
 
 
-REPEATED = ('interface', 'sources', 'upstream', 'operations', 'native_program')
+REPEATED = ('interface', 'sources', 'upstream', 'native_program')
 
 
-def details(tool, language='en', path=None):
-    """One software entry with its connection and what it can run; each fact appears once."""
-    from . import operations
+def details(tool, language='en', path=None, program=None):
+    """One software entry with its connection and what it can run; each fact appears once.
+
+    With program, the source of that packaged program, to read or adapt.
+    """
+    from . import native, programs
     item = software(tool, language, path)
+    if program is not None:
+        return {'tool': tool, 'program': program, 'source': programs.source(tool, program),
+                'adapt': 'Submit an edited copy as source; parameters(PROGRAM, INPUTS) checks the inputs it declares.'}
     if item.get('origin') != 'local':
         # connections.json repeats these catalogue fields so that the file can be read on its own.
         item = {**item, 'connection': {key: value for key, value in item['connection'].items() if key not in REPEATED}}
-    return {**item, 'execution': operations.details(tool)}
+    adapter = native.details(tool)
+    return {**item, 'execution': {'programs': programs.details(tool), 'native_program': True,
+                                  **({'session_adapter': adapter} if adapter else {})}}
 
 
 def registered(path=None):

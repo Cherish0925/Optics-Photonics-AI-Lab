@@ -115,6 +115,25 @@ def written(file):
     return '/'.join(parts)
 
 
+def packaged(step):
+    """A step naming a packaged program: the program exists and declares every input the step gives it."""
+    from . import native, programs
+    tool, action = step['tool'], step['action']
+    if not isinstance(action, str):
+        raise ValueError('action names a packaged program')
+    adapter = native.details(tool)
+    if adapter:
+        if action not in adapter['actions']:
+            raise ValueError(f"{tool} session actions: {', '.join(adapter['actions'])}")
+        return
+    spec = programs.catalog().get(tool, {}).get(action)
+    if spec is None:
+        programs.source(tool, action)  # names the programs of the tool
+    unknown = sorted((set(step.get('inputs', {})) | set(step.get('bindings', {}))) - set(spec['inputs']))
+    if unknown:
+        raise ValueError(f"{tool}/{action} has no input {', '.join(unknown)}; it takes: {', '.join(spec['inputs'])}")
+
+
 def validate(steps, known=()):
     """Check new steps. known holds the IDs of steps already in the run.
 
@@ -148,6 +167,8 @@ def validate(steps, known=()):
                 written(reference['file'])
             elif not isinstance(reference.get('path', []), list): raise ValueError('Binding path must be an array of object keys or array indices')
             if reference['step'] not in s['after']: s['after'].append(reference['step'])
+        if s.get('action') and not s.get('source'):
+            packaged(s)
         graph[s['id']] = s['after']
         result.append(s)
     # Kahn's traversal is linear even for a long sequential experiment.

@@ -6,7 +6,7 @@ The objective is to let researchers and agents connect real computing environmen
 
 ## Current implementation · 0.7.0
 
-The 0.6.0 integration and the subsequent `data-descriptions` and `host-launch` contributions are integrated. Subsequent work starts from these capabilities:
+The 0.6.0 integration and the subsequent `data-descriptions` and `host-launch` contributions are integrated; the `environment-recipes`, `materials` and `research-programs` contributions add the OP-05 and OP-07 rows. Subsequent work starts from these capabilities:
 
 | Work | Implemented | Remaining |
 | --- | --- | --- |
@@ -15,7 +15,9 @@ The 0.6.0 integration and the subsequent `data-descriptions` and `host-launch` c
 | OP-04 / OP-08 | Described arrays, units/coordinates/conventions and HCIPy → POPPY pupil-to-image exchange | More scientific quantities and the periodic-structure and photonic-circuit exchange paths |
 | OP-12 | Completed-episode indexes, retry/continuation with changed worker count, separate solver errors | Shared datasets and asynchronous learner integration |
 | OP-14 / OP-15 | Movable native/portable packages, managed Python launch, on-demand guides, concise Skills | Continued native host runs as host releases change |
-| OP-05 / OP-06 / OP-07 / OP-09–11 / OP-13 / OP-16 | Existing APIs remain available | Distributed integrations, complete research programs, remote jobs and broader software coverage |
+| OP-05 | Installation recipes for 50 open tools (pip through uv, conda-forge through micromamba), preparation as the first step of a submission, binding every tool one interpreter provides | Independently distributed integration packages; removal and upgrades |
+| OP-07 | 26 packaged programs for 18 tools with declared inputs and checks against analytic limits or a second solver; refractive indices from refractiveindex.info | Programs for the remaining recipe tools (SAX, treams, Tidy3D, Solcore, prysm and others) |
+| OP-06 / OP-09–11 / OP-13 / OP-16 | Existing APIs remain available | Complete native-software research, remote jobs and catalogue status |
 
 Catalogue entries, working adapters and complete scientific workflows remain distinct. The environment accepts software outside the catalogue; each solver keeps its own platform and licensing requirements.
 
@@ -69,7 +71,7 @@ Deliver a real research program that repeatedly changes and computes a model, sa
 
 ### OP-07 · Open-software research coverage
 
-Extend the 16 packaged library calculations into complete programs, and connect catalogue tools without complete execution paths. Organize by research need; these examples are not a closed support list. New software follows OP-05.
+Extend the packaged programs ([list](../skills/optical-computation/references/programs.md)) and connect catalogue tools without complete execution paths. Organize by research need; these examples are not a closed support list. New software follows OP-05.
 
 | Research object | Initial programs and integrations |
 | --- | --- |

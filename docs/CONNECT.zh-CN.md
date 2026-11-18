@@ -23,7 +23,7 @@ optics-photonics prepare tmm
 optics-photonics run tmm spectrum --inputs "@inputs.json"
 ```
 
-命令返回输出目录、结果和软件版本。光谱保存在 CSV 文件中。也可先下载 Release 中的 wheel，再用 `python -m pip install 文件.whl` 安装；也可用 `python -m optics_photonics` 调用全部命令。
+命令返回输出目录、结果和软件版本。光谱保存为带单位和坐标轴的 `spectrum.npz`，同时有 CSV。`info tmm` 列出该软件的封装程序及每个输入的默认值和含义，`info tmm --program spectrum` 打印程序源码，修改后可用 `--program` 提交。没有给出的输入保持默认值，不认识的输入名会被拒绝。也可先下载 Release 中的 wheel，再用 `python -m pip install 文件.whl` 安装；也可用 `python -m optics_photonics` 调用全部命令。
 
 ## 科学环境与完整程序
 
@@ -134,7 +134,7 @@ MCP 包含软件检索、材料折射率（`materials`，来自 refractiveindex.
 
 ## 软件覆盖与扩展
 
-软件目录包含商业、开源和受限许可三组，每项保留原始接口文档及已有 MCP、Skill 的来源。可执行计算在交互指南中单独筛选。`software_details` 返回原生 API、安装配方、示例输入和物理约定。
+软件目录包含商业、开源和受限许可三组，每项保留原始接口文档及已有 MCP、Skill 的来源。交互指南可以筛选带封装程序的软件。`software_details` 返回原生 API、安装配方，以及每个封装程序的物理模型、输入和对照结果。
 
 新增软件时补充连接记录、环境说明和原生程序，沿用共同的任务与文件接口。涉及商业 SDK、GUI、远程计算或 MPI 时，把对应启动与会话管理放在软件适配程序中。跨软件传递场、光谱、S 参数和模型时，同时保存单位、坐标、采样、归一化与材料来源。
 

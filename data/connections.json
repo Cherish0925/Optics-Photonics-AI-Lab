@@ -4,7 +4,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://optics.ansys.com/hc/en-us/articles/42661773562899-Sample-code-for-ZOS-API-users",
     "interface": "ZOS-API .NET with Python, C#, C++ and MATLAB; ZPL macros; standalone and interactive connections.",
@@ -33,7 +32,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.keysight.com.cn/cn/zh/products/software/optical-solutions-software/optical-design-solutions/codev.html",
     "interface": "Macro-PLUS scripts, commands and batch design workflows. Consult the installed version for external automation details.",
@@ -58,7 +56,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.keysight.com/es/en/products/software/optical-solutions-software/optical-design-solutions/lighttools.html",
     "interface": "Built-in macros and LTAPI automation; third-party Python wrappers are available.",
@@ -85,7 +82,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://support.photonengr.com/article/176-raytrace-and-analysis-loop",
     "interface": "Built-in scripting and .frs workflows; official examples include trace-and-analysis loops.",
@@ -112,7 +108,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://lambdares.com/hubfs/TracePro_Users_Manual_2026.pdf",
     "interface": "Scheme macros; the manual documents DDE and macro automation.",
@@ -138,7 +133,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://lambdares.com/oslo",
     "interface": "CCL programming and command system; features depend on the edition.",
@@ -165,7 +159,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://breault.com/asap/",
     "interface": "Official integrated Python, VBScript and other scripting support for automated analyses.",
@@ -190,7 +183,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://programmingreference.lighttrans.com/2026.2/api/VirtualLab.Programming.html",
     "interface": "Official Programming API, programmable elements and scripts; documented extensions to Python / MATLAB workflows.",
@@ -216,7 +208,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://optics.ansys.com/hc/en-us/articles/24752772596371-Optical-Automation-library-introduction",
     "interface": "Speos scripts; Ansys optical-automation supplies public Python automation and interoperability code.",
@@ -244,7 +235,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://optics.ansys.com/hc/en-us/articles/360037824513-Python-API-overview",
     "interface": "lumapi Python; LSF scripts; lumopt inverse design; lumslurm scheduling.",
@@ -274,7 +264,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.comsol.com/support/learning-center/article/overview-of-the-comsol-api-107912",
     "interface": "Official Java API and batch execution; LiveLink for MATLAB; third-party Python bridges.",
@@ -304,7 +293,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.3ds.com/products/simulia/cst-studio-suite",
     "interface": "Official Python automation, VBA macros and batch solver workflows.",
@@ -332,7 +320,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.keysight.com/zz/en/products/software/optical-solutions-software/photonic-design-solutions.html",
     "interface": "Parametric CAD, MOST scans and optimization; confirm scripting and external integration for each component.",
@@ -359,7 +346,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.jcmwave.com/jcmsuite/interface/",
     "interface": "Official jcmwave Python; MATLAB / Octave and C interfaces; optimization and batch tasks.",
@@ -385,7 +371,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://photond.com/fimmwave/features/scripting-optimisation",
     "interface": "Official command-line, Python and MATLAB scripting; community pyFIMM is a wrapper reference.",
@@ -418,7 +403,6 @@
     "distributions": [
       "tidy3d"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://docs.flexcompute.com/projects/tidy3d/en/stable/faq/docs/faq/How-is-using-Tidy3D-billed.html",
     "interface": "Official Python API, web.run and batch execution; official MCP / agent plugins.",
@@ -450,7 +434,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.lucedaphotonics.com/luceda-photonics-design-platform",
     "interface": "Native Python framework, PDK packages, device-simulation drivers and Canvas integration.",
@@ -476,7 +459,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.vpiphotonics.com/Tools/DesignSuite/Features/",
     "interface": "Official external simulation API; Python, MATLAB, C++ and COM co-simulation and custom modules.",
@@ -502,7 +484,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://optiwave.com/forums/topic/co-simulation-using-python/",
     "interface": "Python / MATLAB co-simulation components; official examples for external execution and result access.",
@@ -528,7 +509,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.thinfilmcenter.com/essential.php",
     "interface": "The Function extension offers BASIC-like scripts and object access; spreadsheet macros.",
@@ -554,7 +534,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://optilayer.com/com-automation/",
     "interface": "Official COM Automation with Python examples; OptiReOpt for production integration.",
@@ -582,7 +561,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.rp-photonics.com/rp_fiber_power_interface.html",
     "interface": "Built-in scripting language, generated scripts and custom forms.",
@@ -608,7 +586,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.rp-photonics.com/software_overview.html",
     "interface": "Built-in scripting, interactive forms that generate models, and iteration loops.",
@@ -634,7 +611,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": false,
     "installation": "https://crosslight.com/",
     "interface": "Official product and application scope confirmed; a general public API or MCP remains unverified.",
@@ -659,7 +635,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": false,
     "installation": "https://osdoptics.com/accessinstallation/",
     "interface": "Command / macro-driven workflows; complete external API not verified.",
@@ -685,7 +660,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": false,
     "installation": "https://www.sspectra.com/",
     "interface": "Stable public API not verified; evaluate it primarily as a desktop product.",
@@ -711,7 +685,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/matlab/matlab-mcp-server",
     "interface": "MATLAB Engine API, batch execution, Simulink API and the official MATLAB MCP Server.",
@@ -738,7 +711,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.wolfram.com/ai/mcp/",
     "interface": "Wolfram Language, wolframscript, official Python Client and official Wolfram MCP.",
@@ -767,7 +739,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://jp.maplesoft.com/support/help/maple/view.aspx?path=OpenMaple%2FPython%2FAPI",
     "interface": "OpenMaple Python / C / Java API; command-line kernel.",
@@ -795,7 +766,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://docs.flexcompute.com/projects/photonforge/en/latest/getting_started.html",
     "interface": "Native Python; official agent plugins and PCell, routing and verification Skills.",
@@ -823,7 +793,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://lambdares.com/edu",
     "interface": "Commands / macros within EDU limits; do not assume all commercial-edition interfaces are available.",
@@ -854,7 +823,6 @@
     "distributions": [
       "ptypy"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/ptycho/ptypy",
     "interface": "Python, MPI and CUDA / CuPy acceleration engines.",
@@ -892,7 +860,6 @@
       "osx-arm64"
     ],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/NanoComp/meep",
     "interface": "Python, Scheme and C++; scripted execution, HDF5 outputs and adjoint optimization.",
@@ -931,7 +898,6 @@
     ],
     "environment_of": "meep",
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/NanoComp/mpb",
     "interface": "Python / Scheme; programmable parameter sweeps and mode-data analysis.",
@@ -972,7 +938,6 @@
       "fdtdx",
       "jax"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/ymahlau/fdtdx",
     "interface": "Native Python / JAX, automatic differentiation and programmable geometry.",
@@ -1000,7 +965,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/thliebig/openEMS",
     "interface": "Python and Octave / MATLAB interfaces; command-line solver.",
@@ -1027,7 +991,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/victorliu/S4",
     "interface": "Lua scripting; Python interface depends on the build.",
@@ -1068,7 +1031,6 @@
       "torcwa",
       "torch"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/kch3782/torcwa",
     "interface": "Native Python / PyTorch and automatic differentiation.",
@@ -1101,9 +1063,6 @@
     "distributions": [
       "grcwa"
     ],
-    "operations": [
-      "film"
-    ],
     "native_program": true,
     "installation": "https://github.com/weiliangjinca/grcwa",
     "interface": "Python with an Autograd backend.",
@@ -1134,9 +1093,6 @@
     ],
     "distributions": [
       "legume-gme"
-    ],
-    "operations": [
-      "bands"
     ],
     "native_program": true,
     "installation": "https://github.com/fancompute/legume",
@@ -1169,7 +1125,6 @@
     "distributions": [
       "ceviche"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/fancompute/ceviche",
     "interface": "Python / Autograd; examples compose the solver with optimizers.",
@@ -1203,9 +1158,6 @@
     "distributions": [
       "tmm",
       "numpy"
-    ],
-    "operations": [
-      "spectrum"
     ],
     "native_program": true,
     "installation": "https://github.com/sbyrnes321/tmm",
@@ -1244,7 +1196,6 @@
     "distributions": [
       "solcore"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/qpv-research-group/solcore5",
     "interface": "Python API; composes transfer-matrix and other optical / electrical models.",
@@ -1278,7 +1229,6 @@
     "distributions": [
       "rayoptics"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/mjhoptics/ray-optics",
     "interface": "Native Python; scripts, notebooks and optical-model objects.",
@@ -1310,9 +1260,6 @@
     "python": ">=3.11",
     "distributions": [
       "optiland"
-    ],
-    "operations": [
-      "trace"
     ],
     "native_program": true,
     "installation": "https://github.com/optiland/optiland",
@@ -1348,7 +1295,6 @@
     "distributions": [
       "raysect"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/raysect/source",
     "interface": "Python API with compiled numerical components; programmable scenes and observers.",
@@ -1382,9 +1328,6 @@
     "distributions": [
       "raytracing"
     ],
-    "operations": [
-      "abcd"
-    ],
     "native_program": true,
     "installation": "https://github.com/DCC-Lab/RayTracing",
     "interface": "Python objects for matrices, elements, paths and analysis.",
@@ -1415,9 +1358,6 @@
     ],
     "distributions": [
       "LightPipes"
-    ],
-    "operations": [
-      "gaussian"
     ],
     "native_program": true,
     "installation": "https://github.com/opticspy/lightpipes",
@@ -1451,9 +1391,6 @@
     "distributions": [
       "poppy"
     ],
-    "operations": [
-      "psf"
-    ],
     "native_program": true,
     "installation": "https://github.com/spacetelescope/poppy",
     "interface": "Python API and reusable optical elements; integrates with scientific Python.",
@@ -1484,9 +1421,6 @@
     ],
     "distributions": [
       "hcipy"
-    ],
-    "operations": [
-      "psf"
     ],
     "native_program": true,
     "installation": "https://github.com/ehpor/hcipy",
@@ -1520,7 +1454,6 @@
     "distributions": [
       "prysm"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/brandondube/prysm",
     "interface": "Native Python and numerical array interfaces.",
@@ -1553,7 +1486,6 @@
     "distributions": [
       "diffractio"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/optbrea/diffractio",
     "interface": "Python API for scalar / vector sources, masks and fields.",
@@ -1594,7 +1526,6 @@
       "torchoptics",
       "torch"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/MatthewFilipovich/torchoptics",
     "interface": "Native Python / PyTorch with automatic differentiation.",
@@ -1636,7 +1567,6 @@
       "waveprop",
       "torch"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/ebezzam/waveprop",
     "interface": "Python; selected PyTorch differentiable implementations.",
@@ -1670,9 +1600,6 @@
     "distributions": [
       "gdsfactory"
     ],
-    "operations": [
-      "waveguide"
-    ],
     "native_program": true,
     "installation": "https://github.com/gdsfactory/gdsfactory",
     "interface": "Native Python, PCells, PDKs, netlists and solver adapters; official component-designer Skill.",
@@ -1704,9 +1631,6 @@
     ],
     "distributions": [
       "klayout"
-    ],
-    "operations": [
-      "layout"
     ],
     "native_program": true,
     "installation": "https://github.com/KLayout/klayout",
@@ -1748,7 +1672,6 @@
       "sax",
       "jax"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/flaport/sax",
     "interface": "Python / JAX; callable component models and netlists.",
@@ -1774,7 +1697,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/SiEPIC/SiEPIC-Tools",
     "interface": "Python macros and KLayout extensions; integrates with PDKs and simulation tools.",
@@ -1800,7 +1722,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://nazca-design.org/about/",
     "interface": "Native Python; reusable building blocks and PDK interfaces.",
@@ -1826,7 +1747,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/adda-team/adda",
     "interface": "Command-line solver, input geometry and material files; scripts can drive sweeps and parse results.",
@@ -1858,9 +1778,6 @@
     "python": ">=3.11",
     "distributions": [
       "miepython"
-    ],
-    "operations": [
-      "sphere"
     ],
     "native_program": true,
     "installation": "https://github.com/scottprahl/miepython",
@@ -1899,7 +1816,6 @@
     "distributions": [
       "treams"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/tfp-photonics/treams",
     "interface": "Python API for bases, translation operators and scattering matrices.",
@@ -1927,7 +1843,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://smuthi.readthedocs.io/en/latest/_source/01%20about/about_smuthi.html",
     "interface": "Python API for particles, layers, illumination and simulations.",
@@ -1961,7 +1876,6 @@
     "distributions": [
       "pyGDM2"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://wiechapeter.gitlab.io/",
     "interface": "Python API, programmable geometries, materials and optimization workflows.",
@@ -1995,9 +1909,6 @@
     "distributions": [
       "qutip"
     ],
-    "operations": [
-      "rabi"
-    ],
     "native_program": true,
     "installation": "https://github.com/qutip/qutip",
     "interface": "Native Python; quantum objects, solvers and numerical interfaces.",
@@ -2023,7 +1934,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/qojulia/QuantumOptics.jl",
     "interface": "Native Julia API; composable bases, operators and solvers.",
@@ -2057,7 +1967,6 @@
     "distributions": [
       "perceval-quandela"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/Quandela/Perceval",
     "interface": "Python API; local backends and separately configured remote services.",
@@ -2093,7 +2002,6 @@
     "distributions": [
       "strawberryfields"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/XanaduAI/strawberryfields",
     "interface": "Python API, circuit programs and simulation backends.",
@@ -2120,7 +2028,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/LupoLab/Luna.jl",
     "interface": "Native Julia API and scripted models.",
@@ -2152,7 +2059,6 @@
     "distributions": [
       "py-fmas"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/omelchert/py-fmas",
     "interface": "Python classes for propagation models, grids and solvers.",
@@ -2188,7 +2094,6 @@
     "distributions": [
       "laserfun"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/laserfun/laserfun",
     "interface": "Python interface for pulses, fibers and nonlinear propagation.",
@@ -2221,7 +2126,6 @@
     "distributions": [
       "OptiCommPy"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/edsonportosilva/OptiCommPy",
     "interface": "Native Python with modular transmitter, channel and DSP functions.",
@@ -2259,7 +2163,6 @@
     "distributions": [
       "finesse"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://finesse.ifosim.org/docs/latest/",
     "interface": "Python API and KatScript model language; programmable analyses.",
@@ -2287,7 +2190,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": false,
     "installation": "https://github.com/orion-project/rezonator2",
     "interface": "Desktop GUI and project files; a complete stable headless API was not verified.",
@@ -2313,7 +2215,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/fangq/mcx",
     "interface": "Command-line / JSON configurations and language bindings; programmable batch simulations.",
@@ -2339,7 +2240,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/fangq/mmc",
     "interface": "Command-line / configuration files and language bindings.",
@@ -2376,7 +2276,6 @@
       "win-64"
     ],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/manoharan-lab/holopy",
     "interface": "Python API connecting scattering calculations, image handling and inference.",
@@ -2409,7 +2308,6 @@
     "distributions": [
       "pyDHM"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/catrujilla/pyDHM",
     "interface": "Native Python functions for holographic processing.",
@@ -2439,7 +2337,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://pynx.esrf.fr/en/stable/",
     "interface": "Python API and command-line reconstruction tools.",
@@ -2478,7 +2375,6 @@
     "distributions": [
       "mitsuba"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/mitsuba-renderer/mitsuba3",
     "interface": "Python / C++ API; differentiable variants through Dr.Jit.",
@@ -2504,7 +2400,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/mmp/pbrt-v4",
     "interface": "C++ source, scene descriptions and command-line execution.",
@@ -2530,7 +2425,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/ochubar/SRW",
     "interface": "Python interface and scripted radiation / propagation models.",
@@ -2562,7 +2456,6 @@
     "distributions": [
       "shadow4"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/oasys-kit/shadow4",
     "interface": "Native SHADOW4 Python; OASYS plugins; batch simulations can be scripted.",
@@ -2595,7 +2488,6 @@
     "distributions": [
       "xrt"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/kklmn/xrt",
     "interface": "Python; programmable beamlines and batch analysis.",
@@ -2627,9 +2519,6 @@
     "distributions": [
       "sympy"
     ],
-    "operations": [
-      "abcd"
-    ],
     "native_program": true,
     "installation": "https://github.com/sympy/sympy",
     "interface": "Python; numerical-function and code generation.",
@@ -2657,7 +2546,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://www.sagemath.org/",
     "interface": "Python-style interface, CLI and notebooks.",
@@ -2685,7 +2573,6 @@
     ],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/FreeCAD/FreeCAD",
     "interface": "Python API, macros and plugins.",
@@ -2717,7 +2604,6 @@
       "python-gmsh"
     ],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://gmsh.info/",
     "interface": "Python, C, C++ and Julia APIs; CLI and .geo scripts.",
@@ -2751,9 +2637,6 @@
     "distributions": [
       "scikit-image"
     ],
-    "operations": [
-      "registration"
-    ],
     "native_program": true,
     "installation": "https://github.com/scikit-image/scikit-image",
     "interface": "Native Python API.",
@@ -2786,7 +2669,6 @@
     "distributions": [
       "napari"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/napari/napari",
     "interface": "Python API, CLI and plugin system.",
@@ -2813,7 +2695,6 @@
     "modules": [],
     "pip": [],
     "distributions": [],
-    "operations": [],
     "native_program": false,
     "installation": "https://github.com/polyanskiy/refractiveindex.info-database",
     "interface": "Machine-readable YAML, accessible from Python and other languages; a database rather than a solver.",
@@ -2845,7 +2726,6 @@
       "fenics-dolfinx"
     ],
     "distributions": [],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/FEniCS/dolfinx",
     "interface": "Python / C++; UFL weak forms; MPI and numerical backends.",
@@ -2883,7 +2763,6 @@
     "distributions": [
       "ngsolve"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://github.com/NGSolve/ngsolve",
     "interface": "Python / C++; official Maxwell and eigenmode tutorials.",
@@ -2914,9 +2793,6 @@
     ],
     "distributions": [
       "scipy"
-    ],
-    "operations": [
-      "fit_gaussian"
     ],
     "native_program": true,
     "installation": "https://numpy.org/",
@@ -2957,7 +2833,6 @@
       "jax",
       "jaxlib"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://docs.jax.dev/en/latest/",
     "interface": "Python; jit, grad, vmap and related transformations.",
@@ -2996,7 +2871,6 @@
     "distributions": [
       "torch"
     ],
-    "operations": [],
     "native_program": true,
     "installation": "https://pytorch.org/",
     "interface": "Python / C++; Autograd and GPU tensor interfaces.",
@@ -3028,9 +2902,6 @@
     ],
     "distributions": [
       "py-pol"
-    ],
-    "operations": [
-      "polarization"
     ],
     "native_program": true,
     "installation": "https://py-pol.readthedocs.io/en/master/",
