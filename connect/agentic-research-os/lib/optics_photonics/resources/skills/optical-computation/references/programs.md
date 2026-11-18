@@ -22,6 +22,8 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `diffractio/apertures` | Rayleigh-Sommerfeld diffraction of a slit, double slit or grating from near to far field | Fraunhofer expression |
 | `prysm/mtf` | MTF along x and y with Zernike aberrations; PSF; Strehl | diffraction-limited MTF |
 | `scipy/slab_modes` | Guided modes of any layered slab, TE or TM, by finite differences | symmetric-slab dispersion relation |
+| `scipy/fiber_modes` | Step-index fiber: effective indices of every LP and exact vector (TE, TM, HE, EH) mode over wavelength; LP11 cutoff; group index, dispersion, β2, mode field diameter, effective area and γ of the fundamental mode, with material dispersion | Bessel roots to 13 digits; MPB for vector modes; closed-form confinement |
+| `scipy/second_harmonic` | Second-harmonic generation in a uniaxial crystal: type I, type II or quasi-phase-matching angle or period, walk-off, angle and wavelength acceptance; conversion with pump depletion | literature BBO angle and walk-off; tanh² and sinc² limits |
 | `scipy/nlse` | Fiber pulse propagation: dispersion, self-phase modulation, third-order dispersion, loss | soliton; dispersive broadening; energy |
 | `laserfun/supercontinuum` | Generalized NLSE with Raman scattering and self-steepening: solitons and supercontinuum | photon-number conservation; Dudley benchmark |
 | `scipy/laser_rates` | Semiconductor laser L–I curve and step response | threshold, slope, relaxation frequency |

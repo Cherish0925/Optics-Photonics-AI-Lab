@@ -56,11 +56,11 @@ class DeclarationCase(unittest.TestCase):
 
     def test_details_list_programs_and_return_one_source(self):
         listed = environments.details('scipy')['execution']
-        self.assertEqual([item['name'] for item in listed['programs']], ['fit_gaussian', 'laser_rates', 'nlse', 'slab_modes'])
+        self.assertEqual([item['name'] for item in listed['programs']], ['fiber_modes', 'fit_gaussian', 'laser_rates', 'nlse', 'second_harmonic', 'slab_modes'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertTrue(environments.details('scipy', program='nlse')['source'].startswith('"""Pulse propagation'))
-        with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: fit_gaussian, laser_rates'):
+        with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: fiber_modes, fit_gaussian, laser_rates'):
             environments.details('scipy', program='fft')
         native = environments.details('lumerical')['execution']
         self.assertEqual(native['programs'], [])
@@ -132,6 +132,66 @@ class ProgramPhysicsCase(unittest.TestCase):
                                                      'substrate': 1.5, 'wavelength_um': [1.0], 'orders': 81, 'grid': 2048})
         effective = self.run_program('tmm', 'spectrum', {'n': [1, math.sqrt(2.5), 1.5], 'thickness_nm': [200], 'wavelength_nm': [1000]})
         self.assertAlmostEqual(fine['R'][0], effective['first'][1], delta=2e-4)
+
+    def test_fiber_modes_are_roots_of_the_bessel_equations_and_give_standard_fiber_dispersion(self):
+        # Weak guidance, constant indices: LP01 and LP11 against roots found with 40-digit arithmetic (mpmath).
+        fixed = self.run_program('scipy', 'fiber_modes', {'cladding_index': 1.4469, 'wavelength_nm': [1200]})['first']
+        self.assertAlmostEqual(fixed['lp']['LP01'], 1.4497386667402692566, places=13)
+        self.assertAlmostEqual(fixed['lp']['LP11'], 1.4471099450579007644, places=13)
+        self.assertEqual(fixed['vector']['TE01'], fixed['lp']['LP11'])  # TE0m and LP1m obey the same equation
+        # High contrast: the exact vector modes, which MPB reproduces at second order in its resolution
+        # (frequency mismatch 7e-4, 1.7e-4, 4e-5 at 16, 32, 64 points per um), and the LP modes far from them.
+        nanofiber = self.run_program('scipy', 'fiber_modes', {'radius_um': 0.5, 'cladding_index': 1.0, 'core_index': 1.45,
+                                                              'wavelength_nm': [1000]})
+        self.assertEqual(list(nanofiber['first']['vector']), ['HE11', 'TE01', 'TM01', 'HE21'])
+        for mode, value in {'HE11': 1.3091913072159653, 'TE01': 1.138624875571326, 'TM01': 1.0943671099797436, 'HE21': 1.0811637654943793}.items():
+            self.assertAlmostEqual(nanofiber['first']['vector'][mode], value, places=12)
+        self.assertGreater(nanofiber['checks']['vector_lp_difference'], 0.1)
+        # With a constant numerical aperture V = 2 pi a NA / lambda, so LP11 sets in at 2 pi a NA / j01.
+        smf = self.run_program('scipy', 'fiber_modes', {'wavelength_nm': [1550, 1600]})
+        self.assertAlmostEqual(smf['lp11_cutoff_nm'], 2 * math.pi * 4100 * 0.12 / 2.404825557695773, places=6)
+        self.assertLess(smf['checks']['confinement_difference'], 1e-10)
+        self.assertLess(smf['checks']['vector_lp_difference'], 2e-3)
+        # A fused-silica fiber with the numerical aperture and core of standard single-mode fiber at 1550 nm.
+        fundamental = self.run_program('scipy', 'fiber_modes', {'wavelength_nm': [1550]})['fundamental']
+        self.assertAlmostEqual(fundamental['dispersion_ps_per_nm_km'], 17, delta=0.5)
+        self.assertAlmostEqual(fundamental['group_index'], 1.468, delta=1e-3)
+        self.assertAlmostEqual(fundamental['mfd_um'], 10.2, delta=0.2)
+        self.assertAlmostEqual(fundamental['beta2_ps2_per_km'], -1550e-9 ** 2 * fundamental['dispersion_ps_per_nm_km'] * 1e-6
+                               / (2 * math.pi * 299792458) * 1e27, places=9)
+        # A multimode fiber guides about V^2 / 2 modes.
+        multimode = self.run_program('scipy', 'fiber_modes', {'radius_um': 25, 'numerical_aperture': 0.22, 'wavelength_nm': [850],
+                                                              'vector': False})['first']
+        self.assertAlmostEqual(multimode['guided_modes'] / (multimode['V'] ** 2 / 2), 1, delta=0.05)
+
+    def test_second_harmonic_phase_matching_and_conversion(self):
+        from optics_photonics import materials
+        # BBO, type I (ooe) at 1064 nm: the phase-matching angle 22.8 degrees and walk-off 3.19 degrees of the literature.
+        bbo = self.run_program('scipy', 'second_harmonic', {})
+        self.assertAlmostEqual(bbo['angle_deg'], 22.8, delta=0.1)
+        self.assertAlmostEqual(math.degrees(bbo['walkoff_mrad'] / 1000), 3.19, delta=0.03)
+        self.assertAlmostEqual(bbo['indices']['fundamental'], bbo['indices']['harmonic'], places=12)
+        # Angle acceptance from the linear mismatch: d(delta k)/d(theta) = (4 pi / lambda) n_e(theta) tan(rho).
+        slope = 4 * math.pi / 1.064 * bbo['indices']['harmonic'] * math.tan(bbo['walkoff_mrad'] / 1000)
+        self.assertAlmostEqual(bbo['acceptance']['angle_mrad'] / 1000, 4 * 1.3915573782515103 / (5000 * slope), delta=1e-6)
+        # The integrated conversion: tanh^2 at phase matching, sinc^2 without depletion.
+        self.assertAlmostEqual(bbo['efficiency'], math.tanh(math.sqrt(bbo['eta0'])) ** 2, places=9)
+        self.assertLess(abs(bbo['checks']['depletion_difference']), 1e-9)
+        self.assertLess(abs(bbo['checks']['undepleted_difference']), 1e-6)
+        # Periodically poled lithium niobate: the period lambda / (2 (n_e(lambda/2) - n_e(lambda))).
+        ppln = self.run_program('scipy', 'second_harmonic', {'interaction': 'quasi', 'ordinary_index': 'LiNbO3-o',
+                                                             'extraordinary_index': 'LiNbO3-e', 'd_eff_pm_per_V': 14, 'length_mm': 10})
+        n1, n2 = (materials.index_at('LiNbO3-e', wavelength).real for wavelength in (1.064, 0.532))
+        self.assertAlmostEqual(ppln['period_um'], 1.064 / (2 * (n2 - n1)), places=12)
+        self.assertNotIn('angle_mrad', ppln['acceptance'])
+        detuned = self.run_program('scipy', 'second_harmonic', {'interaction': 'quasi', 'ordinary_index': 'LiNbO3-o', 'extraordinary_index': 'LiNbO3-e',
+                                                                'length_mm': 10, 'intensity_MW_per_cm2': 1e-3, 'period_um': ppln['period_um'] * 1.0002})
+        mismatch = 2 * math.pi / ppln['period_um'] - 2 * math.pi / (ppln['period_um'] * 1.0002)
+        expected = detuned['eta0'] * (math.sin(mismatch * 5000) / (mismatch * 5000)) ** 2
+        self.assertAlmostEqual(detuned['efficiency'] / expected, 1, delta=1e-5)
+        type2 = self.run_program('scipy', 'second_harmonic', {'interaction': 'type II'})
+        self.assertGreater(type2['angle_deg'], bbo['angle_deg'])
+        self.assertIsNone(type2['efficiency'])
 
     def test_mie_scattering_reaches_the_rayleigh_limit_and_integrates_to_the_cross_section(self):
         import numpy as np
