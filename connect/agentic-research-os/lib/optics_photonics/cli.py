@@ -49,6 +49,7 @@ def main(argv=None):
     download=commands.add_parser('download'); download.add_argument('run_id'); download.add_argument('file'); download.add_argument('destination')
     array=commands.add_parser('array',help='Read part of an NPY array or NPZ member'); array.add_argument('run_id'); array.add_argument('file'); array.add_argument('--member'); array.add_argument('--index',type=json.loads,help='JSON list, e.g. [10, [0, 100, 2]]'); array.add_argument('--max-elements',type=int,default=10000)
     read=commands.add_parser('read'); read.add_argument('run_id'); read.add_argument('file'); read.add_argument('--offset',type=int,default=0); read.add_argument('--limit',type=int,default=16384)
+    material=commands.add_parser('materials', help='n and k of a material from the refractiveindex.info database'); material.add_argument('material', nargs='?'); material.add_argument('--query'); material.add_argument('--wavelength', type=float, nargs='+'); material.add_argument('--unit', default='nm'); material.add_argument('--limit', type=int, default=20)
     runs=commands.add_parser('runs'); runs.add_argument('--state'); runs.add_argument('--offset',type=int,default=0); runs.add_argument('--limit',type=int,default=20)
     commands.add_parser('mcp')
     commands.add_parser('tools')
@@ -58,6 +59,10 @@ def main(argv=None):
     a=vars(parser.parse_args(argv)); command=a.pop('command')
     try:
         if command == 'search': result=catalogue.search(**a)
+        elif command == 'materials':
+            from . import materials
+            if a['wavelength'] and len(a['wavelength']) == 1: a['wavelength'] = a['wavelength'][0]
+            result=materials.lookup(**a)
         elif command == 'info': result=environments.details(**a)
         elif command == 'register-software': result=environments.register(**a['definition'])
         elif command == 'registered-software': result={'software':environments.registered()}

@@ -4,7 +4,7 @@ import json
 import math
 import sys
 import threading
-from . import __version__, catalogue, environments
+from . import __version__, catalogue, data, environments
 from . import jobs, signals
 
 
@@ -32,10 +32,13 @@ def guide(topic):
 
 STRING = {'type':'string'}
 DOMAINS = [row[0] for row in json.loads((catalogue.resources()/'data'/'domains.en.json').read_text(encoding='utf-8'))]
+# Units in which a wavelength can be given: vacuum wavelength, frequency, wavenumber or photon energy.
+SPECTRAL_UNITS = [unit for kind in ('length', 'frequency', 'angular frequency', 'wavenumber', 'energy') for unit in data.UNITS[kind]]
 TOOLS = [
     ('read_guide', 'Read operating guidance as Markdown. optical-computation: how to connect software, submit programs and read results. optical-research: how to choose a physical model and software. The other topics are the references those two link to, by link name.', schema({'topic':{'enum':list(guides())}},['topic'])),
     ('software_search', 'Find optical software by physical problem, method or name, in English or Chinese; filter by domain and license. Best matches first; an item lists the query words it lacks in missing. install is pip or conda when prepare_environment can install the tool, manual when it needs its own installer.', schema({'query':STRING,'domain':{'enum':DOMAINS},'license_group':{'enum':['open','paid','limited']},'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':100},'language':{'enum':['zh','en']}})),
     ('software_details', 'Read native interfaces, installation source, upstream MCP/Skills and executable operation inputs for one software.', schema({'tool':STRING,'language':{'enum':['zh','en']}},['tool'])),
+    ('materials', 'Refractive index n and extinction coefficient k from the refractiveindex.info database (3576 n,k pages, CC0) with references and conditions. material is a page ID shelf/book/page such as main/Si/Green-2008, or a common name such as SiO2, Si, Au or N-BK7; with wavelength (a number or list in unit, nm by default) the reply gives n and k, without it the page\'s range and references. query searches book and page names; no arguments lists the common names. Pages other than the common ones are downloaded once.', schema({'material':STRING,'query':STRING,'wavelength':{'anyOf':[{'type':'number','exclusiveMinimum':0},{'type':'array','items':{'type':'number','exclusiveMinimum':0},'minItems':1,'maxItems':10000}]},'unit':{'enum':SPECTRAL_UNITS},'limit':{'type':'integer','minimum':1,'maximum':100}})),
     ('register_software', 'Register a local research library, solver or executable that is not in the published catalogue. Provide its identity, module/distribution names and documentation sources; then use bind_environment. pip, conda (conda-forge packages), python (version specifier) and platforms form an installation recipe, so that prepare_environment and submissions install it. Registration does not download or execute it.', schema({'tool':STRING,'name':STRING,'description':STRING,'kind':{'enum':['python','command']},'modules':{'type':'array','items':STRING},'distributions':{'type':'array','items':STRING},'sources':{'type':'array','items':STRING},'pip':{'type':'array','items':STRING},'conda':{'type':'array','items':STRING},'python':STRING,'platforms':{'type':'array','items':{'enum':list(environments.PLATFORMS)}}},['tool','name','description'])),
     ('registered_software', 'List locally registered research tools beyond the published software catalogue.', schema()),
     ('environments', 'Read a short page of configured software. refresh=true checks only this page’s installed programs; tool selects one connection.', schema({'tool':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':100},'refresh':{'type':'boolean'}})),
@@ -61,6 +64,9 @@ TOOLS = [
 def invoke(name, args, cancellation=None):
     if name == 'read_guide': return guide(args['topic'])
     if name == 'software_search': return catalogue.search(**args)
+    if name == 'materials':
+        from . import materials
+        return materials.lookup(**args)
     if name == 'software_details': return environments.details(**args)
     if name == 'register_software': return environments.register(**args)
     if name == 'registered_software': return {'software': environments.registered()}
