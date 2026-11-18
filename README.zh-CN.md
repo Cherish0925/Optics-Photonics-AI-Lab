@@ -33,6 +33,16 @@ optics-photonics connect agentic-research-os --output optics-plugin
 
 连接程序需要 Python 3.10+，支持 Windows、macOS 和 Linux，不依赖第三方库。GitHub 插件市场版本通过 [uv](https://docs.astral.sh/uv/getting-started/installation/) 选择执行端的 Python 3.10+，缺少时自动下载。先安装一次 uv；已有 Python 时也可以用 `optics-photonics connect HOST --python /path/to/python` 生成宿主包。Research OS 使用自带 Python。各科学软件保留自己的 Python、平台和许可。MCP 服务应运行在装有科学软件的机器上，本地或通过 SSH 均可。[接入说明](docs/CONNECT.zh-CN.md) · [交互指南](https://cherish0925.github.io/Optics-Photonics-AI-Lab/connect.zh.html) · [发布包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases)
 
+### 第一个计算
+
+```sh
+optics-photonics search "Bragg mirror"
+optics-photonics submit tmm spectrum --wait 25 --inputs '{"n": [1, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 1.52], "thickness_nm": [63.83, 102.74, 63.83, 102.74, 63.83, 102.74, 63.83, 102.74, 63.83, 102.74], "wavelength_nm": {"start": 450, "stop": 800, "points": 351}}'
+optics-photonics array RUN_ID calculate/attempt-1/spectrum.npz --member R --image R.png
+```
+
+搜索给出软件 `tmm` 和它的封装程序 `spectrum`。提交时第一次会把 tmm 装进它自己的环境，然后计算按 600 nm 设计的五对四分之一波长膜的反射率（600 nm 处 97.8 %），在等待时间内返回结果；若返回 `running`，用 `optics-photonics status RUN_ID --wait 25` 继续等。最后一条命令把反射率随波长画成图。智能体通过 MCP 做同样的事：`software_search`、`submit_calculation(tool, action, inputs, wait)`、`read_array(image="auto")`。
+
 ## 一次计算怎么进行
 
 1. **选软件。** `software_search` 按物理问题查找软件和封装程序，中英文皆可，光学概念的同义词与缩写互相匹配（[词表](data/vocabulary.json)）；`software_details` 返回每项软件的物理方法、接口、安装来源和封装程序。目录之外的工具用 `register_software` 加入。

@@ -534,10 +534,15 @@ def read_array(run_id, file, member=None, index=None, max_elements=None, image=N
     under '_image' with a summary (extremes and their positions) in place of
     the values; part and scale choose what is drawn (see pictures.picture).
     """
-    selection = arrays.read(file_path(run_id, file, path), member=member, index=index,
-                            max_elements=max_elements or (arrays.LIMIT if image else 10000))
+    target = file_path(run_id, file, path)
+    selection = arrays.read(target, member=member, index=index, max_elements=max_elements or (arrays.LIMIT if image else 10000))
     if not image:
         return {'run_id':run_id, 'file':file, **selection}
+    # Axes of length one hold no choice: a picture fixes them, as an index would.
+    given = list(index or []) + [None] * (len(selection['shape']) - len(index or []))
+    fixed = [0 if size == 1 and not isinstance(entry, int) else entry for entry, size in zip(given, selection['shape'])]
+    if fixed != given and any(size > 1 and not isinstance(entry, int) for entry, size in zip(fixed, selection['shape'])):
+        selection = arrays.read(target, member=member, index=fixed, max_elements=max_elements or arrays.LIMIT)
     from . import pictures
     png, summary = pictures.picture(selection, kind=image, part=part, scale=scale)
     kept = {key: value for key, value in selection.items() if key not in ('values', 'real', 'imag')}

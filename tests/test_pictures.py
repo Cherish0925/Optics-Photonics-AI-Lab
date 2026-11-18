@@ -91,6 +91,11 @@ class PictureCase(unittest.TestCase):
                 jobs.read_array(run_id, 'solve/attempt-1/data.npz', member='ramp', image='map', part='imag', path=home)
             with self.assertRaisesRegex(ValueError, 'one- or two-dimensional selection; this one has shape'):
                 jobs.read_array(run_id, 'solve/attempt-1/data.npz', member='ramp', index=[0, 0], image='auto', path=home)
+            # Axes of length one, such as one polarization and one angle of a spectrum, are fixed for the picture.
+            folder = Path(home) / 'runs' / run_id / 'solve' / 'attempt-1'
+            arrays.write(folder / 'spectrum', {'R': ([0.1 * k for k in range(50)], [1, 1, 50])}, {'R': {'quantity': 'reflectance'}})
+            drawn = jobs.read_array(run_id, 'solve/attempt-1/spectrum.npz', member='R', image='auto', path=home)
+            self.assertEqual((drawn['summary']['drawn']['kind'], drawn['result_shape']), ('line', [50]))
 
     def test_the_mcp_reply_carries_the_png_and_the_command_line_writes_it(self):
         with workspace() as home:

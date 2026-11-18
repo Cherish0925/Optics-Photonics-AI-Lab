@@ -33,6 +33,16 @@ optics-photonics connect agentic-research-os --output optics-plugin
 
 The connector needs Python 3.10+ on Windows, macOS or Linux and has no third-party dependencies; GitHub marketplace plugins use [uv](https://docs.astral.sh/uv/getting-started/installation/) to select Python 3.10+ on the execution host, downloading it only when needed. Install uv once, or generate a host package with an existing Python through `optics-photonics connect HOST --python /path/to/python`. Research OS uses its own Python. Each solver keeps its own Python, platforms and license. Run the MCP server on the machine that holds the scientific software, locally or over SSH. [Connection guide](docs/CONNECT.md) · [Interactive guide](https://cherish0925.github.io/Optics-Photonics-AI-Lab/connect.html) · [Releases](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases)
 
+### First calculation
+
+```sh
+optics-photonics search "Bragg mirror"
+optics-photonics submit tmm spectrum --wait 25 --inputs '{"n": [1, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 1.52], "thickness_nm": [63.83, 102.74, 63.83, 102.74, 63.83, 102.74, 63.83, 102.74, 63.83, 102.74], "wavelength_nm": {"start": 450, "stop": 800, "points": 351}}'
+optics-photonics array RUN_ID calculate/attempt-1/spectrum.npz --member R --image R.png
+```
+
+The search names the tool `tmm` and its packaged program `spectrum`. The submission installs tmm into an environment of its own the first time, computes the reflectance of five quarter-wave pairs designed for 600 nm (97.8 % there) and returns the result within the wait; if it replies `running`, `optics-photonics status RUN_ID --wait 25` waits further. The last command draws the reflectance over wavelength. An agent does the same through MCP: `software_search`, `submit_calculation(tool, action, inputs, wait)`, `read_array(image="auto")`.
+
 ## How a calculation runs
 
 1. **Choose software.** `software_search` finds software and packaged programs by physical problem, in English or Chinese, with synonyms and abbreviations of optical concepts ([vocabulary](data/vocabulary.json)); `software_details` returns the physical method, interfaces, installation source and packaged programs of each catalogue entry. `register_software` adds a tool outside the catalogue.
