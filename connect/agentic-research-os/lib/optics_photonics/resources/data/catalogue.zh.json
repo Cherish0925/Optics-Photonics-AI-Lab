@@ -3119,6 +3119,79 @@
     "stage": "成熟工具"
   },
   {
+    "id": "octave",
+    "name": "GNU Octave",
+    "group": "open",
+    "cats": [
+      "foundation",
+      "imaging"
+    ],
+    "method": "MATLAB 兼容语言的数值计算",
+    "summary": "无需 MATLAB 授权运行 MATLAB 语言的光学脚本、信号处理和线性代数。",
+    "api": "octave-cli 运行程序文件；Python、C++、Fortran 接口；7 版起有 jsondecode / jsonencode。",
+    "license": "GPL-3.0-or-later",
+    "compute": "CPU",
+    "usage": "GNU 项目的开源数值计算环境。",
+    "limit": "兼容大部分 MATLAB 语言代码，不兼容 MATLAB 工具箱和 Simulink。",
+    "sources": [
+      {
+        "label": "官方网站",
+        "url": "https://octave.org/"
+      },
+      {
+        "label": "版本说明",
+        "url": "https://octave.org/NEWS-7.html"
+      }
+    ],
+    "route": "script",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "julia",
+    "name": "Julia",
+    "group": "open",
+    "cats": [
+      "foundation",
+      "quantum",
+      "fiber"
+    ],
+    "method": "高性能数值计算语言",
+    "summary": "运行 Julia 光学程序，以及 QuantumOptics.jl、Luna.jl 等各自独立项目环境中的软件包。",
+    "api": "julia 运行程序文件；--project 选择软件包环境；Pkg 管理软件包。",
+    "license": "MIT",
+    "compute": "CPU；线程与 GPU 软件包按配置。",
+    "usage": "开源科学计算语言，其软件包生态用于光学研究。",
+    "limit": "首次调用需要编译，短程序的大部分时间用于编译。",
+    "sources": [
+      {
+        "label": "官方网站",
+        "url": "https://julialang.org/"
+      },
+      {
+        "label": "命令行",
+        "url": "https://docs.julialang.org/en/v1/manual/command-line-interface/"
+      }
+    ],
+    "route": "script",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
     "id": "freecad",
     "name": "FreeCAD",
     "group": "open",

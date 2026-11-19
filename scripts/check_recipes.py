@@ -22,9 +22,12 @@ from optics_photonics import catalogue, environments, execution, programs  # noq
 
 
 def candidates():
+    here = environments.here()
+    julia = environments.julia() or here in (environments.recipe('julia')['platforms'] or [here])
     for tool in sorted(catalogue.connections()):
         item = environments.recipe(tool)
-        if item and (not item['platforms'] or environments.here() in item['platforms']):
+        # Julia packages install where a Julia exists or conda-forge has one.
+        if item and (not item['platforms'] or here in item['platforms']) and (julia or not item['julia']):
             yield tool
 
 
@@ -32,9 +35,11 @@ def check(tool, home, run_programs=False):
     started = time.time()
     try:
         record = environments.prepare(tool, path=home)
-        result = {'tool': tool, 'state': 'installed', 'seconds': round(time.time() - started),
-                  'installer': record['installer'], 'python': environments.probe(tool, record['python'], home)['python_version'],
-                  'versions': record['versions']}
+        result = {'tool': tool, 'state': 'installed', 'seconds': round(time.time() - started), 'installer': record['installer']}
+        if record['kind'] == 'executable':
+            result.update(executable=record['executable'], language=record['language'], packages=record['packages'])
+        else:
+            result.update(python=environments.probe(tool, record['python'], home)['python_version'], versions=record['versions'])
     except Exception as error:  # report every failure and continue with the other tools
         return {'tool': tool, 'state': 'failed', 'seconds': round(time.time() - started), 'error': str(error)[-800:]}
     if run_programs and programs.catalog().get(tool):

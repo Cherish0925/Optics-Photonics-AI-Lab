@@ -31,7 +31,39 @@ def markdown(entries,domains,lang):
             lines.append('')
     return '\n'.join(lines)+'\n'
 
+def route_table(lang):
+    """Every catalogued software with its routes, generated into docs/NATIVE*.md between the routes markers."""
+    from optics_photonics import catalogue, routes
+    en = lang == 'en'
+    rows = ['| ' + (' | '.join(('Software', 'Routes', 'Installs') if en else ('软件', '通路', '安装'))) + ' |', '| --- | --- | --- |']
+    for item in catalogue.catalogue(lang):
+        found = routes.routes(item['id'])
+        if not found:
+            continue
+        parts = []
+        for route in found:
+            detail = route.get('language') if route['route'] in ('executable', 'inside') else route.get('progids', [None])[0] if route['route'] == 'automation' else None
+            if route['route'] == 'inside' and detail and len(detail) > 70:
+                detail = detail[:67].rsplit(' ', 1)[0] + ' …'
+            parts.append(route['route'] + (f' ({detail})' if detail else ''))
+        record = catalogue.connections()[item['id']]
+        installs = ('pip' if record.get('pip') else 'conda' if record.get('conda') else 'julia' if record.get('julia') else '—')
+        if installs != '—' and record.get('platforms'):
+            installs += ' (' + ', '.join(record['platforms']) + ')'
+        rows.append(f"| {item['name']} (`{item['id']}`) | {'; '.join(parts).replace('|', '/')} | {installs} |")
+    return '\n'.join(rows)
+
+
+def write_routes():
+    for lang, name in (('en', 'NATIVE.md'), ('zh', 'NATIVE.zh-CN.md')):
+        file = ROOT / 'docs' / name
+        text = file.read_text(encoding='utf-8')
+        start, end = text.index('<!-- routes -->') + len('<!-- routes -->'), text.index('<!-- /routes -->')
+        file.write_text(text[:start] + '\n' + route_table(lang) + '\n' + text[end:], encoding='utf-8')
+
+
 def main():
+    write_routes()
     subprocess.run([sys.executable,str(ROOT/"scripts/build_connect.py")],check=True)
     sets={}
     for lang in ('zh','en'):

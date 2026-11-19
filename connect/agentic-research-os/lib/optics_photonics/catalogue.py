@@ -213,6 +213,13 @@ def best_program(tool, terms):
     return best, chosen
 
 
+@lru_cache(maxsize=None)
+def route_kinds(tool):
+    """The kinds of route by which the environment reaches a catalogued tool, unattended ones first."""
+    from . import routes
+    return list(dict.fromkeys(route['route'] for route in routes.routes(tool, record=connections()[tool])))
+
+
 def search(query='', domain=None, license_group=None, offset=0, limit=20, language='en'):
     """Rank software by the concepts of the query it matches.
 
@@ -240,7 +247,10 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         weights = [next((weight for weight, text in zip((4, 3, 2, 1), fields) if any(p.search(text) for p in patterns)), 0)
                    for _, patterns in terms]
         connection = connections()[item['id']]
-        runs = 0 if programs.catalog().get(item['id']) else 1 if connection.get('pip') or connection.get('conda') else 2
+        installs = connection.get('pip') or connection.get('conda') or connection.get('julia')
+        packaged = programs.catalog().get(item['id'])
+        # Packaged programs that install themselves, then packaged programs or a recipe, then the rest.
+        runs = 0 if packaged and installs else 1 if packaged or installs else 2
         fit, program = best_program(item['id'], terms) if terms else ((0, 0), None)
         ranked.append((sum(map(bool, weights)), sum(weights), fit, runs, position, item, weights, program))
     best = max((entry[0] for entry in ranked), default=0)
@@ -253,9 +263,9 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         missing = [] if count == len(terms) else [label for (label, _), weight in zip(terms, weights) if not weight]
         program = {'name': program, 'title': programs.catalog()[item['id']][program]['title']} if program else None
         matches.append({k: item[k] for k in ('id', 'name', 'group', 'cats', 'summary')} |
-                       {'connection': connection['kind'], 'programs': list(programs.catalog().get(item['id'], {})),
+                       {'connection': connection['kind'], 'routes': route_kinds(item['id']), 'programs': list(programs.catalog().get(item['id'], {})),
                         'operations': list(programs.catalog().get(item['id'], {})),
-                        'install': 'conda' if connection.get('conda') else 'pip' if connection.get('pip') else 'manual',
+                        'install': 'conda' if connection.get('conda') else 'pip' if connection.get('pip') else 'julia' if connection.get('julia') else 'manual',
                         'upstream_mcp': item['mcp']['kind']} | ({'program': program} if program else {}) |
                        ({'missing': missing} if missing else {}))
     found = {'total': len(matches), 'items': matches[offset:offset + limit],

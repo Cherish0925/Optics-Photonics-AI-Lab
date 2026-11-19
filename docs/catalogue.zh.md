@@ -1,6 +1,6 @@
 # Optics · Photonics — 软件目录
 
-核查日期: 2026-10-20 | 97 个工具与产品族
+核查日期: 2026-10-20 | 99 个工具与产品族
 
 原创目录说明与代码采用 MIT；被收录软件遵循各自许可。
 
@@ -1509,6 +1509,42 @@ ID: `sage` | 推导与数字基础
 
 原始资料：
 - [官方主页与文档](https://www.sagemath.org/)
+
+### GNU Octave
+
+ID: `octave` | 推导与数字基础, 计算成像与重建
+
+- **物理方法:** MATLAB 兼容语言的数值计算
+- **用途:** 无需 MATLAB 授权运行 MATLAB 语言的光学脚本、信号处理和线性代数。
+- **编程入口:** octave-cli 运行程序文件；Python、C++、Fortran 接口；7 版起有 jsondecode / jsonencode。
+- **计算环境:** CPU
+- **许可:** GPL-3.0-or-later
+- **应用依据:** GNU 项目的开源数值计算环境。
+- **适用边界:** 兼容大部分 MATLAB 语言代码，不兼容 MATLAB 工具箱和 Simulink。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [官方网站](https://octave.org/)
+- [版本说明](https://octave.org/NEWS-7.html)
+
+### Julia
+
+ID: `julia` | 推导与数字基础, 量子光学, 光纤与通信
+
+- **物理方法:** 高性能数值计算语言
+- **用途:** 运行 Julia 光学程序，以及 QuantumOptics.jl、Luna.jl 等各自独立项目环境中的软件包。
+- **编程入口:** julia 运行程序文件；--project 选择软件包环境；Pkg 管理软件包。
+- **计算环境:** CPU；线程与 GPU 软件包按配置。
+- **许可:** MIT
+- **应用依据:** 开源科学计算语言，其软件包生态用于光学研究。
+- **适用边界:** 首次调用需要编译，短程序的大部分时间用于编译。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [官方网站](https://julialang.org/)
+- [命令行](https://docs.julialang.org/en/v1/manual/command-line-interface/)
 
 ### FreeCAD
 

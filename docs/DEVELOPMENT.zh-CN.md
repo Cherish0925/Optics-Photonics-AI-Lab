@@ -15,10 +15,10 @@
 | OP-04 / OP-08 | 数组的单位、坐标与约定；HCIPy → POPPY 光瞳到成像的数据交换；超表面单元 → 超透镜焦斑 | 更多科学量；电路路径中的版图和三维器件求解器 |
 | OP-12 | 已完成 episode 索引、重试与改变进程数后的续接、单独记录求解错误 | 共享数据集及异步学习器集成 |
 | OP-14 / OP-15 | 可移动的原生与便携包、自动选择 Python、按需读取指南、精简 Skills | 随宿主版本演进继续运行实际接入流程 |
-| OP-05 | 50 项开源软件的安装配方（pip 由 uv 安装，conda-forge 由 micromamba 安装），提交时先自动准备环境，一个解释器连接其中所有可用软件 | 独立分发的接入包；卸载与升级 |
-| OP-07 | 29 项软件的 45 个封装程序，写明输入，并与解析极限或另一求解器对照，安装配方工作流在各平台运行它们；refractiveindex.info 折射率数据 | 其余带配方软件的程序（Tidy3D、ceviche、pyGDM2、rayoptics、xrt 等） |
+| OP-05 | 59 项软件的安装配方（pip 由 uv 安装；conda-forge 由 micromamba 安装，含 GNU Octave、Julia；Julia 软件包由 Pkg 安装），提交时先自动准备环境，一个解释器连接其中所有可用软件；目录中每个软件的通路（python、session、带语言的 executable、Windows 自动化、在线服务、仅界面内），在 PATH、安装目录、环境变量和 Windows 注册表中查找，MATLAB、Octave、Julia、Wolfram Language、Maple、Lua、Lumerical 脚本程序，以及调用本机可执行程序的 Python 程序 | 独立分发的接入包；卸载与升级；在有许可证的安装上运行 MATLAB、Wolfram、Maple、Lumerical 的桥接 |
+| OP-07 | 30 项软件的 46 个封装程序，写明输入，并与解析极限或另一求解器对照，安装配方工作流在各平台运行它们（ADDA 的程序在绑定 adda 可执行程序后运行）；refractiveindex.info 折射率数据 | 其余带配方软件的程序（Tidy3D、ceviche、pyGDM2、rayoptics、xrt 等） |
 | OP-11 | 参数扫描作为并行步骤运行，汇总成表，可追加更细的扫描，`resume_run` 保留已完成的参数点；在一个进程内优化输入（差分进化、Nelder–Mead），边算边保存历史和最优一次计算的文件 | 单个长程序内部的断点；代理模型与多目标搜索 |
-| OP-06 / OP-09 / OP-10 / OP-13 / OP-16 | 保留已有接口 | 完整商业软件研究、远端任务、目录状态 |
+| OP-06 / OP-09 / OP-10 / OP-13 / OP-16 | COMSOL、Lumerical、OpticStudio、CST 的会话适配器；COMSOL、Lumerical、CST 可执行程序的批处理通路 | 在有许可证的工作站上完成商业软件研究、远端任务、目录状态 |
 
 软件目录、可运行适配器、完整科学流程分别说明。目录之外的软件仍可通过统一接口注册；每个求解器保留自己的平台及许可要求。
 

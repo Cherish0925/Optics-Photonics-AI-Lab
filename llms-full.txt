@@ -1,6 +1,6 @@
 # Optics · Photonics — software catalogue
 
-Reviewed: 2026-10-20 | 97 tools and product families
+Reviewed: 2026-10-20 | 99 tools and product families
 
 Original descriptions and code: MIT. Linked products retain their own licenses.
 
@@ -1509,6 +1509,42 @@ ID: `sage` | Derivation & digital foundations
 
 Sources:
 - [Official documentation / website](https://www.sagemath.org/)
+
+### GNU Octave
+
+ID: `octave` | Derivation & digital foundations, Computational imaging
+
+- **Physical method:** Numerical computing in a MATLAB-compatible language
+- **Purpose:** Runs MATLAB-language optical scripts, signal processing and linear algebra without a MATLAB license.
+- **Programmable interface:** octave-cli runs program files; Python, C++ and Fortran interfaces; jsondecode / jsonencode from version 7.
+- **Compute:** CPU.
+- **License:** GPL-3.0-or-later
+- **Application basis:** The GNU project's open numerical-computing environment.
+- **Limitations:** Compatible with most MATLAB language code but not with MATLAB toolboxes or Simulink.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [Official documentation / website](https://octave.org/)
+- [Release notes](https://octave.org/NEWS-7.html)
+
+### Julia
+
+ID: `julia` | Derivation & digital foundations, Quantum optics, Fibers & communications
+
+- **Physical method:** High-performance numerical computing language
+- **Purpose:** Runs Julia optics programs and packages such as QuantumOptics.jl and Luna.jl in project environments of their own.
+- **Programmable interface:** julia runs program files; --project selects a package environment; packages through Pkg.
+- **Compute:** CPU; threads and GPU packages according to configuration.
+- **License:** MIT
+- **Application basis:** Open scientific-computing language with a package ecosystem used in optics.
+- **Limitations:** First calls compile code, so short programs spend much of their time compiling.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [Official documentation / website](https://julialang.org/)
+- [Command line](https://docs.julialang.org/en/v1/manual/command-line-interface/)
 
 ### FreeCAD
 

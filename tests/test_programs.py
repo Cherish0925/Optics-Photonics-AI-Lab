@@ -39,7 +39,8 @@ class DeclarationCase(unittest.TestCase):
     def test_every_program_declares_its_physics_inputs_and_results(self):
         connections = catalogue.connections()
         for tool, items in programs.catalog().items():
-            self.assertEqual(connections[tool]['kind'], 'python', tool)
+            # A program runs in its tool's Python environment, or drives the installed executable it is bound to.
+            self.assertTrue(connections[tool]['kind'] == 'python' or any(route['route'] == 'executable' for route in connections[tool]['routes']), tool)
             for name, spec in items.items():
                 with self.subTest(program=tool + '/' + name):
                     self.assertTrue(spec['title'].endswith('.'))
@@ -107,8 +108,9 @@ class ProgramPhysicsCase(unittest.TestCase):
 
     def test_every_program_runs_with_its_defaults(self):
         for tool, items in programs.catalog().items():
-            if not all(map(installed, catalogue.connections()[tool]['modules'])):
-                continue  # Meep and MPB come from conda-forge, outside this environment
+            record = catalogue.connections()[tool]
+            if record['kind'] != 'python' or not all(map(installed, record['modules'])):
+                continue  # Meep and MPB come from conda-forge, outside this environment; ADDA's program drives its executable
             for name in items:
                 with self.subTest(program=tool + '/' + name):
                     result = self.run_program(tool, name)

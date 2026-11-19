@@ -1973,6 +1973,50 @@
     ]
   },
   {
+    "url": "https://octave.org/",
+    "label": "Official documentation / website",
+    "kind": "docs",
+    "software_ids": [
+      "octave"
+    ],
+    "software_names": [
+      "GNU Octave"
+    ]
+  },
+  {
+    "url": "https://octave.org/NEWS-7.html",
+    "label": "Release notes",
+    "kind": "docs",
+    "software_ids": [
+      "octave"
+    ],
+    "software_names": [
+      "GNU Octave"
+    ]
+  },
+  {
+    "url": "https://julialang.org/",
+    "label": "Official documentation / website",
+    "kind": "docs",
+    "software_ids": [
+      "julia"
+    ],
+    "software_names": [
+      "Julia"
+    ]
+  },
+  {
+    "url": "https://docs.julialang.org/en/v1/manual/command-line-interface/",
+    "label": "Command line",
+    "kind": "docs",
+    "software_ids": [
+      "julia"
+    ],
+    "software_names": [
+      "Julia"
+    ]
+  },
+  {
     "url": "https://github.com/FreeCAD/FreeCAD",
     "label": "API / project documentation",
     "kind": "code",

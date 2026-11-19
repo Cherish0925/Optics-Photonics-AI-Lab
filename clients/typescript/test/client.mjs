@@ -123,3 +123,19 @@ test('a sweep runs its points in parallel and its table names the best point',as
   assert.deepEqual(summary.at_min,{x:2});
  }finally{client.close();await rm(home,{recursive:true,force:true,maxRetries:20,retryDelay:50});}
 });
+
+test('installed software is found, bound by its executable and driven by a program',async()=>{
+ const home=await mkdtemp(join(tmpdir(),'Optics TypeScript '));
+ const command=process.env.OPTICS_PYTHON||(process.platform==='win32'?'python':'python3');
+ const client=await OpticsLab.connect({command,args:['-B',resolve('../../server.py'),'mcp'],home});
+ try {
+  const found=await client.discover({tool:'matlab',roots:[home]});
+  assert.equal(found.routes[0].program.language,'matlab');
+  const python=execFileSync(command,['-c','import sys; print(sys.executable)'],{encoding:'utf8'}).trim();
+  const bound=await client.bindNative('adda',{executable:python,python});
+  assert.deepEqual([bound.kind,bound.language],['executable',null]);
+  const source="RUN('-c', 'open(\"out.txt\", \"w\").write(\"6\")')\nRESULT = {'out': (OUTPUT_DIR / 'out.txt').read_text()}";
+  const one=await client.calculate('adda',{source,wait:20});
+  assert.deepEqual([one.state,one.result],['succeeded',{out:'6'}]);
+ }finally{client.close();await rm(home,{recursive:true,force:true,maxRetries:20,retryDelay:50});}
+});

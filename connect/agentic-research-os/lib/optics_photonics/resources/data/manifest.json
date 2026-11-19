@@ -7,15 +7,15 @@
     "en",
     "zh"
   ],
-  "entries": 97,
+  "entries": 99,
   "domains": 14,
   "groups": {
     "paid": 29,
     "limited": 3,
-    "open": 65
+    "open": 67
   },
-  "primary_source_urls": 198,
-  "resource_urls_including_connectors": 202,
+  "primary_source_urls": 202,
+  "resource_urls_including_connectors": 206,
   "catalogues": {
     "en": "https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/data/catalogue.en.json",
     "zh": "https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/data/catalogue.zh.json"

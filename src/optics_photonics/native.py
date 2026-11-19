@@ -46,8 +46,8 @@ def details(tool):
             'verification': 'Adapter lifecycle tests; licensed solver execution is required on the target workstation.'}
 
 
-def discover(roots=None):
-    """Inspect known installation layouts, without launching software or scanning whole disks."""
+def discover(roots=None, tool=None, path=None):
+    """Installations of session SDKs and of every route, without launching software or scanning whole disks."""
     folders = [Path(p).expanduser() for p in roots or []]
     folders += [Path(p) for p in ('/opt', '/opt/ansys_inc', '/usr/local', '/Applications')]
     folders += [Path(os.environ[k]) for k in ('ProgramFiles', 'ProgramFiles(x86)', 'LUMERICAL_HOME', 'CST_HOME', 'COMSOL_HOME', 'ZEMAX_ROOT') if os.environ.get(k)]
@@ -61,19 +61,26 @@ def discover(roots=None):
     for root in dict.fromkeys(folders):
         if not root.is_dir():
             continue
-        for tool, globs in patterns.items():
+        for name, globs in patterns.items():
             for glob in globs:
                 for file in root.glob(glob):
                     if not file.is_file():
                         continue
                     full = str(file.resolve())
-                    entry = {'tool': tool, 'file': full}
-                    if tool == 'lumerical': entry['sdk_path'] = str(file.parent.resolve())
-                    if tool == 'cst': entry['sdk_path'] = str(file.parent.parent.resolve())
-                    if tool == 'opticstudio': entry['options'] = {'opticstudio_directory': str(file.parent.resolve())}
-                    found[(tool, full)] = entry
-    return {'platform': platform.system(), 'installations': list(found.values()),
-            'adapters': [details(tool) for tool in ADAPTERS]}
+                    entry = {'tool': name, 'route': 'session', 'file': full}
+                    if name == 'lumerical': entry['sdk_path'] = str(file.parent.resolve())
+                    if name == 'cst': entry['sdk_path'] = str(file.parent.parent.resolve())
+                    if name == 'opticstudio': entry['options'] = {'opticstudio_directory': str(file.parent.resolve())}
+                    found[(name, full)] = entry
+    from . import routes
+    tools = [tool] if tool else list(ADAPTERS)
+    if tool:
+        found = {key: entry for key, entry in found.items() if entry['tool'] == tool}
+    reply = {'platform': platform.system(), 'installations': list(found.values()) + routes.discover(roots, tool, path),
+             'adapters': [details(name) for name in tools if name in ADAPTERS]}
+    if tool:
+        reply['routes'] = routes.routes(tool, path)
+    return reply
 
 
 def probe(connection):
@@ -94,9 +101,17 @@ print(json.dumps({'python':sys.executable,'modules':found,'importable':all(found
     return json.loads(result.stdout.strip().splitlines()[-1])
 
 
-def bind(tool, *, python=None, sdk_path=None, options=None, threads=1, concurrency=1, path=None, requirements=None, env=None):
+def bind(tool, *, route=None, executable=None, progid=None, project=None, python=None, sdk_path=None, options=None,
+         threads=1, concurrency=1, path=None, requirements=None, env=None):
+    """A session SDK for COMSOL, Lumerical, OpticStudio and CST; another route of any installed software."""
+    if route not in (None, 'session') or executable or progid or (tool not in ADAPTERS and route is None):
+        if options:
+            raise ValueError('options configure session adapters')
+        from . import routes
+        return routes.bind(tool, route=route, executable=executable, progid=progid, project=project, python=python,
+                           sdk_path=sdk_path, threads=threads, concurrency=concurrency, requirements=requirements, env=env, path=path)
     if tool not in ADAPTERS:
-        raise ValueError('Native session adapters: ' + ', '.join(ADAPTERS))
+        raise ValueError('Session adapters: ' + ', '.join(ADAPTERS) + '; other software binds by route executable, automation or python')
     if platform.system() not in ADAPTERS[tool]['platforms']:
         raise ValueError(tool + ' session adapter runs on ' + ', '.join(ADAPTERS[tool]['platforms']) + '. Run its MCP connection on that workstation.')
     if type(threads) is not int or threads < 1 or type(concurrency) is not int or concurrency < 1:

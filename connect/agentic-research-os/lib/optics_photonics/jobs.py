@@ -157,8 +157,9 @@ def validate(steps, known=()):
         s = dict(item)
         identifier(s.get('id'))
         if s['id'] in graph or s['id'] in known: raise ValueError('Duplicate step ID: '+s['id'])
-        if set(s)-{'id','tool','action','source','inputs','after','bindings','timeout','requirements','optimize','point','points'}:
-            raise ValueError('A step accepts id, tool, action, source, inputs, after, bindings, requirements, timeout, optimize, point and points')
+        if set(s)-{'id','tool','action','source','script','inputs','after','bindings','timeout','requirements','optimize','point','points'}:
+            raise ValueError('A step accepts id, tool, action, source, script, inputs, after, bindings, requirements, timeout, optimize, point and points')
+        if not isinstance(s.get('script', ''), str): raise ValueError('script is the text of a program in the software\'s own language')
         if not isinstance(s.get('tool'), str): raise ValueError('Each step needs a software tool ID')
         if not isinstance(s.get('inputs', {}), dict): raise ValueError('inputs must be an object')
         if not isinstance(s.get('after', []), list): raise ValueError('after must be a list of step IDs')
@@ -605,7 +606,7 @@ def perform(run_id, row, path, cancellation):
                     row_result = db.execute("SELECT result FROM steps WHERE run_id=? AND id=? AND state='succeeded'",(run_id,key)).fetchone()
                     results[key] = json.loads(row_result[0])
         request = {'action':spec.get('action',''),'source':spec.get('source',''),'inputs':resolved_inputs(spec,results,folders),
-                   **{key:spec[key] for key in ('optimize','points') if spec.get(key)}}
+                   **{key:spec[key] for key in ('script','optimize','points') if spec.get(key)}}
         result = execution.run(spec['tool'],request,output=output,configuration=config,timeout=spec.get('timeout'),cancel=cancellation)
         record = result['record']
         result = {'output':result['output'], **record} if isinstance(record,dict) and 'result' in record else {'output':result['output'],'result':record}
