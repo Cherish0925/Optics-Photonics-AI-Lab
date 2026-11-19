@@ -6,6 +6,16 @@ import {join,resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {OpticsLab} from '../dist/index.js';
 
+test('picture handles text metadata and reports unsupported older servers clearly',async()=>{
+ const request=async()=>({content:[{type:'image',mimeType:'image/png',data:Buffer.from('png').toString('base64')},
+                                  {type:'text',text:JSON.stringify({summary:{minimum:2}})}]});
+ const picture=await OpticsLab.prototype.picture.call({request},'run','field.npy');
+ assert.equal(picture.png.toString(),'png');
+ assert.deepEqual(picture.summary,{minimum:2});
+ await assert.rejects(OpticsLab.prototype.picture.call({request:async()=>({content:[{type:'text',text:'{}'}]})},'run','field.npy'),
+                      /upgrade the Optics connector/);
+});
+
 test('submit arbitrary software, reconnect and retrieve its saved output',async()=>{
  const home=await mkdtemp(join(tmpdir(),'Optics TypeScript '));
  const command=process.env.OPTICS_PYTHON||(process.platform==='win32'?'python':'python3');

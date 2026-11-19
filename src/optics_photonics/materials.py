@@ -17,6 +17,7 @@ import math
 import os
 from pathlib import Path
 import re
+import tempfile
 import urllib.parse
 import urllib.request
 
@@ -125,9 +126,18 @@ def _download(row, target):
     with urllib.request.urlopen(url, timeout=60) as response:
         data = response.read()
     target.parent.mkdir(parents=True, exist_ok=True)
-    partial = target.with_name(target.name + '.partial')
-    partial.write_bytes(data)
-    os.replace(partial, target)
+    with tempfile.NamedTemporaryFile(dir=target.parent, prefix=target.name + '.', suffix='.partial', delete=False) as stream:
+        partial = Path(stream.name)
+        try:
+            stream.write(data)
+        except BaseException:
+            stream.close()
+            partial.unlink(missing_ok=True)
+            raise
+    try:
+        os.replace(partial, target)
+    finally:
+        partial.unlink(missing_ok=True)
 
 
 def page(material, path=None):

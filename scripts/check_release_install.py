@@ -76,7 +76,8 @@ data.save(OUTPUT_DIR/'spectrum',{
             info = getattr(initialized, 'server_info', getattr(initialized, 'serverInfo', None))
             assert info.version == options.version, initialized
             names = {tool.name for tool in (await session.list_tools()).tools}
-            assert len(names) == 22, names
+            expected_tools = 24 if tuple(map(int, options.version.split('.'))) >= (0, 8, 0) else 22
+            assert len(names) == expected_tools, names
             if options.previous_run:
                 old = result(await session.call_tool('run_status', {'run_id': options.previous_run, 'include_results': True}))
                 assert old['state'] == 'succeeded', old

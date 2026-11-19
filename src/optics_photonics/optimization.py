@@ -47,7 +47,10 @@ def checked(spec):
         scale = item.get('scale', 'linear')
         if scale not in ('linear', 'log') or scale == 'log' and low <= 0:
             raise ValueError(f'optimize.variables.{key}: scale is linear or log, and log needs low > 0')
-        bounds[str(key)] = {'low': low, 'high': high, 'scale': scale, 'integer': bool(item.get('integer', False))}
+        integer = item.get('integer', False)
+        if type(integer) is not bool or integer and math.ceil(low) > math.floor(high):
+            raise ValueError(f'optimize.variables.{key}: integer must be boolean and its bounds must contain an integer')
+        bounds[str(key)] = {'low': low, 'high': high, 'scale': scale, 'integer': integer}
     if ('minimize' in spec) == ('maximize' in spec) or not isinstance(spec.get('minimize', spec.get('maximize')), str):
         raise ValueError('optimize needs minimize or maximize: the dotted path of a number in RESULT, such as R.0')
     method = spec.get('method', 'differential-evolution')
@@ -57,8 +60,8 @@ def checked(spec):
     if type(evaluations) is not int or not 2 <= evaluations <= 100000:
         raise ValueError('optimize.evaluations is an integer between 2 and 100000')
     seed, tolerance = spec.get('seed', 0), spec.get('tolerance', 1e-8)
-    if type(seed) is not int or not isinstance(tolerance, (int, float)) or not tolerance > 0:
-        raise ValueError('optimize.seed is an integer and optimize.tolerance a positive number')
+    if type(seed) is not int or isinstance(tolerance, bool) or not isinstance(tolerance, (int, float)) or not math.isfinite(tolerance) or tolerance <= 0:
+        raise ValueError('optimize.seed is an integer and optimize.tolerance a finite positive number')
     goal = 'minimize' if 'minimize' in spec else 'maximize'
     return {'variables': bounds, 'goal': goal, 'path': spec[goal], 'method': method, 'evaluations': evaluations,
             'seed': seed, 'tolerance': float(tolerance)}
@@ -71,7 +74,7 @@ def value_of(bound, u):
         value = bound['low'] * (bound['high'] / bound['low']) ** u
     else:
         value = bound['low'] + (bound['high'] - bound['low']) * u
-    return int(round(value)) if bound['integer'] else value
+    return min(math.floor(bound['high']), max(math.ceil(bound['low']), round(value))) if bound['integer'] else value
 
 
 def position_of(bound, value):
@@ -92,8 +95,9 @@ def nelder_mead(f, start, evaluations, tolerance=1e-8, step=0.1):
         point = list(simplex[0])
         point[i] = point[i] + step if point[i] + step <= 1 else point[i] - step
         simplex.append(point)
+    simplex = simplex[:evaluations]
     values = [f(x) for x in simplex]
-    used = n + 1
+    used = len(values)
     while used < evaluations:
         order = sorted(range(n + 1), key=values.__getitem__)
         simplex, values = [simplex[i] for i in order], [values[i] for i in order]
@@ -105,6 +109,10 @@ def nelder_mead(f, start, evaluations, tolerance=1e-8, step=0.1):
         reflected = clip([c + (c - w) for c, w in zip(centre, worst)])
         fr = f(reflected)
         used += 1
+        if used >= evaluations:
+            if fr < values[-1]:
+                simplex[-1], values[-1] = reflected, fr
+            break
         if values[0] <= fr < values[-2]:
             simplex[-1], values[-1] = reflected, fr
             continue
@@ -127,7 +135,7 @@ def nelder_mead(f, start, evaluations, tolerance=1e-8, step=0.1):
             simplex[k] = [b + 0.5 * (x - b) for b, x in zip(simplex[0], simplex[k])]
             values[k] = f(simplex[k])
             used += 1
-    k = min(range(n + 1), key=values.__getitem__)
+    k = min(range(len(values)), key=values.__getitem__)
     return simplex[k], values[k], used, False
 
 

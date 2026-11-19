@@ -99,7 +99,7 @@ power = {name: np.abs(np.asarray(S[pair])) ** 2 for name, pair in ports.items()}
 expected = {name: np.abs(value) ** 2 for name, value in analytic.items()}
 
 T = power[dips_of]
-inner = np.where((T[1:-1] < T[:-2]) & (T[1:-1] <= T[2:]))[0] + 1
+inner = np.where((T[1:-1] < T[:-2]) & (T[1:-1] <= T[2:]))[0] + 1 if length and ng else []
 top = float(T.max())
 dips = []
 for i in inner:
@@ -119,6 +119,7 @@ for i in inner:
                  'width_nm': float((x1 - x0) * 1e3), 'loaded_q': float(wl[i] / (x1 - x0))})
 fsr = float(np.mean(np.diff([d['wavelength_um'] for d in dips]))) if len(dips) > 1 else None
 centre = float(np.mean([d['wavelength_um'] for d in dips])) if dips else wl0
+expected_fsr = centre ** 2 / abs(ng * length) if ng * length else None
 axes = ['wavelength_um']
 arrays = {'wavelength_um': data.quantity(wl, 'vacuum wavelength', unit='um')}
 for name in power:
@@ -126,6 +127,6 @@ for name in power:
     arrays[name + '_analytic'] = data.quantity(expected[name], f'analytic power transmission to the {name} port', unit='1', axes=axes)
 saved = data.save(OUTPUT_DIR / 'transmission', arrays)
 RESULT = {'data': saved['data'], 'circuit': p['circuit'], 'dips': dips[:20], 'dip_count': len(dips), 'fsr_nm': fsr * 1e3 if fsr else None,
-          'fsr_expected_nm': centre ** 2 / (ng * length) * 1e3,
+          'fsr_expected_nm': expected_fsr * 1e3 if expected_fsr is not None else None,
           'checks': {'analytic_difference': float(max(np.max(np.abs(power[n] - expected[n])) for n in power)),
-                     'fsr_error': abs(fsr / (centre ** 2 / (ng * length)) - 1) if fsr else None}}
+                     'fsr_error': abs(fsr / expected_fsr - 1) if fsr and expected_fsr else None}}

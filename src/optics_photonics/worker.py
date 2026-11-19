@@ -65,30 +65,36 @@ def execute(tool, request, output):
         source = programs.source(tool, action)  # a packaged program runs like a submitted one
     if native_path:
         from optics_photonics import native
-        context = native.session(json.loads(Path(native_path).read_text(encoding='utf-8')), inputs, output)
-    else:
-        context = nullcontext({})
-    with context as session:
-        def program(given, folder):
-            namespace = {'__name__': '__main__', '__file__': str(output/'program.py'), 'INPUTS': given, 'OUTPUT_DIR': folder, 'RESULT': None, **session}
-            exec(code, namespace)
-            if namespace['RESULT'] is None:
-                raise ValueError('Set RESULT to the compact JSON result; write arrays and models under OUTPUT_DIR')
-            return namespace['RESULT']
-        def calculate(given, folder):
+        connection = json.loads(Path(native_path).read_text(encoding='utf-8'))
+    if source:
+        (output/'program.py').write_text(source, encoding='utf-8')
+        code = compile(source, str(output/'program.py'), 'exec')
+    elif request.get('optimize'):
+        raise ValueError('optimize runs a program given as source in this session, not a session action')
+
+    def calculate(given, folder):
+        # Each sweep point owns its project and output. An optimization reuses that point's session.
+        context = native.session(connection, given, folder) if native_path else nullcontext({})
+        with context as session:
+            if not source:
+                return native.calculate(tool, action, given, {'INPUTS': given, 'OUTPUT_DIR': folder, 'RESULT': None, **session})
+
+            def program(values, target):
+                namespace = {'__name__': '__main__', '__file__': str(output/'program.py'), 'INPUTS': values, 'OUTPUT_DIR': target, 'RESULT': None, **session}
+                if native_path:
+                    namespace['EXPORT'] = lambda value, name='data': native.export(value, name, target)
+                exec(code, namespace)
+                if namespace['RESULT'] is None:
+                    raise ValueError('Set RESULT to the compact JSON result; write arrays and models under OUTPUT_DIR')
+                return namespace['RESULT']
+
             if not request.get('optimize'):
                 return program(given, folder)
             from optics_photonics import optimization
             spec = None if request.get('source') else programs.catalog().get(tool, {}).get(action)
             return optimization.run(program, given, request['optimize'], folder, programs.inputs(spec) if spec else None)
-        if source:
-            (output/'program.py').write_text(source, encoding='utf-8')
-            code = compile(source, str(output/'program.py'), 'exec')
-            result = points(request['points'], calculate, output) if request.get('points') else calculate(inputs, output)
-        else:
-            if request.get('optimize'):
-                raise ValueError('optimize runs a program given as source in this session, not a session action')
-            result = native.calculate(tool, action, inputs, {'INPUTS': inputs, 'OUTPUT_DIR': output, 'RESULT': None, **session})
+
+    result = points(request['points'], calculate, output) if request.get('points') else calculate(inputs, output)
     # Distribution names are taken from the active interpreter, including native-program dependencies.
     versions = {}
     package_map = distributions()

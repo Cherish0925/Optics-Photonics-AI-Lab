@@ -46,7 +46,7 @@ envelope = 1 / np.cosh(T / T0) if p['shape'] == 'sech' else np.exp(-T ** 2 / (2 
 A = np.sqrt(P0) * envelope * np.exp(-0.5j * C * (T / T0) ** 2)
 w = 2 * np.pi * np.fft.fftfreq(points, dT)                         # angular frequency, rad/ps
 dz = length / steps
-half = np.exp((0.5j * beta2 * w ** 2 + 1j * beta3 / 6 * w ** 3 - alpha / 2) * dz / 2)
+half = np.exp((0.5j * beta2 * w ** 2 - 1j * beta3 / 6 * w ** 3 - alpha / 2) * dz / 2)
 saved_at = np.unique(np.linspace(0, steps, int(p['saved_positions'])).round().astype(int))
 powers, spectra, positions = [], [], []
 
@@ -54,7 +54,8 @@ powers, spectra, positions = [], [], []
 def record(field, step):
     positions.append(step * dz)
     powers.append(np.abs(field) ** 2)
-    spectra.append(np.abs(np.fft.fftshift(np.fft.fft(field))) ** 2 * dT ** 2)
+    # The exp(-i omega t) convention associates positive frequency with exp(-i omega T).
+    spectra.append(np.abs(np.fft.fftshift(np.fft.ifft(field)) * points) ** 2 * dT ** 2)
 
 
 record(A, 0)
@@ -78,8 +79,8 @@ def fwhm(power):
     return float((above[-1] - above[0]) * dT)
 
 
-LD = T0 ** 2 / abs(beta2) if beta2 else float('inf')
-LNL = 1 / (gamma * P0) if gamma else float('inf')
+LD = T0 ** 2 / abs(beta2) if beta2 else None
+LNL = 1 / (gamma * P0) if gamma else None
 order = float(np.sqrt(gamma * P0 * T0 ** 2 / abs(beta2))) if beta2 else None
 energy = np.sum(np.abs(A) ** 2) * dT
 checks = {'energy_error': float(abs(energy / energy0 - 1)) if alpha == 0 else None, 'dispersive_width_error': None, 'soliton_shape_error': None}

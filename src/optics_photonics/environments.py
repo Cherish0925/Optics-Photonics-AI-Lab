@@ -145,7 +145,7 @@ def details(tool, language='en', path=None, program=None):
 
     With program, that packaged program's physics, inputs, results, checks and source, to read or adapt.
     """
-    from . import native, programs
+    from . import operations, programs
     item = software(tool, language, path)
     if program is not None:
         return {'tool': tool, 'program': program, **{k: v for k, v in programs.details(tool, program).items() if k != 'name'},
@@ -154,9 +154,7 @@ def details(tool, language='en', path=None, program=None):
     if item.get('origin') != 'local':
         # connections.json repeats these catalogue fields so that the file can be read on its own.
         item = {**item, 'connection': {key: value for key, value in item['connection'].items() if key not in REPEATED}}
-    adapter = native.details(tool)
-    return {**item, 'execution': {'programs': programs.details(tool), 'native_program': True,
-                                  **({'session_adapter': adapter} if adapter else {})}}
+    return {**item, 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
 
 
 def registered(path=None):

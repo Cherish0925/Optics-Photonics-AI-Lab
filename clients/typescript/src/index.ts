@@ -45,7 +45,7 @@ export class OpticsLab {
   static async connect(options:Options={}) {
     const client=new OpticsLab(options);
     try {
-      await client.request('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'optics-typescript',version:'0.7.0'}});
+      await client.request('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'optics-typescript',version:'0.8.0'}});
       client.notify('notifications/initialized');
       return client;
     } catch(error) { client.close(); throw error; }
@@ -119,8 +119,10 @@ export class OpticsLab {
   async picture(run_id:string,file:string,options:{member?:string;index?:(number|null|(number|null)[])[];max_elements?:number;image?:'auto'|'line'|'map';part?:'abs'|'real'|'imag'|'phase'|'power';scale?:'linear'|'log'}={}):Promise<{png:Buffer;summary:Record<string,unknown>}> {
     const result=await this.request('tools/call',{name:'read_array',arguments:{run_id,file,image:'auto',...options}});
     if(result.isError) throw new Error(result.content?.map((c:{text?:string})=>c.text??'').join('\n')||'Optics operation failed');
-    const image=result.content.find((c:{type:string})=>c.type==='image');
-    return {png:Buffer.from(image.data,'base64'),summary:result.structuredContent.summary};
+    const image=result.content?.find((c:{type:string;mimeType?:string})=>c.type==='image'&&c.mimeType==='image/png');
+    if(!image||typeof image.data!=='string') throw new Error('The server did not return a PNG; upgrade the Optics connector to 0.8.0 or newer');
+    const structured=result.structuredContent??JSON.parse(result.content?.find((c:{type:string})=>c.type==='text')?.text??'{}');
+    return {png:Buffer.from(image.data,'base64'),summary:structured.summary??{}};
   }
   read(run_id:string,file:string,offset=0,limit=16384){return this.call('read_result',{run_id,file,offset,limit});}
   /** Copy a result file to this computer; the server may run elsewhere, for example over SSH. */

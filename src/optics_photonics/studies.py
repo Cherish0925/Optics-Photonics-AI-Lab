@@ -149,7 +149,7 @@ def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product
     wait (up to 25 seconds) returns the run's state after that time or on completion,
     and for one calculation its result, files and output folder, or its error.
     """
-    from . import jobs, programs
+    from . import environments, jobs, programs
     if not isinstance(wait, (int, float)) or isinstance(wait, bool) or not 0 <= wait <= 25:
         raise ValueError('wait must be between 0 and 25 seconds')
     step = {'tool': tool, 'inputs': {} if inputs is None else inputs}
@@ -170,14 +170,18 @@ def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product
         points = expand(step, sweep, pairing, max(used, default=0) + 1, programs.inputs(spec) if spec else None)
         if chunk is not None and (type(chunk) is not int or chunk < 1):
             raise ValueError('chunk is a positive number of points per process')
-        steps = grouped(points, chunk or max(1, math.ceil(len(points) / (4 * jobs.resources(path=path)['cpu']))))
+        configuration = environments.read(path)['tools'].get(tool, {})
+        # External programs accept one request per invocation; they need not implement our worker's grouping protocol.
+        size = 1 if configuration.get('kind') == 'command' else chunk or max(1, math.ceil(len(points) / (4 * jobs.resources(path=path)['cpu'])))
+        steps = grouped(points, size)
     # The call, not its numbered steps, identifies a retried request.
     call = {'tool': tool, 'inputs': step['inputs'], 'action': action, 'source': source, 'sweep': sweep, 'pairing': pairing,
             'optimize': optimize, 'chunk': chunk, 'timeout': timeout, 'requirements': requirements, 'name': name, 'run_id': run_id}
     submitted = jobs.submit(steps, name=name, request_id=request_id, run_id=run_id, path=path, _payload={'calculation': call})
     if not wait:
         return submitted
-    return {**submitted, **jobs.outcome(submitted['run_id'], steps[0]['id'] if sweep is None else None, wait, path, cancel)}
+    original = jobs.submitted_steps(submitted['request_id'], path)
+    return {**submitted, **jobs.outcome(submitted['run_id'], original[0] if sweep is None and original else None, wait, path, cancel)}
 
 
 def _number(value):

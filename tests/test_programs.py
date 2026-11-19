@@ -23,6 +23,19 @@ def installed(module):
 
 
 class DeclarationCase(unittest.TestCase):
+    def test_legacy_operation_discovery_delegates_to_the_same_programs(self):
+        from optics_photonics import operations
+        name, example = operations.EXAMPLES['scipy']
+        self.assertEqual(name, 'fit_gaussian')
+        self.assertEqual(example, programs.inputs(programs.catalog()['scipy'][name]))
+        details = environments.details('scipy')['execution']
+        self.assertEqual(details['operations'][0]['name'], name)
+        self.assertTrue(details['operations'][0]['description'])
+        self.assertEqual(details['operations'][0]['inputs_example'], example)
+        found = catalogue.search('scipy')['items']
+        for item in found:
+            self.assertEqual(item['operations'], item['programs'])
+
     def test_every_program_declares_its_physics_inputs_and_results(self):
         connections = catalogue.connections()
         for tool, items in programs.catalog().items():
@@ -220,6 +233,9 @@ class ProgramPhysicsCase(unittest.TestCase):
         self.assertAlmostEqual(ideal['airy_ratio'], 1, delta=0.03)       # NA 0.45: within 3 % of 0.514 lambda / NA
         self.assertAlmostEqual(ideal['strehl'], 1, delta=1e-3)
         self.assertLess(ideal['checks']['energy_error'], 1e-12)
+        tight = self.run_program('scipy', 'metalens', {'aperture_um': 25.6, 'window': 1})
+        self.assertLess(tight['checks']['energy_error'], 1e-12)
+        json.dumps(tight, allow_nan=False)
         from support import workspace
         guide = (Path(__file__).resolve().parents[1] / 'skills/optical-computation/references/programs.md').read_text(encoding='utf-8')
         steps = json.loads(guide.split('A file passes the same way')[1].split('```json')[1].split('```')[0])
@@ -335,6 +351,27 @@ class ProgramPhysicsCase(unittest.TestCase):
         self.assertLess(laser['checks']['threshold_error'], 1e-3)
         self.assertLess(laser['checks']['slope_error'], 1e-3)
 
+    def test_zero_dispersion_and_nonlinearity_serialize_and_third_order_drift_has_the_declared_sign(self):
+        import numpy as np
+        from optics_photonics import data, worker
+        folder = Path(self.folder.name)/'third-order'
+        record = worker.execute('scipy', {'action': 'nlse', 'inputs': {'shape': 'gaussian', 'beta2_ps2_per_km': 0,
+                                'beta3_ps3_per_km': 1, 'gamma_per_W_km': 0, 'length_km': 0.001, 'steps': 1}}, folder)
+        self.assertIsNone(record['result']['dispersion_length_km'])
+        self.assertIsNone(record['result']['nonlinear_length_km'])
+        stored = data.load(folder/'pulse.npz')
+        power, time_axis = stored['power'].values[-1], stored['time_ps'].values
+        centre = float(np.sum(time_axis*power)/np.sum(power))
+        # For a Gaussian, +(beta3/6) d^3 A/dT^3 gives <T> = beta3*z/(4*T0^2).
+        self.assertAlmostEqual(centre, 0.00025, delta=1e-10)
+        # A known positive physical offset exp(-i*2*pi*f*T) must appear at +f on the stored axis.
+        source = programs.source('scipy', 'nlse').replace('w = 2 * np.pi * np.fft.fftfreq',
+                                                       'A *= np.exp(-2j * np.pi * 0.5 * T)\nw = 2 * np.pi * np.fft.fftfreq', 1)
+        offset = folder/'offset'
+        worker.execute('scipy', {'source': source, 'inputs': {'beta2_ps2_per_km': 0, 'gamma_per_W_km': 0, 'steps': 1}}, offset)
+        spectrum = data.load(offset/'pulse.npz')
+        self.assertAlmostEqual(spectrum['frequency_THz'].values[np.argmax(spectrum['spectrum'].values[0])], 0.5)
+
     def test_ray_optics_and_polarization(self):
         abcd = self.run_program('raytracing', 'abcd', {'elements': [{'space_m': 0.1}, {'focal_length_m': 0.05}, {'space_m': 0.1}], 'ray': [0.001, 0]})
         self.assertAlmostEqual(abcd['ray_out'][0], -0.001, places=12)
@@ -344,6 +381,14 @@ class ProgramPhysicsCase(unittest.TestCase):
         self.assertEqual(trace['finite_intersections'], 5)
         self.assertAlmostEqual(xy[1][1], -xy[2][1], places=12)
         self.assertAlmostEqual(abs(xy[1][1]), abs(xy[3][0]), places=12)
+        positive = self.run_program('optiland', 'trace', {'field_deg': [0, 5]})['centroid_mm']
+        negative = self.run_program('optiland', 'trace', {'field_deg': [0, -5]})['centroid_mm']
+        self.assertAlmostEqual(positive[1], -negative[1], places=10)
+        first = self.run_program('optiland', 'trace', {'field_deg': [3, 4]})['centroid_mm']
+        swapped = self.run_program('optiland', 'trace', {'field_deg': [4, 3]})['centroid_mm']
+        self.assertAlmostEqual(first[0], swapped[1], places=10)
+        self.assertAlmostEqual(first[1], swapped[0], places=10)
+        self.assertLess(first[0], first[1])
         for angle in (0, 30, 45, 90):
             result = self.run_program('py-pol', 'polarization', {'elements': [{'type': 'polarizer', 'azimuth_deg': angle}]})
             self.assertAlmostEqual(result['intensity'], math.cos(math.radians(angle)) ** 2, places=12)
@@ -383,6 +428,14 @@ def calculate(tool, name, inputs=None):
 
 @environment('sax')
 class CircuitCase(unittest.TestCase):
+    def test_a_balanced_interferometer_has_no_finite_spectral_period(self):
+        result = calculate('sax', 'circuit', {'circuit': 'mzi', 'arm_difference_um': 0})
+        self.assertIsNone(result['fsr_nm'])
+        self.assertIsNone(result['fsr_expected_nm'])
+        self.assertIsNone(result['checks']['fsr_error'])
+        self.assertLess(result['checks']['analytic_difference'], 1e-10)
+        json.dumps(result, allow_nan=False)
+
     def test_rings_and_interferometer_follow_their_transfer_functions(self):
         for circuit in ('ring', 'add_drop', 'mzi'):
             result = calculate('sax', 'circuit', {'circuit': circuit, 'wavelength_um': {'start': 1.5, 'stop': 1.6, 'points': 8001}})
@@ -513,7 +566,7 @@ class FiberCase(unittest.TestCase):
 @environment('strawberryfields')
 class SqueezingCase(unittest.TestCase):
     def test_squeezed_vacuum_matches_its_analytic_statistics(self):
-        for inputs in ({}, {'transmission': 1.0}, {'squeezing': 0.3, 'transmission': 0.5}):
+        for inputs in ({}, {'transmission': 0.0}, {'transmission': 1.0}, {'squeezing': 0.3, 'transmission': 0.5}):
             self.assertLess(calculate('strawberry', 'gaussian_state', inputs)['checks']['analytic_difference'], 1e-10)
         displaced = calculate('strawberry', 'gaussian_state', {'displacement': [1.5, 0], 'squeezing': 0.3})
         self.assertLess(displaced['mandel_q'], 0)  # amplitude squeezing gives sub-Poissonian light

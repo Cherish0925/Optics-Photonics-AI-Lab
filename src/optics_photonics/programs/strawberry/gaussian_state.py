@@ -52,8 +52,9 @@ mandel = variance / mean_photons - 1 if mean_photons > 0 else None
 difference = None
 if not alpha and r > 0:
     expected = [eta * math.exp(-2 * r) + 1 - eta, eta * math.exp(2 * r) + 1 - eta]
-    gaps = [abs(eigen[0] - expected[0]), abs(eigen[1] - expected[1]), abs(mean_photons - eta * math.sinh(r) ** 2),
-            abs(g2 - (3 + 1 / math.sinh(r) ** 2))]
+    gaps = [abs(eigen[0] - expected[0]), abs(eigen[1] - expected[1]), abs(mean_photons - eta * math.sinh(r) ** 2)]
+    if g2 is not None:
+        gaps.append(abs(g2 - (3 + 1 / math.sinh(r) ** 2)))
     if eta == 1:
         pure = [math.tanh(r) ** (2 * k) * math.factorial(2 * k) / (4 ** k * math.factorial(k) ** 2 * math.cosh(r)) for k in range(cutoff // 2 + 1)]
         gaps.append(max(abs(P[2 * k] - value) for k, value in enumerate(pure)))

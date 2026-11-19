@@ -254,6 +254,7 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         program = {'name': program, 'title': programs.catalog()[item['id']][program]['title']} if program else None
         matches.append({k: item[k] for k in ('id', 'name', 'group', 'cats', 'summary')} |
                        {'connection': connection['kind'], 'programs': list(programs.catalog().get(item['id'], {})),
+                        'operations': list(programs.catalog().get(item['id'], {})),
                         'install': 'conda' if connection.get('conda') else 'pip' if connection.get('pip') else 'manual',
                         'upstream_mcp': item['mcp']['kind']} | ({'program': program} if program else {}) |
                        ({'missing': missing} if missing else {}))

@@ -45,7 +45,9 @@ system.wavelengths.add(value=wavelength, is_primary=True)
 pupil = np.asarray(p['pupil_points'], dtype=float)
 if pupil.ndim != 2 or pupil.shape[1] != 2 or np.any(np.sum(pupil ** 2, axis=1) > 1):
     raise ValueError('pupil_points must be [x,y] pairs within the unit entrance pupil')
-system.trace_generic(Hx=1 if fx else 0, Hy=1 if fy else 0, Px=pupil[:, 0], Py=pupil[:, 1], wavelength=wavelength)
+field_scale = system.fields.max_field or 1.0
+system.trace_generic(Hx=float(fx) / field_scale, Hy=float(fy) / field_scale,
+                     Px=pupil[:, 0], Py=pupil[:, 1], wavelength=wavelength)
 x, y = np.asarray(system.surfaces.x), np.asarray(system.surfaces.y)
 np.savez_compressed(OUTPUT_DIR / 'rays.npz', x_mm=x, y_mm=y, pupil_xy=pupil, wavelength_um=wavelength)
 data.save(OUTPUT_DIR / 'rays-described', {

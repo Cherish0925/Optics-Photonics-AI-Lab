@@ -1,5 +1,6 @@
 """Exercise adapter ownership and transport with SDK doubles, without solver licenses."""
 import json
+import importlib.util
 import os
 from pathlib import Path
 import subprocess
@@ -11,7 +12,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from optics_photonics import native, environments, execution, jobs
+from optics_photonics import native, environments, execution, jobs, studies
 from support import workspace
 
 
@@ -25,10 +26,41 @@ class FDTD:
  def close(self):
   if self.path: self.path.with_suffix(".closed").write_text("closed")
  def run(self): self.value+=1
+ def switchtolayout(self): pass
 '''
 
 
 class NativeTests(unittest.TestCase):
+    def test_grouped_sweeps_open_and_close_each_points_project(self):
+        with workspace() as folder:
+            root = Path(folder)
+            (root/'lumapi.py').write_text(LUMAPI)
+            projects = []
+            for value in (3, 8):
+                project = root/f'original-{value}.fsp'
+                project.write_text(json.dumps({'value': value}))
+                projects.append(str(project))
+            with patch.object(native.platform, 'system', return_value='Linux'):
+                native.bind('lumerical', python=sys.executable, sdk_path=str(root), path=root/'home')
+            calls = [{'source': 'SESSION.run()\nRESULT={"value":MODEL.value}'}]
+            if importlib.util.find_spec('numpy'):
+                calls.append({'action': 'solve_project'})  # SDK result export needs NumPy in its environment.
+            for call in calls:
+                run = studies.submit('lumerical', sweep={'project': projects}, chunk=2, wait=25, path=root/'home', **call)
+                self.assertEqual(run['state'], 'succeeded', run)
+                output = root/'home'/'runs'/run['run_id']/'point-0001-0002'/'attempt-1'
+                values = [json.loads((output/f'point-{i:04d}'/'model.fsp').read_text())['value'] for i in (1, 2)]
+                self.assertEqual(values, [4, 9])
+                self.assertEqual(len(list(output.rglob('model.closed'))), 2)
+                self.assertEqual([json.loads(Path(project).read_text())['value'] for project in projects], [3, 8])
+            if importlib.util.find_spec('numpy'):
+                optimized = studies.submit('lumerical', inputs={'project': projects[0]}, source='MODEL.value=INPUTS["x"]\n'
+                    'RESULT={"score":(MODEL.value-3)**2, **EXPORT({"x":MODEL.value}, "selected")}',
+                    optimize={'variables': {'x': [0, 10]}, 'minimize': 'score', 'evaluations': 20}, wait=25, path=root/'home')
+                self.assertEqual(optimized['state'], 'succeeded', optimized)
+                best = root/'home'/'runs'/optimized['run_id']/'calculate'/'attempt-1'/'best'/'selected.json'
+                self.assertEqual(json.loads(best.read_text())['x'], optimized['result']['best']['x'])
+
     def test_sdk_discovery_and_failed_binding_leave_configuration_unchanged(self):
         with workspace() as folder:
             root = Path(folder)

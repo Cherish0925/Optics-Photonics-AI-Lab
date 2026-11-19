@@ -65,7 +65,7 @@ ideal_field = np.where(inside, np.exp(1j * required), 0)
 
 # Sample the window: each cell's field repeated sub x sub times, padded to the window.
 step = period / sub
-size = int(2 ** math.ceil(math.log2(float(p['window']) * aperture / step)))
+size = int(2 ** math.ceil(math.log2(max(float(p['window']) * aperture / step, (2 * cells + 1) * sub))))
 
 
 def sampled(field):

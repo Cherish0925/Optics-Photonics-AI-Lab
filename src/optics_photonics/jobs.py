@@ -60,6 +60,12 @@ def database(path=None):
         PRAGMA user_version=2;
         ''')
         db.commit()
+    if db.execute('PRAGMA user_version').fetchone()[0] < 3:
+        db.executescript('''
+        CREATE TABLE IF NOT EXISTS request_steps(request_id TEXT PRIMARY KEY, step_ids TEXT NOT NULL);
+        PRAGMA user_version=3;
+        ''')
+        db.commit()
     try:
         yield db
         db.commit()
@@ -173,6 +179,12 @@ def validate(steps, known=()):
         if 'points' in s and (not isinstance(s['points'], list) or not s['points'] or s.get('bindings') or
                               any(not isinstance(item, dict) or set(item) != {'id','point','inputs'} for item in s['points'])):
             raise ValueError('points lists {id, point, inputs} computed in turn by one process, without bindings')
+        point_ids = set()
+        for point in s.get('points', []):
+            identifier(point['id'])
+            if point['id'] in point_ids or not isinstance(point['inputs'], dict) or not isinstance(point['point'], dict):
+                raise ValueError('points need unique IDs and object inputs and point values')
+            point_ids.add(point['id'])
         if s.get('optimize') is not None:
             from . import optimization
             optimization.checked(s['optimize'])
@@ -275,6 +287,13 @@ def step_ids(run_id, path=None):
         return {row[0] for row in db.execute('SELECT id FROM steps WHERE run_id=?', (run_id,))}
 
 
+def submitted_steps(request_id, path=None):
+    """Original step IDs of a submission, including on a retry after later appends."""
+    with database(path) as db:
+        row = db.execute('SELECT step_ids FROM request_steps WHERE request_id=?', (request_id,)).fetchone()
+        return json.loads(row[0]) if row else []
+
+
 def submit(steps, name='Optical research', request_id=None, run_id=None, path=None, _environments=None, _payload=None):
     key = request_id or str(uuid.uuid4())
     # A retried request is recognized by its payload: the steps, or the call that produced them.
@@ -298,6 +317,8 @@ def submit(steps, name='Optical research', request_id=None, run_id=None, path=No
             prepared = []
             for spec in checked:
                 environment = _environments.get(spec['id']) or execution.binding(spec['tool'], path)
+                if spec.get('points') and environment['kind'] == 'command':
+                    raise ValueError('Command environments require one sweep point per step')
                 if environment['threads'] > capacity:
                     raise ValueError(f"{spec['tool']} requests {environment['threads']} CPU threads; configured capacity is {capacity}")
                 limits = dict(db.execute('SELECT name,capacity FROM pools'))
@@ -311,6 +332,7 @@ def submit(steps, name='Optical research', request_id=None, run_id=None, path=No
                 db.execute("UPDATE runs SET state=CASE WHEN state='running' THEN state ELSE 'queued' END,finished=NULL WHERE id=?", (result_id,))
             db.executemany('INSERT INTO steps(run_id,id,specification,environment,state) VALUES(?,?,?,?,?)', prepared)
             db.execute('INSERT INTO requests VALUES(?,?,?)', (key,payload,result_id))
+            db.execute('INSERT INTO request_steps VALUES(?,?)', (key,encoded([step['id'] for step in steps])))
     notify(path)
     start_worker(result_id, path)
     return {'run_id':result_id, 'request_id':key}

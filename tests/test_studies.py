@@ -82,6 +82,19 @@ class SweepDefinitionCase(unittest.TestCase):
 
 
 class SweepRunCase(unittest.TestCase):
+    def test_external_command_receives_each_point_as_a_complete_request(self):
+        with workspace() as home:
+            script = Path(home) / 'solve.py'
+            script.write_text('import json, os\nfrom pathlib import Path\n'
+                              'given=json.loads(Path(os.environ["OPTICS_REQUEST_FILE"]).read_text())["inputs"]\n'
+                              'Path(os.environ["OPTICS_RESULT_FILE"]).write_text(json.dumps({"f":given["x"]**2}))\n')
+            environments.register('command-bowl', 'Command bowl', 'External model', kind='command', path=home)
+            environments.bind('command-bowl', command=[sys.executable, str(script)], concurrency=2, path=home)
+            run = studies.submit('command-bowl', sweep={'x': [1, 2, 3]}, chunk=3, wait=25, path=home)
+            self.assertEqual(run['state'], 'succeeded', run)
+            rows = studies.table(run['run_id'], values=['f'], path=home)['rows']
+            self.assertEqual([row['values']['f'] for row in rows], [1, 4, 9])
+
     def test_a_sweep_runs_in_groups_and_its_table_finds_the_best_point(self):
         with workspace() as home:
             connect(home)
@@ -144,6 +157,17 @@ class SweepRunCase(unittest.TestCase):
 
 
 class WaitCase(unittest.TestCase):
+    def test_retried_append_returns_its_original_result_after_later_appends(self):
+        with workspace() as home:
+            connect(home)
+            first = studies.submit('bowl', {'x': 0, 'scale': [1]}, source=MODEL, wait=25, path=home)
+            arguments = dict(inputs={'x': 3, 'scale': [1]}, source=MODEL, run_id=first['run_id'], request_id='append', wait=25, path=home)
+            original = studies.submit('bowl', **arguments)
+            studies.submit('bowl', {'x': 8, 'scale': [1]}, source=MODEL, run_id=first['run_id'], wait=25, path=home)
+            retry = studies.submit('bowl', **arguments)
+            self.assertEqual((retry['result'], retry['output']), (original['result'], original['output']))
+            self.assertEqual(jobs.step_ids(first['run_id'], home), {'calculate', 'calculate-2', 'calculate-3'})
+
     def test_a_submission_that_finishes_within_its_wait_returns_its_result_or_error(self):
         with workspace() as home:
             connect(home)
@@ -163,6 +187,31 @@ class WaitCase(unittest.TestCase):
 
 
 class OptimizationCase(unittest.TestCase):
+    def test_small_budgets_and_fractional_integer_bounds_are_respected(self):
+        for method in optimization.METHODS:
+            for budget in (2, 3, 5, 41):
+                with self.subTest(method=method, budget=budget), tempfile.TemporaryDirectory() as folder:
+                    evaluated = []
+                    def model(inputs, output):
+                        evaluated.append(inputs)
+                        return {'f': sum(inputs.values())}
+                    result = optimization.run(model, {}, {'variables': {'x': [0, 1], 'y': [0, 1], 'z': [0, 1]},
+                                                          'minimize': 'f', 'method': method, 'evaluations': budget}, folder)
+                    self.assertGreater(len(evaluated), 0)
+                    self.assertLessEqual(len(evaluated), budget)
+                    self.assertEqual(result['evaluations'], len(evaluated))
+        with tempfile.TemporaryDirectory() as folder:
+            evaluated = []
+            def integer_model(inputs, output):
+                evaluated.append(inputs['x'])
+                return {'f': inputs['x']}
+            result = optimization.run(integer_model, {}, {'variables': {'x': {'low': 0.2, 'high': 2.8, 'integer': True}},
+                                                          'minimize': 'f', 'evaluations': 40}, folder)
+            self.assertTrue(set(evaluated) <= {1, 2}, evaluated)
+            self.assertEqual(result['best']['x'], 1)
+            with self.assertRaisesRegex(ValueError, 'bounds must contain an integer'):
+                optimization.checked({'variables': {'x': {'low': 0.2, 'high': 0.8, 'integer': True}}, 'minimize': 'f'})
+
     def evaluate(self, inputs, folder):
         namespace = {'INPUTS': inputs, 'OUTPUT_DIR': Path(folder), 'RESULT': None}
         exec(MODEL, namespace)
