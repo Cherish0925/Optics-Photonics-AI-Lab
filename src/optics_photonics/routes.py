@@ -219,10 +219,15 @@ def driver_python(path=None):
     return bound['python'] if bound and bound.get('kind') == 'python' else sys.executable
 
 
-def bind(tool, *, route=None, executable=None, python=None, sdk_path=None, progid=None, project=None,
+def bind(tool, *, route=None, executable=None, python=None, sdk_path=None, progid=None, project=None, language=None,
          threads=1, concurrency=1, cwd=None, requirements=None, env=None, path=None):
-    """Connect an installed software by one of its routes; without a route, the one its arguments or discovery name."""
+    """Connect an installed software by one of its routes; without a route, the one its arguments or discovery name.
+
+    language selects the script language of an executable, for software outside the catalogue or another build.
+    """
     chosen = environments.settings(threads, concurrency, cwd, requirements, env)
+    if language is not None:
+        languages.language(language)
     if route is None:
         route = 'executable' if executable else 'automation' if progid else 'python' if (sdk_path or python) else None
     if route is None:
@@ -233,7 +238,7 @@ def bind(tool, *, route=None, executable=None, python=None, sdk_path=None, progi
                              'Give executable, sdk_path or progid, or roots to discover_native_software')
         arguments = {k: v for k, v in found[0]['bind'].items() if k != 'tool'}
         return bind(tool, threads=threads, concurrency=concurrency, cwd=cwd, requirements=requirements, env=env, path=path,
-                    python=python, project=project, **arguments)
+                    python=python, project=project, language=language, **arguments)
     if route == 'executable':
         spec = first(tool, 'executable', path) or {}
         if not executable:
@@ -247,7 +252,7 @@ def bind(tool, *, route=None, executable=None, python=None, sdk_path=None, progi
         here = system()
         siblings = {name: str(Path(found).parent / name) for name in spec.get('siblings', {}).get(here, [])
                     if runnable(Path(found).parent / name)}
-        connection = {'kind': 'executable', 'executable': found, 'language': spec.get('language'), 'siblings': siblings,
+        connection = {'kind': 'executable', 'executable': found, 'language': language or spec.get('language'), 'siblings': siblings,
                       'python': os.path.abspath(os.path.expanduser(python)) if python else driver_python(path)}
         if project:
             connection['project'] = str(Path(project).expanduser().resolve())

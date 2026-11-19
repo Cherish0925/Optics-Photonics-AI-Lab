@@ -233,6 +233,12 @@ class Execution(unittest.TestCase):
             self.assertIn('bad input', failing['error'])
             script = studies.submit('adda', script='anything', wait=25, path=home)
             self.assertIn('without a script language', script['error'])
+            # Software outside the catalogue takes a script language at binding.
+            environments.register('lab-solver', 'Lab solver', 'An executable of the lab', kind='command', path=home)
+            bound = native.bind('lab-solver', executable=sys.executable, language='lua', path=home)
+            self.assertEqual((bound['kind'], bound['language']), ('executable', 'lua'))
+            with self.assertRaisesRegex(ValueError, 'Script languages'):
+                native.bind('lab-solver', executable=sys.executable, language='fortran', path=home)
             environments.register('local-python', 'Local Python', 'A Python tool', modules=['json'], path=home)
             environments.bind('local-python', python=sys.executable, path=home)
             self.assertIn('bind_native_software', studies.submit('local-python', script='RESULT = 1', wait=25, path=home)['error'])

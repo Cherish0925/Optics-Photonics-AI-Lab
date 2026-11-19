@@ -44,7 +44,7 @@ optics-photonics submit octave --script mode_solver.m --sweep '{"wavelength_um":
 | lua | S4 | table | `OUTPUT_DIR` | `S4 optics_main.lua` |
 | lsf | Lumerical 设计环境 | 每个输入一个变量 | `OUTPUT_DIR` | `fdtd-solutions -nw -trust-script -exit -run optics_main.lsf` |
 
-工作进程把程序保存为带该语言后缀的 `optics_program`，并用同一语言写一个简短的 `optics_main`：定义 INPUTS 和输出目录，运行程序，把 RESULT 写成 JSON。可执行程序在本次计算（扫描时为每个点）的输出目录中运行，输出写入 `script.log`。RESULT 可含数值、字符串、列表和对象；复数场和大数组存为同目录下的文件。参数扫描、优化和工作流的结果引用与 Python 程序相同。Octave、Julia、Lua 的桥接（以及经 Octave 走过的 MATLAB 代码路径）已在本开发环境用真实解释器运行；MATLAB、Wolfram Language、Maple 和 Lumerical 脚本的桥接按厂商文档中的命令与函数编写，需要有许可的软件才能运行。
+目录之外的软件用 `register-software` 登记为命令后，在连接时指定语言（`bind-native TOOL --executable PATH --language julia`）。工作进程把程序保存为带该语言后缀的 `optics_program`，并用同一语言写一个简短的 `optics_main`：定义 INPUTS 和输出目录，运行程序，把 RESULT 写成 JSON。可执行程序在本次计算（扫描时为每个点）的输出目录中运行，输出写入 `script.log`。RESULT 可含数值、字符串、列表和对象；复数场和大数组存为同目录下的文件。参数扫描、优化和工作流的结果引用与 Python 程序相同。Octave、Julia、Lua 的桥接（以及经 Octave 走过的 MATLAB 代码路径）已在本开发环境用真实解释器运行；MATLAB、Wolfram Language、Maple 和 Lumerical 脚本的桥接按厂商文档中的命令与函数编写，需要有许可的软件才能运行。
 
 ## 调用可执行程序的 Python 程序
 

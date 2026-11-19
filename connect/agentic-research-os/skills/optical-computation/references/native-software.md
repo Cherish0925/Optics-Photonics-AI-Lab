@@ -27,7 +27,7 @@ Bindings keep `threads`, `concurrency`, `requirements` and `env`. Begin licensed
 | lua | S4 | table; null is nil | `OUTPUT_DIR` | `S4 optics_main.lua` |
 | lsf | Lumerical design environments | one variable per input: numbers, strings, numeric vectors and matrices | `OUTPUT_DIR` | `fdtd-solutions -nw -trust-script -exit -run optics_main.lsf` |
 
-The program is saved as `optics_program` with the language's suffix next to `optics_main`, which defines INPUTS, runs the program and writes RESULT to `script-result.json`; the executable's output is in `script.log`. MATLAB and Octave run the program with `run`, so it may end with local functions. Julia writes a matrix as a list of rows and a named tuple as an object; Lumerical saves RESULT with `jsonsave`, in its own JSON notation. A program that ends without RESULT fails with the end of `script.log`.
+A tool outside the catalogue, registered with `register_software(kind="command")`, takes its language at binding: `bind_native_software(tool, executable, language)`. The program is saved as `optics_program` with the language's suffix next to `optics_main`, which defines INPUTS, runs the program and writes RESULT to `script-result.json`; the executable's output is in `script.log`. MATLAB and Octave run the program with `run`, so it may end with local functions. Julia writes a matrix as a list of rows and a named tuple as an object; Lumerical saves RESULT with `jsonsave`, in its own JSON notation. A program that ends without RESULT fails with the end of `script.log`.
 
 ```json
 {"tool": "octave", "inputs": {"wavelength_um": 1.55, "n": [1.45, 3.48]},

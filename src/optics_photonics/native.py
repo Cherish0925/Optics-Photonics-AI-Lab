@@ -101,14 +101,14 @@ print(json.dumps({'python':sys.executable,'modules':found,'importable':all(found
     return json.loads(result.stdout.strip().splitlines()[-1])
 
 
-def bind(tool, *, route=None, executable=None, progid=None, project=None, python=None, sdk_path=None, options=None,
+def bind(tool, *, route=None, executable=None, progid=None, project=None, language=None, python=None, sdk_path=None, options=None,
          threads=1, concurrency=1, path=None, requirements=None, env=None):
     """A session SDK for COMSOL, Lumerical, OpticStudio and CST; another route of any installed software."""
-    if route not in (None, 'session') or executable or progid or (tool not in ADAPTERS and route is None):
+    if route not in (None, 'session') or executable or progid or language or (tool not in ADAPTERS and route is None):
         if options:
             raise ValueError('options configure session adapters')
         from . import routes
-        return routes.bind(tool, route=route, executable=executable, progid=progid, project=project, python=python,
+        return routes.bind(tool, route=route, executable=executable, progid=progid, project=project, language=language, python=python,
                            sdk_path=sdk_path, threads=threads, concurrency=concurrency, requirements=requirements, env=env, path=path)
     if tool not in ADAPTERS:
         raise ValueError('Session adapters: ' + ', '.join(ADAPTERS) + '; other software binds by route executable, automation or python')

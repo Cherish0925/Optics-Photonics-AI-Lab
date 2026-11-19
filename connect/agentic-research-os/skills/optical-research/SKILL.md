@@ -7,7 +7,7 @@ description: "Select optical and photonic software and mathematical representati
 
 Start with the observable and the physical representation. A focal spot, scattering matrix, photon arrival distribution and density matrix require different models. State wavelength range, length scales, coherence, polarization, material response and intended accuracy before selecting a solver.
 
-Use `software_search` to find candidates, then `software_details` for the selected software. The catalogue distinguishes open, paid and limited licenses. A documented API, an installed environment and an executed calculation are separate properties. Upstream documentation MCPs do not necessarily run a solver.
+Use `software_search` to find candidates, then `software_details` for the selected software. The catalogue distinguishes open, paid and limited licenses. A documented API, an installed environment and an executed calculation are separate properties: `routes` in a search result says how the environment reaches the software (python, session, executable, automation, service, or inside for scripts that run only in its own window), and `install` whether a recipe installs it here. Software the user has installed counts as available once `discover_native_software` finds it. Upstream documentation MCPs do not necessarily run a solver.
 
 Read only the relevant domain reference below. Each gives the variables to transfer between programs and the numerical questions that change a conclusion.
 
