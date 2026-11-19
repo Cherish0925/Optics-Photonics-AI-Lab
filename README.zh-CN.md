@@ -52,7 +52,7 @@ optics-photonics array RUN_ID calculate/attempt-1/spectrum.npz --member R --imag
 5. **继续与取回结果。** `run_status` 每次最多等待 25 秒，等待期间同一连接上的其他请求照常返回。运行不随连接断开而停止，用 `list_runs` 重新找到。`result_files`、`read_result`、`read_array` 分别返回文件列表、字节片段和 NPY/NPZ 数组的局部；`read_array` 加 `image` 时把所选部分画成 PNG 返回：曲线或带色标的二维图，标出坐标和单位。`resume_run` 重跑未完成步骤，保留已完成步骤。
 6. **采集 episode。** `sample_episodes` 在并行的软件进程中运行 Gymnasium 形式的环境，保存种子、动作、观测和奖励，供学习使用；中断或追加的采集会接着进行，不重复已完成的 episode（[接口说明](docs/LEARNING.md)）。
 
-同样的操作也有 `optics-photonics` 命令、Python 接口和 TypeScript 客户端。每个封装程序都已运行并与解析结果或另一求解器对照，Meep 和 MPB 的程序在 conda-forge 环境中运行；四个商业软件的会话适配器只用 SDK 替身运行过，尚未在有许可证的求解器上运行。Octave、Julia、Lua 脚本和 ADDA 程序已用真实软件运行；MATLAB、Wolfram Language、Maple 和 Lumerical 脚本的桥接按厂商文档中的命令编写，有待有许可证的安装运行。
+同样的操作也有 `optics-photonics` 命令、Python 接口和 TypeScript 客户端。每个封装程序都已运行并与解析结果或另一求解器对照，Meep 和 MPB 的程序在 conda-forge 环境中运行；四个商业软件的会话适配器只用 SDK 替身运行过，尚未在有许可证的求解器上运行。Octave、Julia、Lua 脚本、S4 和 ADDA 程序已用真实软件运行；MATLAB、Wolfram Language、Maple 和 Lumerical 脚本的桥接按厂商文档中的命令编写，有待有许可证的安装运行。
 
 ## 运行机制
 

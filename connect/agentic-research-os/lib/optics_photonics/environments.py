@@ -491,7 +491,7 @@ def prepare(tool, *, path=None, python=None, packages=None):
     else:
         item = installable(tool, path)
     if item['julia'] or item['executable']:
-        return prepare_executable(tool, item, configured, path=path)
+        return prepare_executable(tool, item, configured, packages, path=path)
     name = item['environment']
     folder = home(path) / 'environments'
     folder.mkdir(parents=True, exist_ok=True)
@@ -534,8 +534,11 @@ def prepare(tool, *, path=None, python=None, packages=None):
     return {'tool': tool, **managed}
 
 
-def prepare_executable(tool, item, configured, path=None):
-    """An executable from conda-forge, or a Julia project environment with the recipe's packages; bound by its route."""
+def prepare_executable(tool, item, configured, packages=(), path=None):
+    """An executable from conda-forge, or a Julia project environment with the recipe's packages; bound by its route.
+
+    packages adds Julia packages to a Julia project, or conda-forge packages to an executable's environment.
+    """
     from . import routes
     from .jobs import cores
     folder = home(path) / 'environments'
@@ -549,10 +552,12 @@ def prepare_executable(tool, item, configured, path=None):
             if not executable:
                 executable = prepare('julia', path=path)['executable']
             prefix.mkdir(exist_ok=True)
-            names = ', '.join(json.dumps(name) for name in item['julia'])
-            # Pkg resolves and precompiles once; a prepared project only gains missing packages.
-            install([executable, '--startup-file=no', '--project=' + str(prefix), '-e',
-                     f'import Pkg; Pkg.add([{names}]); Pkg.precompile()'])
+            names = ', '.join(json.dumps(name) for name in [*item['julia'], *packages])
+            # Pkg resolves and precompiles once; a prepared project only gains missing packages. Projects share
+            # the Julia depot, so one installation runs at a time.
+            with locked(folder / 'julia-packages.lock'):
+                install([executable, '--startup-file=no', '--project=' + str(prefix), '-e',
+                         f'import Pkg; Pkg.add([{names}]); Pkg.precompile()'])
             connection = routes.bind(tool, route='executable', executable=executable, project=str(prefix), path=path, **kept)
             installer = 'julia'
         else:
@@ -562,12 +567,16 @@ def prepare_executable(tool, item, configured, path=None):
                 if prefix.exists():
                     shutil.rmtree(prefix)
                 create(prefix, item, None, path)
+            if packages:
+                install([conda(path), 'install', '-y', '-q', '-p', str(prefix), '-c', 'conda-forge', '--override-channels', *packages],
+                        home(path) / 'conda')
             variables = {key: value.replace('{prefix}', str(prefix)) for key, value in spec.get('variables', {}).items()}
             kept['env'] = {**variables, **kept.get('env', {})}
             connection = routes.bind(tool, route='executable', executable=str(executable), path=path, **kept)
             installer = 'conda'
+        earlier = (configured or {}).get('packages', [])
         managed = {**{k: v for k, v in connection.items() if k != 'tool'}, 'managed': item['environment'], 'installer': installer,
-                   'packages': list(item['julia'] or item['conda'])}
+                   'packages': sorted(set(earlier) | set(item['julia'] or item['conda']) | set(packages))}
         update('tools', tool, managed, path)
     return {'tool': tool, **managed}
 

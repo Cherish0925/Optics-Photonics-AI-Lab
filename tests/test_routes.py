@@ -1,11 +1,12 @@
 """Routes to installed software: the route records, discovery, bindings, scripts in other languages and driver programs.
 
-Interpreters of other languages (Octave, Julia, Lua) and ADDA run when they are
-found on PATH or named by OPTICS_TEST_OCTAVE, OPTICS_TEST_JULIA, OPTICS_TEST_LUA
-and OPTICS_TEST_ADDA; the other cases use the running Python as the installed
-executable.
+Interpreters of other languages (Octave, Julia, Lua), S4 and ADDA run when they
+are found on PATH or named by OPTICS_TEST_OCTAVE, OPTICS_TEST_JULIA,
+OPTICS_TEST_LUA, OPTICS_TEST_S4 and OPTICS_TEST_ADDA; the other cases use the
+running Python as the installed executable.
 """
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -282,6 +283,37 @@ class Execution(unittest.TestCase):
         self.assertEqual([point['result'] for point in record['result']['points']],
                          [{'server': 'FRED.Application', 'point': 1}, {'server': 'FRED.Application', 'point': 2}])
         self.assertEqual((len(made), calls), (1, ['init', 'done']))
+
+    def test_s4_slab_transmission_follows_the_airy_formula(self):
+        executable = found('OPTICS_TEST_S4', 'S4')
+        if not executable:
+            self.skipTest('S4 is not installed')
+        script = '''
+S = S4.NewSimulation()
+S:SetLattice({1,0}, {0,1})
+S:SetNumG(1)
+S:AddMaterial("Vacuum", {1, 0})
+S:AddMaterial("Slab", {INPUTS.epsilon, 0})
+S:AddLayer("Above", 0, "Vacuum")
+S:AddLayer("Slab", INPUTS.thickness, "Slab")
+S:AddLayerCopy("Below", 0, "Above")
+S:SetExcitationPlanewave({0, 0}, {1, 0}, {0, 0})
+S:SetFrequency(INPUTS.frequency)
+local incident, reflected = S:GetPoyntingFlux("Above", 0)
+RESULT = {T = S:GetPoyntingFlux("Below", 0) / incident, R = -reflected / incident}
+'''
+        with workspace() as folder:
+            home = Path(folder) / 'home'
+            self.assertEqual(native.bind('s4', executable=executable, path=home)['language'], 'lua')
+            reply = studies.submit('s4', script=script, inputs={'epsilon': 4.0, 'thickness': 0.3},
+                                   sweep={'frequency': [0.3, 0.7, 1.1]}, path=home)
+            self.assertEqual(jobs.status(reply['run_id'], wait=25, path=home)['state'], 'succeeded')
+            reflectance = ((2 - 1) / (2 + 1)) ** 2
+            for row in studies.table(reply['run_id'], values=['T', 'R'], path=home)['rows']:
+                phase = 2 * math.pi * 2 * 0.3 * row['point']['frequency']
+                airy = 1 / (1 + 4 * reflectance / (1 - reflectance) ** 2 * math.sin(phase) ** 2)
+                self.assertAlmostEqual(row['values']['T'], airy, places=12)
+                self.assertAlmostEqual(row['values']['R'] + row['values']['T'], 1, places=12)
 
     def test_adda_particle_converges_to_the_exact_series(self):
         executable = found('OPTICS_TEST_ADDA', 'adda')
