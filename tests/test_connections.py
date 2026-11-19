@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'src'))
-from optics_photonics import catalogue, environments, execution, operations
+from optics_photonics import catalogue, environments, execution
 from optics_photonics.mcp import serve
 from optics_photonics.packages import package, HOSTS
 
@@ -33,8 +33,6 @@ class ConnectionTests(unittest.TestCase):
             if record['pip']:
                 self.assertTrue(record['modules'])
                 self.assertTrue(record['distributions'])
-            if record['operations']:
-                self.assertIn(row['id'], operations.EXAMPLES)
 
     def test_catalogue_pagination_and_domain_selection(self):
         a = catalogue.search(domain='film',limit=2)
@@ -59,15 +57,45 @@ class ConnectionTests(unittest.TestCase):
         self.assertIn(('xrt', None), found('xray beamline'))
         # A word matches the start of a word: ring is not found inside scattering.
         self.assertNotIn('miepython', [tool for tool, _ in found('ring')])
-        # Three or more words also return software one word short, after the full matches.
-        ranked = found('mie scattering sphere')
-        self.assertIn(('treams', ['sphere']), ranked)
+        # Three or more terms also return software one term short, after the full matches.
+        ranked = found('mie scattering sphere cluster')
+        self.assertEqual(ranked[0], ('treams', None))
+        self.assertIn(('miepython', ['cluster']), ranked)
         self.assertEqual([missing for _, missing in ranked], sorted((missing for _, missing in ranked), key=bool))
         # Two words must both match while some software has both.
         self.assertTrue(all(missing is None for _, missing in found('thin film')))
         self.assertEqual(found('zzzz film'), [(tool, ['zzzz']) for tool, _ in found('film')])
         self.assertEqual(found('zzzz yyyy'), [])
         self.assertEqual(len(found('')), len(catalogue.catalogue()))
+
+    def test_search_finds_a_concept_by_any_of_its_names_and_names_the_program(self):
+        def ids(query, **options):
+            return [row['id'] for row in catalogue.search(query, limit=100, **options)['items']]
+        # An abbreviation, its expansion and the Chinese term are one concept; abbreviations match whole words.
+        self.assertEqual(ids('PSF'), ids('point spread function'))
+        self.assertEqual(ids('PSF'), ids('点扩散函数'))
+        self.assertNotIn('laserfun', ids('FEM'))
+        self.assertNotIn('laserfun', ids('modes'))  # a word of four letters takes endings, so mode is not modeling
+        # Packaged programs are searched, and the matching one is named.
+        top = catalogue.search('Bragg mirror')['items'][0]
+        self.assertEqual((top['id'], top['program']['name']), ('tmm', 'spectrum'))
+        # Words that state the task are not required; Chinese is split into the names it contains.
+        self.assertEqual(ids('compute the reflectance of a multilayer coating'), ids('reflectance multilayer'))
+        self.assertEqual([row for row in catalogue.search('计算光纤中的孤子', limit=100)['items'] if 'missing' not in row],
+                         [row for row in catalogue.search('fiber soliton', limit=100)['items'] if 'missing' not in row])
+        # Among equal matches, software with packaged programs comes before software installed by hand.
+        film = catalogue.search('thin film', limit=100)['items']
+        self.assertTrue(film[0]['programs'])
+        self.assertLess(ids('thin film').index('tmm'), ids('thin film').index('macleod'))
+        # Nothing found says how to go on.
+        self.assertIn('submit_calculation', catalogue.search('zzzz')['hint'])
+
+    def test_each_vocabulary_name_belongs_to_one_concept(self):
+        groups, known = catalogue.vocabulary()
+        names = [(' '.join(map(catalogue.stem, catalogue.normalized(name).split())), number)
+                 for number, group in enumerate(groups) for name in group]
+        repeated = {name for name, number in names if known.get(name.replace(' ', '') if catalogue.CJK.search(name) else name) != number}
+        self.assertEqual(repeated, set())
 
     def test_mcp_initialization_and_tool_call(self):
         requests = [
@@ -80,7 +108,7 @@ class ConnectionTests(unittest.TestCase):
         # Tool calls complete independently; replies are matched by request ID.
         messages=sorted((json.loads(s) for s in out.getvalue().splitlines()),key=lambda m:m['id'])
         self.assertEqual([m['id'] for m in messages],[1,2,3,4])
-        self.assertEqual(messages[1]['result']['structuredContent']['execution']['operations'][0]['name'],'spectrum')
+        self.assertEqual(messages[1]['result']['structuredContent']['execution']['programs'][0]['name'],'spectrum')
         self.assertTrue(messages[2]['result']['isError'])
         self.assertEqual(messages[-1]['result'],{})
 

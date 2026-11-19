@@ -20,7 +20,7 @@ This writes `device.npz` and `device.json`. An axis is the name of a one-dimensi
 | S-parameters | time dependence, normalization, port labels in order, reference planes |
 | Image | unit, pixel axes, normalization, wavelength |
 | Path difference | unit, wavefront sign |
-| Material data | source, version, conditions of validity |
+| Material data | source, version, conditions of validity; the `materials` page ID records all three |
 
 Two conventions have fixed values because programs disagree about them. The time dependence of complex amplitudes is `exp(-i omega t)` or `exp(+i omega t)`. The wavefront sign of a path difference is `positive leads` (Wyant and Creath, Zemax, Code V, POPPY) or `positive lags` (an optical path length excess, as in Goodman and Born and Wolf). Other statements are free text or JSON.
 

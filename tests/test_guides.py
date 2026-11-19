@@ -5,14 +5,15 @@ import re
 import sys
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from optics_photonics import mcp
+from optics_photonics import mcp, programs
 
 ROOT = Path(__file__).resolve().parents[1]
 NAMES = {name for name, _, _ in mcp.TOOLS}
 ARGUMENTS = {key for _, _, spec in mcp.TOOLS for key in spec['properties']}
-# Identifiers that belong to programs and records, not to the tool interface.
+# Identifiers that belong to programs and records, not to the tool interface, and the inputs of packaged programs.
 PROGRAM = {'optics_photonics', 'make_env', 'make_policy', 'episode_end', 'episode_error', 'inspect_project', 'solve_project',
-           'opticstudio_directory', 'zosapi_nethelper'}
+           'opticstudio_directory', 'zosapi_nethelper'} | {
+    name for items in programs.catalog().values() for spec in items.values() for name in spec['inputs']}
 
 
 def call(name, arguments):

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "optics-photonics"
-version = "0.7.0"
+version = "0.8.0"
 description = "Independent optical research environment: solvers, native programs, agent tools and episode sampling"
 requires-python = ">=3.10"
 license = "MIT"
@@ -25,3 +25,6 @@ Repository = "https://github.com/Cherish0925/Optics-Photonics-AI-Lab"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["optics_photonics*"]
+
+[tool.setuptools.package-data]
+"optics_photonics.programs" = ["*/*.py"]

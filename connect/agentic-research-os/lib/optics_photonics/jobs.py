@@ -60,6 +60,12 @@ def database(path=None):
         PRAGMA user_version=2;
         ''')
         db.commit()
+    if db.execute('PRAGMA user_version').fetchone()[0] < 3:
+        db.executescript('''
+        CREATE TABLE IF NOT EXISTS request_steps(request_id TEXT PRIMARY KEY, step_ids TEXT NOT NULL);
+        PRAGMA user_version=3;
+        ''')
+        db.commit()
     try:
         yield db
         db.commit()
@@ -115,6 +121,27 @@ def written(file):
     return '/'.join(parts)
 
 
+def packaged(step):
+    """A step naming a packaged program: the program exists and declares every input the step gives it."""
+    from . import native, programs
+    tool, action = step['tool'], step['action']
+    if not isinstance(action, str):
+        raise ValueError('action names a packaged program')
+    adapter = native.details(tool)
+    if adapter:
+        if action not in adapter['actions']:
+            raise ValueError(f"{tool} session actions: {', '.join(adapter['actions'])}")
+        return
+    spec = programs.catalog().get(tool, {}).get(action)
+    if spec is None:
+        programs.source(tool, action)  # names the programs of the tool
+    varied = {str(key).split('.')[0] for key in (step.get('optimize') or {}).get('variables', {})}
+    given = set(step.get('inputs', {})).union(*(item['inputs'] for item in step.get('points', [])))
+    unknown = sorted((given | set(step.get('bindings', {})) | varied) - set(spec['inputs']))
+    if unknown:
+        raise ValueError(f"{tool}/{action} has no input {', '.join(unknown)}; it takes: {', '.join(spec['inputs'])}")
+
+
 def validate(steps, known=()):
     """Check new steps. known holds the IDs of steps already in the run.
 
@@ -130,8 +157,8 @@ def validate(steps, known=()):
         s = dict(item)
         identifier(s.get('id'))
         if s['id'] in graph or s['id'] in known: raise ValueError('Duplicate step ID: '+s['id'])
-        if set(s)-{'id','tool','action','source','inputs','after','bindings','timeout','requirements'}:
-            raise ValueError('A step accepts id, tool, action, source, inputs, after, bindings, requirements and timeout')
+        if set(s)-{'id','tool','action','source','inputs','after','bindings','timeout','requirements','optimize','point','points'}:
+            raise ValueError('A step accepts id, tool, action, source, inputs, after, bindings, requirements, timeout, optimize, point and points')
         if not isinstance(s.get('tool'), str): raise ValueError('Each step needs a software tool ID')
         if not isinstance(s.get('inputs', {}), dict): raise ValueError('inputs must be an object')
         if not isinstance(s.get('after', []), list): raise ValueError('after must be a list of step IDs')
@@ -148,6 +175,21 @@ def validate(steps, known=()):
                 written(reference['file'])
             elif not isinstance(reference.get('path', []), list): raise ValueError('Binding path must be an array of object keys or array indices')
             if reference['step'] not in s['after']: s['after'].append(reference['step'])
+        if not isinstance(s.get('point', {}), dict): raise ValueError('point records the swept inputs of a step as an object')
+        if 'points' in s and (not isinstance(s['points'], list) or not s['points'] or s.get('bindings') or
+                              any(not isinstance(item, dict) or set(item) != {'id','point','inputs'} for item in s['points'])):
+            raise ValueError('points lists {id, point, inputs} computed in turn by one process, without bindings')
+        point_ids = set()
+        for point in s.get('points', []):
+            identifier(point['id'])
+            if point['id'] in point_ids or not isinstance(point['inputs'], dict) or not isinstance(point['point'], dict):
+                raise ValueError('points need unique IDs and object inputs and point values')
+            point_ids.add(point['id'])
+        if s.get('optimize') is not None:
+            from . import optimization
+            optimization.checked(s['optimize'])
+        if s.get('action') and not s.get('source'):
+            packaged(s)
         graph[s['id']] = s['after']
         result.append(s)
     # Kahn's traversal is linear even for a long sequential experiment.
@@ -191,9 +233,71 @@ def start_worker(run_id, path=None):
     threading.Thread(target=process.wait,daemon=True).start()
 
 
-def submit(steps, name='Optical research', request_id=None, run_id=None, path=None, _environments=None):
+def deferred():
+    """The environment of a calculation waiting for its tool's preparation step; the binding is read when it starts.
+
+    Admission uses these settings, which match those of a newly prepared
+    environment: one thread per process, and as many processes as CPU capacity allows.
+    """
+    return {'kind':'prepared','threads':1,'concurrency':cores(),'cwd':None,'requirements':{},'env':{}}
+
+
+def setup(tool, path=None, **inputs):
+    """A step that prepares a tool's environment, and the environment that runs it."""
+    step = {'id':'prepare.'+tool,'tool':tool,'inputs':{'tool':tool,'home':str(environments.home(path)),**inputs},'after':[]}
+    config = {'kind':'command','command':[sys.executable,'-B',str(Path(__file__).with_name('setup_worker.py'))],
+              'threads':1,'concurrency':1,'cwd':None,'requirements':{},'env':{}}
+    return step, config
+
+
+def provisioned(steps, known, path=None):
+    """Put a preparation step in front of the calculations of each tool that has no environment yet.
+
+    A tool with an installation recipe for this platform is prepared once per
+    run, by a step named prepare.TOOL; its calculations start after it. A
+    tool without a recipe keeps the reason in the error.
+    """
+    configured = environments.read(path)['tools']
+    overrides, added = {}, []
+    for spec in steps:
+        tool = spec['tool']
+        if tool in configured:
+            continue
+        key = 'prepare.'+tool
+        if spec['id'] == key:
+            raise ValueError(key+' names the step that prepares '+tool+'; use another step ID')
+        if key not in known and key not in overrides:
+            try:
+                environments.installable(tool, path)
+            except ValueError as reason:
+                raise ValueError('No environment is connected for '+tool+'. '+str(reason)) from None
+            step, config = setup(tool, path, if_missing=True)
+            added.append(step); overrides[key] = config
+        if key not in spec['after']:
+            spec['after'] = [*spec['after'], key]
+        overrides[spec['id']] = deferred()
+    return added+steps, overrides
+
+
+def step_ids(run_id, path=None):
+    """IDs of the steps of a run; an unknown run is an error."""
+    identifier(run_id)
+    with database(path) as db:
+        if not db.execute('SELECT 1 FROM runs WHERE id=?', (run_id,)).fetchone(): raise ValueError('Unknown run: '+run_id)
+        return {row[0] for row in db.execute('SELECT id FROM steps WHERE run_id=?', (run_id,))}
+
+
+def submitted_steps(request_id, path=None):
+    """Original step IDs of a submission, including on a retry after later appends."""
+    with database(path) as db:
+        row = db.execute('SELECT step_ids FROM request_steps WHERE request_id=?', (request_id,)).fetchone()
+        return json.loads(row[0]) if row else []
+
+
+def submit(steps, name='Optical research', request_id=None, run_id=None, path=None, _environments=None, _payload=None):
     key = request_id or str(uuid.uuid4())
-    payload = encoded({'steps':steps,'name':name,'run_id':run_id})
+    # A retried request is recognized by its payload: the steps, or the call that produced them.
+    payload = encoded(_payload if _payload is not None else {'steps':steps,'name':name,'run_id':run_id})
     with database(path) as db:
         db.execute('BEGIN IMMEDIATE')
         prior = db.execute('SELECT * FROM requests WHERE id=?', (key,)).fetchone()
@@ -207,10 +311,14 @@ def submit(steps, name='Optical research', request_id=None, run_id=None, path=No
             if existing and existing['cancel']: raise ValueError('Resume the cancelled run before appending steps')
             known = {r[0] for r in db.execute('SELECT id FROM steps WHERE run_id=?', (result_id,))}
             checked = validate(steps, known)
+            if _environments is None:
+                checked, _environments = provisioned(checked, known, path)
             capacity = db.execute("SELECT value FROM settings WHERE key='cpu'").fetchone()[0]
             prepared = []
             for spec in checked:
-                environment = (_environments or {}).get(spec['tool']) or execution.binding(spec['tool'], path)
+                environment = _environments.get(spec['id']) or execution.binding(spec['tool'], path)
+                if spec.get('points') and environment['kind'] == 'command':
+                    raise ValueError('Command environments require one sweep point per step')
                 if environment['threads'] > capacity:
                     raise ValueError(f"{spec['tool']} requests {environment['threads']} CPU threads; configured capacity is {capacity}")
                 limits = dict(db.execute('SELECT name,capacity FROM pools'))
@@ -224,16 +332,19 @@ def submit(steps, name='Optical research', request_id=None, run_id=None, path=No
                 db.execute("UPDATE runs SET state=CASE WHEN state='running' THEN state ELSE 'queued' END,finished=NULL WHERE id=?", (result_id,))
             db.executemany('INSERT INTO steps(run_id,id,specification,environment,state) VALUES(?,?,?,?,?)', prepared)
             db.execute('INSERT INTO requests VALUES(?,?,?)', (key,payload,result_id))
+            db.execute('INSERT INTO request_steps VALUES(?,?)', (key,encoded([step['id'] for step in steps])))
     notify(path)
     start_worker(result_id, path)
     return {'run_id':result_id, 'request_id':key}
 
 
-def prepare(tool, python=None, request_id=None, path=None):
-    if not environments.software(tool, path=path)['connection'].get('pip'):
-        raise ValueError('Use this software’s native installer, then bind its environment')
-    config={'kind':'command','command':[sys.executable,'-B',str(Path(__file__).with_name('setup_worker.py'))],'threads':1,'concurrency':1,'cwd':None}
-    return submit([{'id':'install','tool':tool,'inputs':{'tool':tool,'python':python,'home':str(environments.home(path))}}],name='Prepare '+tool,request_id=request_id,path=path,_environments={tool:config})
+def prepare(tool, python=None, packages=None, request_id=None, path=None):
+    """Install a tool's recipe and extra packages in the background; returns the run of one prepare step."""
+    configured = environments.read(path)['tools'].get(tool)
+    if not (packages and configured and configured.get('managed')):
+        environments.installable(tool, path)
+    step, config = setup(tool, path, python=python, packages=packages or [])
+    return submit([step],name='Prepare '+tool,request_id=request_id,path=path,_environments={step['id']:config})
 
 
 def reconcile(path=None):
@@ -276,6 +387,20 @@ def status(run_id, path=None, offset=0, limit=50, include_results=True, wait=0, 
         result['next_offset'] = offset+limit if len(items)>limit else None
     if result['state']=='queued': start_worker(run_id, path)
     return result
+
+
+def outcome(run_id, step_id=None, wait=0, path=None, cancel=None):
+    """The state of a run after waiting up to wait seconds, with the result or error of step_id once it has finished."""
+    current = status(run_id, path, limit=1, include_results=False, wait=wait, cancel=cancel)
+    reply = {'state': current['state'], 'counts': current['counts']}
+    if step_id:
+        with database(path) as db:
+            row = db.execute('SELECT state,result,error,attempt FROM steps WHERE run_id=? AND id=?', (run_id, step_id)).fetchone()
+        if row and row['state'] in TERMINAL:
+            record = json.loads(row['result']) if row['result'] else {}
+            reply.update({'output': f"{step_id}/attempt-{row['attempt']}/", **{key: record[key] for key in ('result', 'files') if key in record}})
+            if row['error']: reply['error'] = row['error']
+    return reply
 
 
 def list_runs(state=None, offset=0, limit=20, path=None):
@@ -424,9 +549,26 @@ def read_result(run_id, file, offset=0, limit=16384, path=None):
     return {'file':file,'offset':offset,'encoding':format,'data':data,'next_offset':offset+len(content) if offset+len(content)<source.stat().st_size else None}
 
 
-def read_array(run_id, file, member=None, index=None, max_elements=10000, path=None):
-    """Read part of an NPY array or NPZ member from a run; see arrays.read."""
-    return {'run_id':run_id, 'file':file, **arrays.read(file_path(run_id, file, path), member=member, index=index, max_elements=max_elements)}
+def read_array(run_id, file, member=None, index=None, max_elements=None, image=None, part=None, scale='linear', path=None):
+    """Read part of an NPY array or NPZ member from a run; see arrays.read.
+
+    With image (auto, line or map) the selection is drawn as a PNG, returned
+    under '_image' with a summary (extremes and their positions) in place of
+    the values; part and scale choose what is drawn (see pictures.picture).
+    """
+    target = file_path(run_id, file, path)
+    selection = arrays.read(target, member=member, index=index, max_elements=max_elements or (arrays.LIMIT if image else 10000))
+    if not image:
+        return {'run_id':run_id, 'file':file, **selection}
+    # Axes of length one hold no choice: a picture fixes them, as an index would.
+    given = list(index or []) + [None] * (len(selection['shape']) - len(index or []))
+    fixed = [0 if size == 1 and not isinstance(entry, int) else entry for entry, size in zip(given, selection['shape'])]
+    if fixed != given and any(size > 1 and not isinstance(entry, int) for entry, size in zip(fixed, selection['shape'])):
+        selection = arrays.read(target, member=member, index=fixed, max_elements=max_elements or arrays.LIMIT)
+    from . import pictures
+    png, summary = pictures.picture(selection, kind=image, part=part, scale=scale)
+    kept = {key: value for key, value in selection.items() if key not in ('values', 'real', 'imag')}
+    return {'run_id':run_id, 'file':file, **kept, 'summary':summary, '_image':png}
 
 
 def resolved_inputs(spec, results, folders):
@@ -450,6 +592,8 @@ def perform(run_id, row, path, cancellation):
     spec, config = json.loads(row['specification']), json.loads(row['environment'])
     output = environments.home(path)/'runs'/run_id/row['id']/('attempt-'+str(row['attempt']))
     try:
+        if config['kind'] == 'prepared':
+            config = execution.binding(spec['tool'], path)
         with database(path) as db:
             results, folders = {}, {}
             for reference in spec.get('bindings', {}).values():
@@ -460,7 +604,8 @@ def perform(run_id, row, path, cancellation):
                 elif 'file' not in reference and key not in results:
                     row_result = db.execute("SELECT result FROM steps WHERE run_id=? AND id=? AND state='succeeded'",(run_id,key)).fetchone()
                     results[key] = json.loads(row_result[0])
-        request = {'action':spec.get('action',''),'source':spec.get('source',''),'inputs':resolved_inputs(spec,results,folders)}
+        request = {'action':spec.get('action',''),'source':spec.get('source',''),'inputs':resolved_inputs(spec,results,folders),
+                   **{key:spec[key] for key in ('optimize','points') if spec.get(key)}}
         result = execution.run(spec['tool'],request,output=output,configuration=config,timeout=spec.get('timeout'),cancel=cancellation)
         record = result['record']
         result = {'output':result['output'], **record} if isinstance(record,dict) and 'result' in record else {'output':result['output'],'result':record}

@@ -18,18 +18,21 @@ def main(argv=None):
     parser.add_argument('--version', action='version', version=__version__)
     commands = parser.add_subparsers(dest='command', required=True)
     search = commands.add_parser('search'); search.add_argument('query', nargs='?', default=''); search.add_argument('--domain'); search.add_argument('--license-group', choices=('open','paid','limited')); search.add_argument('--limit',type=int,default=20); search.add_argument('--offset',type=int,default=0); search.add_argument('--language',choices=('zh','en'),default='en')
-    info = commands.add_parser('info'); info.add_argument('tool'); info.add_argument('--language',choices=('zh','en'),default='en')
+    info = commands.add_parser('info'); info.add_argument('tool'); info.add_argument('--language',choices=('zh','en'),default='en'); info.add_argument('--program', help='print the source of this packaged program')
     register = commands.add_parser('register-software'); register.add_argument('definition', type=object_argument)
     commands.add_parser('registered-software')
     env = commands.add_parser('environments')
     discovery = commands.add_parser('discover'); discovery.add_argument('--root', dest='roots', action='append')
     native_bind = commands.add_parser('bind-native'); native_bind.add_argument('tool'); native_bind.add_argument('--python'); native_bind.add_argument('--sdk-path'); native_bind.add_argument('--options', type=object_argument, default={}); native_bind.add_argument('--threads', type=int, default=1); native_bind.add_argument('--concurrency', type=int, default=1); native_bind.add_argument('--requirements', type=object_argument); native_bind.add_argument('--env', type=object_argument)
-    bind = commands.add_parser('bind'); bind.add_argument('tool'); choice=bind.add_mutually_exclusive_group(required=True); choice.add_argument('--python'); choice.add_argument('--command-json',type=object_argument); bind.add_argument('--threads',type=int,default=1); bind.add_argument('--concurrency',type=int,default=1); bind.add_argument('--cwd'); bind.add_argument('--requirements',type=object_argument); bind.add_argument('--env',type=object_argument)
-    prep = commands.add_parser('prepare'); prep.add_argument('tool'); prep.add_argument('--python')
+    bind = commands.add_parser('bind'); bind.add_argument('tool', nargs='?', help='omit to bind every tool the interpreter provides'); choice=bind.add_mutually_exclusive_group(required=True); choice.add_argument('--python'); choice.add_argument('--command-json',type=object_argument); bind.add_argument('--threads',type=int,default=1); bind.add_argument('--concurrency',type=int,default=1); bind.add_argument('--cwd'); bind.add_argument('--requirements',type=object_argument); bind.add_argument('--env',type=object_argument)
+    prep = commands.add_parser('prepare'); prep.add_argument('tool'); prep.add_argument('--python'); prep.add_argument('--package', dest='packages', action='append', help='an extra requirement; repeat for more')
     for name in ('run','submit'):
-        run = commands.add_parser(name); run.add_argument('tool'); run.add_argument('action',nargs='?',default=''); run.add_argument('--inputs',type=object_argument,default={}); run.add_argument('--program',type=Path)
+        run = commands.add_parser(name); run.add_argument('tool'); run.add_argument('action',nargs='?',default='',help='a packaged program listed by info'); run.add_argument('--inputs',type=object_argument,default={}); run.add_argument('--program',type=Path)
         if name == 'run': run.add_argument('--output'); run.add_argument('--timeout',type=float)
-        else: run.add_argument('--name',default='Optical research'); run.add_argument('--request-id'); run.add_argument('--timeout',type=float)
+        else:
+            run.add_argument('--name',default='Optical research'); run.add_argument('--request-id'); run.add_argument('--timeout',type=float)
+            run.add_argument('--sweep',type=object_argument,help='JSON: input -> values or {start, stop, points}'); run.add_argument('--pairing',choices=('product','zip'),default='product'); run.add_argument('--chunk',type=int,help='points per process'); run.add_argument('--run-id'); run.add_argument('--wait',type=float,default=0,help='seconds to wait for the result, up to 25')
+        run.add_argument('--optimize',type=object_argument,help='JSON: {variables, minimize|maximize, method, evaluations}')
     sample = commands.add_parser('sample'); sample.add_argument('tool'); sample.add_argument('program', type=Path)
     sample.add_argument('--task', type=object_argument, required=True); sample.add_argument('--policy', type=object_argument, required=True)
     sample.add_argument('--episodes', type=int, required=True); sample.add_argument('--workers', type=int, default=1)
@@ -47,8 +50,10 @@ def main(argv=None):
         if name == 'status':
             item.add_argument('--wait',type=float,default=0); item.add_argument('--summary',dest='include_results',action='store_false')
     download=commands.add_parser('download'); download.add_argument('run_id'); download.add_argument('file'); download.add_argument('destination')
-    array=commands.add_parser('array',help='Read part of an NPY array or NPZ member'); array.add_argument('run_id'); array.add_argument('file'); array.add_argument('--member'); array.add_argument('--index',type=json.loads,help='JSON list, e.g. [10, [0, 100, 2]]'); array.add_argument('--max-elements',type=int,default=10000)
+    array=commands.add_parser('array',help='Read part of an NPY array or NPZ member'); array.add_argument('run_id'); array.add_argument('file'); array.add_argument('--member'); array.add_argument('--index',type=json.loads,help='JSON list, e.g. [10, [0, 100, 2]]'); array.add_argument('--max-elements',type=int); array.add_argument('--image',metavar='PNG',type=Path,help='draw the selection to this PNG file'); array.add_argument('--kind',choices=('auto','line','map'),default='auto'); array.add_argument('--part',choices=('abs','real','imag','phase','power')); array.add_argument('--scale',choices=('linear','log'),default='linear')
     read=commands.add_parser('read'); read.add_argument('run_id'); read.add_argument('file'); read.add_argument('--offset',type=int,default=0); read.add_argument('--limit',type=int,default=16384)
+    material=commands.add_parser('materials', help='n and k of a material from the refractiveindex.info database'); material.add_argument('material', nargs='?'); material.add_argument('--query'); material.add_argument('--wavelength', type=float, nargs='+'); material.add_argument('--unit', default='nm'); material.add_argument('--limit', type=int, default=20); material.add_argument('--dispersion', action='store_true', help='also the group index, GVD and D')
+    sweep=commands.add_parser('sweep',help='Tabulate the points of a sweep'); sweep.add_argument('run_id'); sweep.add_argument('--value',dest='values',action='append',help='dotted RESULT path; repeat for more'); best=sweep.add_mutually_exclusive_group(); best.add_argument('--minimize'); best.add_argument('--maximize'); sweep.add_argument('--save',action='store_true'); sweep.add_argument('--offset',type=int,default=0); sweep.add_argument('--limit',type=int,default=100)
     runs=commands.add_parser('runs'); runs.add_argument('--state'); runs.add_argument('--offset',type=int,default=0); runs.add_argument('--limit',type=int,default=20)
     commands.add_parser('mcp')
     commands.add_parser('tools')
@@ -58,7 +63,13 @@ def main(argv=None):
     a=vars(parser.parse_args(argv)); command=a.pop('command')
     try:
         if command == 'search': result=catalogue.search(**a)
-        elif command == 'info': result=environments.details(**a)
+        elif command == 'materials':
+            from . import materials
+            if a['wavelength'] and len(a['wavelength']) == 1: a['wavelength'] = a['wavelength'][0]
+            result=materials.lookup(**a)
+        elif command == 'info':
+            result=environments.details(**a)
+            if a['program']: print(result['source'], end=''); return
         elif command == 'register-software': result=environments.register(**a['definition'])
         elif command == 'registered-software': result={'software':environments.registered()}
         elif command == 'environments': result={'environments':environments.available()}
@@ -71,12 +82,22 @@ def main(argv=None):
             source=a.pop('program'); source=source.read_text(encoding='utf-8') if source else ''
             request={k:a.pop(k) for k in ('inputs','action')}; request['source']=source
             tool=a.pop('tool')
-            if command=='run': result=execution.run(tool,request,**a)
+            if command=='run':
+                optimize=a.pop('optimize')
+                if optimize:
+                    from . import optimization
+                    optimization.checked(optimize); request['optimize']=optimize
+                if request['action'] and not source: jobs.packaged({'tool':tool,**request})
+                result=execution.run(tool,request,**a)
             else:
-                timeout=a.pop('timeout'); result=jobs.submit([{'id':'calculate','tool':tool,**request,'timeout':timeout}],**a)
+                from . import studies
+                result=studies.submit(tool,**request,**a)
         elif command == 'sample':
             from . import sampling
             a['source'] = a.pop('program').read_text(encoding='utf-8'); result = sampling.submit(**a)
+        elif command == 'sweep':
+            from . import studies
+            result=studies.table(**a)
         elif command == 'resources': result=jobs.resources(**a)
         elif command == 'runs': result=jobs.list_runs(**a)
         elif command == 'submit-workflow':
@@ -85,8 +106,13 @@ def main(argv=None):
                 # A step may name its program file beside the workflow file instead of carrying the source text.
                 if isinstance(step,dict) and 'program' in step: step['source']=(file.parent/step.pop('program')).read_text(encoding='utf-8')
             result=jobs.submit(steps,**a)
-        elif command in ('status','files','cancel','resume','download','read','array'):
-            result=getattr(jobs, {'read':'read_result','array':'read_array'}.get(command,command))(**a)
+        elif command == 'array':
+            target, kind = a.pop('image'), a.pop('kind')
+            result=jobs.read_array(**a, image=kind if target else None)
+            if target:
+                target.write_bytes(result.pop('_image')); result['image']=str(target)
+        elif command in ('status','files','cancel','resume','download','read'):
+            result=getattr(jobs, {'read':'read_result'}.get(command,command))(**a)
         elif command == 'connect':
             from .packages import package
             result=package(a.pop('output'),**a)

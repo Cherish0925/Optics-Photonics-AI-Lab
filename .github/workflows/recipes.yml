@@ -1,0 +1,27 @@
+name: Installation recipes
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - data/connections.json
+      - src/optics_photonics/environments.py
+      - src/optics_photonics/programs/**
+      - src/optics_photonics/worker.py
+      - scripts/check_recipes.py
+permissions:
+  contents: read
+jobs:
+  prepare:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - name: Prepare every recipe for this platform and run its packaged programs
+        run: python scripts/check_recipes.py --jobs 4 --programs

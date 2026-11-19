@@ -88,7 +88,7 @@ for name in json.loads(sys.argv[2]):
 print(json.dumps({'python':sys.executable,'modules':found,'importable':all(found.values())}))
 """
     result = subprocess.run([connection['python'], '-c', code, connection.get('sdk_path') or '', json.dumps(modules)],
-                            capture_output=True, text=True, timeout=30)
+                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or 'Could not inspect the selected SDK environment')
     return json.loads(result.stdout.strip().splitlines()[-1])

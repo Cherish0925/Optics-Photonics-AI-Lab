@@ -525,7 +525,7 @@
     "license": "商业授权；学术许可、模块与并发求解按合同配置",
     "compute": "本地授权求解器；脚本驱动",
     "usage": "Photon Design 官方波导和器件设计工具。",
-    "limit": "模态截断与传播分段需要收敛检查；其他 Photon Design 产品另有模型边界。",
+    "limit": "模态截断与传播分段需要确认收敛；其他 Photon Design 产品另有模型边界。",
     "sources": [
       {
         "label": "官方脚本与优化",
@@ -1287,7 +1287,7 @@
     "license": "GPL-3.0",
     "compute": "CPU；并行能力按构建",
     "usage": "开源电磁求解器与公开教程。",
-    "limit": "光频使用需检查材料色散、网格与接口支持，不能沿用射频默认模型。",
+    "limit": "光频使用需确认材料色散、网格与接口支持，不能沿用射频默认模型。",
     "sources": [
       {
         "label": "项目与接口",
@@ -2004,7 +2004,7 @@
       "pic"
     ],
     "method": "版图 / DRC / LVS",
-    "summary": "GDS / OASIS 编辑、参数化单元、版图规则与连通性检查。",
+    "summary": "GDS / OASIS 编辑、参数化单元、版图规则与连通性验证。",
     "api": "Python pya / klayout.db、Ruby、批处理 CLI、宏插件。",
     "license": "GPL-3.0",
     "compute": "本地桌面或无 GUI 批处理",
@@ -2441,7 +2441,7 @@
     "license": "Apache-2.0",
     "compute": "本地数值后端",
     "usage": "Xanadu 的公开研究工具与方法论文。",
-    "limit": "仓库文档的 Python 依赖较旧；新环境选型需先检查兼容性，不能按最新框架无条件部署。",
+    "limit": "仓库文档的 Python 依赖较旧；新环境选型需先确认兼容性，不能按最新框架无条件部署。",
     "sources": [
       {
         "label": "项目与接口",
@@ -3240,7 +3240,7 @@
     "license": "BSD-3-Clause",
     "compute": "Qt / GPU 可视化；分析依插件",
     "usage": "开源科学成像生态。",
-    "limit": "插件不是 LLM Skill；批量数值分析优先直接调用分析库，GUI 用于检查。",
+    "limit": "插件不是 LLM Skill；批量数值分析优先直接调用分析库，GUI 用于查看。",
     "sources": [
       {
         "label": "项目与接口",

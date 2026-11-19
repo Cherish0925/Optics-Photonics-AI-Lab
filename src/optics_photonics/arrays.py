@@ -252,3 +252,39 @@ def nest(values, shape):
         return values
     size = math.prod(shape[1:])
     return [nest(values[i * size:(i + 1) * size], shape[1:]) for i in range(shape[0])]
+
+
+def write(file, arrays, descriptions=None):
+    """Write arrays to FILE.npz, and their descriptions to FILE.json, without NumPy.
+
+    arrays maps a name to (values, shape) with values a flat list in C order:
+    all bool, all int, or numbers with None for a missing value (stored as
+    NaN). descriptions maps a name to its data.quantity description. Returns
+    the file names, as data.save does.
+    """
+    import json
+    import os
+    file = Path(file)
+    numbers, described = file.with_name(file.name + '.npz'), file.with_name(file.name + '.json')
+    record = {'format': data.FORMAT, 'arrays': {}}
+    partial = file.with_name(file.name + '.partial.npz')
+    with zipfile.ZipFile(partial, 'w', zipfile.ZIP_DEFLATED) as archive:
+        for name, (values, shape) in arrays.items():
+            values, shape = list(values), tuple(shape)
+            if len(values) != math.prod(shape):
+                raise ValueError(f'{name}: {len(values)} values do not fill the shape {list(shape)}')
+            if values and all(type(v) is bool for v in values):
+                descr, packed = '|b1', struct.pack(f'<{len(values)}?', *values)
+            elif values and all(type(v) is int for v in values):
+                descr, packed = '<i8', struct.pack(f'<{len(values)}q', *values)
+            else:
+                descr, packed = '<f8', struct.pack(f'<{len(values)}d', *(math.nan if v is None else float(v) for v in values))
+            text = repr({'descr': descr, 'fortran_order': False, 'shape': shape}).encode('latin1')
+            text += b' ' * (-(len(MAGIC) + 4 + len(text) + 1) % 64) + b'\n'  # the data starts at a multiple of 64
+            archive.writestr(name + '.npy', MAGIC + b'\x01\x00' + struct.pack('<H', len(text)) + text + packed)
+            record['arrays'][name] = {'dtype': descr, 'shape': list(shape), **((descriptions or {}).get(name) or {})}
+    os.replace(partial, numbers)
+    partial = file.with_name(file.name + '.partial.json')
+    partial.write_text(json.dumps(record, ensure_ascii=False, indent=1, allow_nan=False) + '\n', encoding='utf-8')
+    os.replace(partial, described)
+    return {'data': numbers.name, 'description': described.name, 'arrays': list(arrays)}

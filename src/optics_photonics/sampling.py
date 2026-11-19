@@ -5,7 +5,7 @@ import math
 import os
 from pathlib import Path
 import time
-from . import environments, execution, jobs
+from . import environments, jobs
 
 
 def positive_int(value, name):
@@ -302,7 +302,10 @@ def submit(tool, source, *, task, policy, episodes, workers=1, max_steps=1000, s
     for run in previous:
         if not (environments.home(path) / 'runs' / jobs.identifier(run)).is_dir():
             raise ValueError('Unknown run: ' + run)
-    if execution.binding(tool, path)['kind'] not in ('python', 'native'):
+    configured = environments.read(path)['tools'].get(tool)
+    if configured is None:
+        environments.installable(tool, path)  # the submission prepares it first
+    elif configured['kind'] not in ('python', 'native'):
         raise ValueError('Episode programs need a Python or native SDK binding; use bind with a Python interpreter')
     count = min(workers, episodes)
     sampling = {'source': source, 'task': task, 'policy': policy, 'episodes': episodes, 'stride': count, 'seed': seed,

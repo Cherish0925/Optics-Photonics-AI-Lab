@@ -3,7 +3,18 @@ import assert from 'node:assert/strict';
 import {mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
+import {execFileSync} from 'node:child_process';
 import {OpticsLab} from '../dist/index.js';
+
+test('picture handles text metadata and reports unsupported older servers clearly',async()=>{
+ const request=async()=>({content:[{type:'image',mimeType:'image/png',data:Buffer.from('png').toString('base64')},
+                                  {type:'text',text:JSON.stringify({summary:{minimum:2}})}]});
+ const picture=await OpticsLab.prototype.picture.call({request},'run','field.npy');
+ assert.equal(picture.png.toString(),'png');
+ assert.deepEqual(picture.summary,{minimum:2});
+ await assert.rejects(OpticsLab.prototype.picture.call({request:async()=>({content:[{type:'text',text:'{}'}]})},'run','field.npy'),
+                      /upgrade the Optics connector/);
+});
 
 test('submit arbitrary software, reconnect and retrieve its saved output',async()=>{
  const home=await mkdtemp(join(tmpdir(),'Optics TypeScript '));
@@ -88,5 +99,27 @@ Path(os.environ["OPTICS_RESULT_FILE"]).write_text(json.dumps({"bytes":Path(input
   }
   await assert.rejects(client.download(run_id,'write/attempt-1/absent.bin',join(home,'absent.bin')));
   await assert.rejects(readFile(join(home,'absent.bin')));
+ }finally{client.close();await rm(home,{recursive:true,force:true,maxRetries:20,retryDelay:50});}
+});
+
+test('a sweep runs its points in parallel and its table names the best point',async()=>{
+ const home=await mkdtemp(join(tmpdir(),'Optics TypeScript '));
+ const command=process.env.OPTICS_PYTHON||(process.platform==='win32'?'python':'python3');
+ const client=await OpticsLab.connect({command,args:['-B',resolve('../../server.py'),'mcp'],home});
+ try {
+  await client.call('register_software',{tool:'bowl',name:'Bowl',description:'A standard-library model',modules:['json']});
+  const python=execFileSync(command,['-c','import sys; print(sys.executable)'],{encoding:'utf8'}).trim();  // a binding names an interpreter by its path
+  await client.call('bind_environment',{tool:'bowl',python,concurrency:4});
+  const source='RESULT = {"f": (INPUTS["x"] - 2) ** 2}';
+  const one=await client.calculate('bowl',{source,inputs:{x:5},wait:20});  // a short calculation answers in the same call
+  assert.deepEqual([one.state,one.result],['succeeded',{f:9}]);
+  const {run_id}=await client.calculate('bowl',{source,sweep:{x:{start:0,stop:4,points:9}}});
+  assert.equal((await client.wait(run_id,{timeout:30000})).state,'succeeded');
+  const table=await client.sweep(run_id,{values:['f'],minimize:'f',save:true});
+  assert.equal(table.points,9);
+  assert.deepEqual(table.best?.point,{x:2});
+  const {png,summary}=await client.picture(run_id,'sweep.npz',{member:'f'});
+  assert.deepEqual([...png.subarray(1,4)],[80,78,71]);
+  assert.deepEqual(summary.at_min,{x:2});
  }finally{client.close();await rm(home,{recursive:true,force:true,maxRetries:20,retryDelay:50});}
 });

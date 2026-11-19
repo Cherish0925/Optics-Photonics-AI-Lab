@@ -7,7 +7,7 @@ An independent package for optical software, native research programs, backgroun
 The connector supports Python 3.10+ on Windows, macOS and Linux. Each solver uses its own supported Python version, operating system and license. Different tools may use different environments.
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.7.0/optics_photonics-0.7.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.8.0/optics_photonics-0.8.0-py3-none-any.whl"
 optics-photonics info tmm
 optics-photonics prepare tmm
 optics-photonics run tmm spectrum --inputs "@inputs.json"
@@ -19,7 +19,7 @@ Use these inputs:
 {"n":[1,1.45,1.52],"thickness_nm":[100],"wavelength_nm":[450,550,650]}
 ```
 
-The result includes the output directory, scientific result and software versions; the spectrum is saved as CSV. A release wheel can be installed without Git. Every command also works through `python -m optics_photonics`.
+The result includes the output directory, scientific result and software versions; the spectrum is saved as `spectrum.npz` with units and axes, and as CSV. `info tmm` lists the packaged programs of a tool with each input's default and meaning, and `info tmm --program spectrum` prints a program's source, which can be edited and submitted with `--program`. Inputs not given keep their defaults; an unknown input name is rejected. A release wheel can be installed without Git. Every command also works through `python -m optics_photonics`.
 
 ## Environments and complete programs
 
@@ -30,7 +30,18 @@ optics-photonics resources --cpu 8
 optics-photonics run tmm --program research.py --inputs "@inputs.json"
 ```
 
-`prepare` installs a documented recipe into a separate environment. `bind` reuses an existing one. `threads` sets common numerical-library thread limits; `concurrency` limits simultaneous processes for one software. Total CPU capacity is shared by background runs. Configure MPI, GPUs, vendor licenses and cluster queues in the solver's native launcher.
+`prepare` installs a tool from its recipe into an environment of its own under `OPTICS_HOME/environments`. `bind` reuses an existing interpreter; `bind --python PATH` without a tool connects every catalogue or registered tool that interpreter provides and keeps tools already connected. `threads` sets common numerical-library thread limits; `concurrency` limits simultaneous processes for one software. Total CPU capacity is shared by background runs. Configure MPI, GPUs, vendor licenses and cluster queues in the solver's native launcher.
+
+### Installation recipes
+
+50 open tools carry a recipe in [connections.json](../data/connections.json); `software_search` shows each tool's route as `install`: `pip`, `conda` or `manual`.
+
+- **pip.** Pinned requirements, including a fixed commit for tools published only on GitHub (laserfun, PtyPy, py-fmas). With [uv](https://docs.astral.sh/uv/) on the PATH the environment is created by uv, which also provides the Python version a recipe states (PoPPy and GDSFactory need 3.12, Strawberry Fields below 3.12); without uv the connector's own Python and pip are used.
+- **conda.** Software without usable wheels comes from conda-forge: Meep and MPB (one shared environment; no Windows build), FEniCSx, Gmsh and HoloPy. The installer is `OPTICS_CONDA`, or micromamba, mamba or conda on the PATH; otherwise the official micromamba release for this platform is downloaded once into `OPTICS_HOME/bin` and checked against its published SHA-256.
+- **platforms.** A recipe lists the conda platform names it installs on when wheels do not cover all of them, for example Raysect only on `linux-64`. Elsewhere the error states the platforms.
+- **manual.** Commercial software and tools whose installation needs a compiler or a vendor installer (Lumerical, COMSOL, OpticStudio, CST, JCMsuite, openEMS, PyNX, SMUTHI) are installed with their own instructions and then bound. `installation_note` records what to watch for, such as the unrelated PyPI packages named `meep` and `pynx`.
+
+A submission for a tool without an environment installs it first: the run gains a step `prepare.TOOL`, and the calculation starts when it succeeds. An environment is created once; preparing again only adds what is missing, and two runs preparing the same environment wait for each other. `prepare TOOL --package scipy` (MCP: `packages`) adds requirements to a prepared environment and keeps its other settings. A newly prepared tool runs one thread per process and as many processes as the CPU capacity allows; `bind_environment` changes both. Installed versions, including conda-forge package versions, are recorded in the binding. [scripts/check_recipes.py](../scripts/check_recipes.py) prepares every recipe for this platform in a scratch home and reports each result; with `--programs` it then runs every packaged program of each tool with its defaults and reports its checks.
 
 A Python program receives `INPUTS` and `OUTPUT_DIR`, and sets `RESULT` to compact JSON. It can use the complete upstream API, retain a live solver session and perform arbitrary optimization or iteration. Save arrays, meshes and models under OUTPUT_DIR. Native program examples are in [examples/programs](../examples/programs).
 
@@ -46,9 +57,10 @@ optics-photonics files RUN_ID
 optics-photonics read RUN_ID calculate/attempt-1/result.json
 optics-photonics download RUN_ID calculate/attempt-1/spectrum.csv spectrum.csv
 optics-photonics array RUN_ID calculate/attempt-1/field.npz --member field --index "[[0, null, 4], 128]"
+optics-photonics array RUN_ID calculate/attempt-1/psf.npz --member psf --image psf.png --scale log
 ```
 
-Submission returns immediately. The independent worker continues when the submitting CLI or MCP process exits. Reuse `request-id` for retries of the same submission. Written files can be read while the run is active. `files --prefix STEP/` lists one step, and `array` returns part of an NPY or NPZ array without loading the file.
+Submission returns immediately. The independent worker continues when the submitting CLI or MCP process exits. Reuse `request-id` for retries of the same submission. Written files can be read while the run is active. `files --prefix STEP/` lists one step, and `array` returns part of an NPY or NPZ array without loading the file; `--image FILE.png` draws that part as lines or a map with axes and a color bar (`--part phase` for complex fields, `--scale log` for decades).
 
 A workflow is an array of steps with `id`, `tool`, `inputs`, `action` or `source`, optional `after`, `bindings` and `timeout`. Independent steps run within resource limits. A binding such as `{"value":{"step":"solve","path":["result","R"]}}` copies a predecessor result into the input named `value` and adds the dependency. For large data, `{"field":{"step":"solve","file":"field.npz"}}` sets the input `field` to the location of a file or folder that step wrote; the reference stays relative to the run and is resolved on the computing host when the step starts.
 
@@ -60,6 +72,17 @@ optics-photonics resume RUN_ID
 ```
 
 Append preserves the research run. Resume retains successful steps and reruns unfinished steps into separate attempt directories. Provider-specific cloud job IDs and session continuation belong in the native research program. Complete examples appear in the [Chinese guide](CONNECT.zh-CN.md).
+
+### Sweeps and optimization
+
+```sh
+optics-photonics submit tmm spectrum --inputs '{"n":[1,1.38,1.52],"wavelength_nm":[550]}' --sweep '{"thickness_nm.0":{"start":50,"stop":150,"points":21},"n.1":[1.30,1.38,1.46]}'
+optics-photonics sweep RUN_ID --value first.1 --minimize first.1 --save
+optics-photonics submit tmm spectrum --run-id RUN_ID --inputs '{"n":[1,1.30,1.52],"wavelength_nm":[550]}' --sweep '{"thickness_nm.0":{"start":100,"stop":110,"points":21}}'
+optics-photonics run tmm spectrum --inputs "@coating.json" --optimize '{"variables":{"thickness_nm.0":[0,300],"thickness_nm.1":[0,300]},"minimize":"mean.R"}'
+```
+
+A sweep computes its points in parallel, several per process for short programs; a dotted name such as `thickness_nm.0` sets one element of a list input. `sweep` tabulates the swept inputs and chosen result values of every point, finds the best one and with `--save` writes `sweep.npz` gridded over the swept inputs. `--run-id` appends a finer sweep to the same run. `--optimize` searches the variables within their bounds inside one process, by differential evolution with a Nelder–Mead polish or by Nelder–Mead alone, and keeps the files of the best evaluation in `best/` ([parameter studies](../skills/optical-computation/references/studies.md)).
 
 ## Install from a marketplace
 
@@ -103,7 +126,7 @@ optics-photonics connect agentic-research-os --output optics-plugin
 | Qiushi | Research OS editions use its native package; other editions use `connect qiushi` for MCP or command access. |
 | Other MCP hosts | `connect mcp`; register the stdio command in the host's format. |
 
-MCP provides software search, environment preparation/binding, resource settings, submission, history, status, cancellation, resumption and result access. `prepare_environment` installs a listed recipe in the background and returns a run ID; successful installation registers the environment. Two Skills and their references supply operating and scientific guidance on demand; `read_guide` returns any of them to a host that does not load Skills.
+MCP provides software search, material refractive indices (`materials`, from the refractiveindex.info database), environment preparation/binding, resource settings, submission, history, status, cancellation, resumption and result access. `prepare_environment` installs a tool's recipe in the background and returns a run ID; successful installation registers the environment. A submission for a tool without an environment does this itself. Two Skills and their references supply operating and scientific guidance on demand; `read_guide` returns any of them to a host that does not load Skills.
 
 Computations run on the MCP host. SSH can launch the stdio server on a workstation with the scientific software: `ssh -T USER@HOST /path/to/python -m optics_photonics mcp`. `read_result` returns bounded text/binary contents and `read_array` part of an NPY/NPZ array. `download_result` copies to a path on the MCP host. The TypeScript client's `download` transfers a file's content through the connection; SSH/SFTP remains an option for very large remote files.
 
@@ -113,7 +136,7 @@ Install a new wheel or tag and generate a new plugin directory to update. Config
 
 ## Software and extension model
 
-The bilingual catalogue separates commercial, open-source and restricted tools. Each connection retains primary interface documentation and upstream MCP/Skill sources. Filter executed calculations in the interactive guide. `software_details` gives native APIs, installation recipes, runnable inputs and physical conventions.
+The bilingual catalogue separates commercial, open-source and restricted tools. Each connection retains primary interface documentation and upstream MCP/Skill sources. The interactive guide filters tools with packaged programs. `software_details` gives native APIs, installation recipes and each packaged program's physics, inputs and checks.
 
 Extend software through a connection record, environment and native program using the same job/file interface. Vendor SDKs, GUI applications, MPI and cloud services retain their own launch/session requirements. Exchange units, coordinates, sampling, normalization and material sources alongside fields, spectra, S-parameters and models.
 
@@ -134,7 +157,7 @@ Host format sources: [Codex](https://developers.openai.com/plugins/build/plugins
 
 ## Add a research tool outside the catalogue
 
-Register its local description, then bind its installed environment. The published catalogue remains unchanged.
+Register its local description, then bind its installed environment, or give it a recipe (`pip`, `conda`, `python`, `platforms`) so that `prepare_environment` and submissions install it. The published catalogue remains unchanged.
 
 ```python
 import sys

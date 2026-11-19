@@ -3,8 +3,12 @@ import { open, rm } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 
 export type Step = { id:string; tool:string; source?:string; action?:string; inputs?:Record<string,unknown>;
-  after?:string[]; bindings?:Record<string,{step:string;path?:(string|number)[];file?:string}>; timeout?:number; requirements?:Record<string,number> };
-export type Submission = {run_id:string;request_id:string};
+  after?:string[]; bindings?:Record<string,{step:string;path?:(string|number)[];file?:string}>; timeout?:number; requirements?:Record<string,number>;
+  optimize?:Record<string,unknown>; point?:Record<string,unknown>; points?:{id:string;point:Record<string,unknown>;inputs:Record<string,unknown>}[] };
+export type Submission = {run_id:string;request_id:string;state?:string;counts?:Record<string,number>;result?:unknown;files?:string[];output?:string;error?:string};
+export type SweepPoint = {step:string;id:string;state:string;point:Record<string,unknown>;values:Record<string,unknown>;error?:string};
+export type SweepTable = {run_id:string;points:number;states:Record<string,number>;swept:string[];values:string[];rows:SweepPoint[];
+  next_offset:number|null;best?:(SweepPoint&{goal:string;path:string})|null;saved?:string|null};
 export type RunStatus = {id:string;state:string;counts:Record<string,number>;next_offset:number|null;
   steps:{id:string;state:string;output?:string;result?:unknown;error?:string;attempt:number}[]};
 export type Options = {command?:string;args?:string[];home?:string;env?:NodeJS.ProcessEnv;timeout?:number};
@@ -41,7 +45,7 @@ export class OpticsLab {
   static async connect(options:Options={}) {
     const client=new OpticsLab(options);
     try {
-      await client.request('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'optics-typescript',version:'0.7.0'}});
+      await client.request('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'optics-typescript',version:'0.8.0'}});
       client.notify('notifications/initialized');
       return client;
     } catch(error) { client.close(); throw error; }
@@ -90,6 +94,10 @@ export class OpticsLab {
   environments(options:Record<string,unknown>={}) {return this.call('environments',options);}
   resources(cpu?:number,pools?:Record<string,number>) {return this.call('compute_resources',{...(cpu===undefined?{}:{cpu}),...(pools===undefined?{}:{pools})});}
   submit(steps:Step[],options:{name?:string;request_id?:string;run_id?:string}={}) {return this.call<Submission>('submit_workflow',{steps,...options});}
+  /** One calculation: a packaged program (action) or source; sweep runs every combination of inputs as parallel steps, optimize searches inputs inside one process. */
+  calculate(tool:string,options:{action?:string;source?:string;inputs?:Record<string,unknown>;sweep?:Record<string,unknown>;pairing?:'product'|'zip';chunk?:number;optimize?:Record<string,unknown>;run_id?:string;name?:string;request_id?:string;timeout?:number;wait?:number}={}) {return this.call<Submission>('submit_calculation',{tool,...options});}
+  /** Swept inputs, state and chosen RESULT values (dotted paths) of every point of a sweep, with the best point. */
+  sweep(run_id:string,options:{values?:string[];minimize?:string;maximize?:string;save?:boolean;offset?:number;limit?:number}={}) {return this.call<SweepTable>('sweep_results',{run_id,...options});}
   status(run_id:string,options:{wait?:number;offset?:number;limit?:number;include_results?:boolean;signal?:AbortSignal}={}) {
     const {signal,...query}=options;
     return this.call<RunStatus>('run_status',{run_id,...query},{signal});
@@ -107,6 +115,15 @@ export class OpticsLab {
   files(run_id:string,offset=0,limit=100,prefix=''){return this.call('result_files',{run_id,offset,limit,...(prefix?{prefix}:{})});}
   /** Part of an NPY array or NPZ member; index entries are positions or [start, stop, step]. */
   array(run_id:string,file:string,options:{member?:string;index?:(number|null|(number|null)[])[];max_elements?:number}={}){return this.call('read_array',{run_id,file,...options});}
+  /** A PNG of a one- or two-dimensional selection (lines or a map with a color bar) and the extremes with their positions. */
+  async picture(run_id:string,file:string,options:{member?:string;index?:(number|null|(number|null)[])[];max_elements?:number;image?:'auto'|'line'|'map';part?:'abs'|'real'|'imag'|'phase'|'power';scale?:'linear'|'log'}={}):Promise<{png:Buffer;summary:Record<string,unknown>}> {
+    const result=await this.request('tools/call',{name:'read_array',arguments:{run_id,file,image:'auto',...options}});
+    if(result.isError) throw new Error(result.content?.map((c:{text?:string})=>c.text??'').join('\n')||'Optics operation failed');
+    const image=result.content?.find((c:{type:string;mimeType?:string})=>c.type==='image'&&c.mimeType==='image/png');
+    if(!image||typeof image.data!=='string') throw new Error('The server did not return a PNG; upgrade the Optics connector to 0.8.0 or newer');
+    const structured=result.structuredContent??JSON.parse(result.content?.find((c:{type:string})=>c.type==='text')?.text??'{}');
+    return {png:Buffer.from(image.data,'base64'),summary:structured.summary??{}};
+  }
   read(run_id:string,file:string,offset=0,limit=16384){return this.call('read_result',{run_id,file,offset,limit});}
   /** Copy a result file to this computer; the server may run elsewhere, for example over SSH. */
   async download(run_id:string,file:string,destination:string,options:RequestOptions={}):Promise<{path:string;bytes:number}> {

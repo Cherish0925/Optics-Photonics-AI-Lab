@@ -7,3 +7,8 @@ renamed Optics Sans. The original copyright attribution is retained.
 Source: https://github.com/notofonts/noto-cjk
 Font license: docs/assets/FONT_LICENSE.txt (SIL Open Font License 1.1).
 The self-contained HTML editions embed this font and its license.
+
+data/materials holds the index and selected pages of the refractiveindex.info
+database (https://github.com/polyanskiy/refractiveindex.info-database), which
+is dedicated to the public domain under CC0 1.0. Each page keeps its own
+references, which the materials tool returns with every value.
