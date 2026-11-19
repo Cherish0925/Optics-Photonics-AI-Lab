@@ -424,7 +424,19 @@ def conda(path=None):
 
 
 def install(command, conda_root=None):
-    """Run an installer; its output goes to stderr so that stdout stays a JSON reply."""
+    """Run an installer; its output goes to stderr so that stdout stays a JSON reply.
+
+    conda installers share one package cache, which two processes extracting into it at once can
+    leave failing on Windows, so they run one at a time.
+    """
+    if conda_root is not None:
+        Path(conda_root).parent.mkdir(parents=True, exist_ok=True)
+        with locked(Path(conda_root).parent / 'conda-installer.lock'):
+            return _install(command, conda_root)
+    return _install(command, conda_root)
+
+
+def _install(command, conda_root=None):
     env = dict(os.environ)
     if conda_root and 'MAMBA_ROOT_PREFIX' not in env:
         env['MAMBA_ROOT_PREFIX'] = str(conda_root)
