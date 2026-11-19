@@ -15,22 +15,26 @@ from support import workspace  # noqa: E402
 
 
 class MaterialCase(unittest.TestCase):
-    def test_parallel_first_downloads_do_not_share_a_partial_file(self):
+    def test_parallel_first_downloads_publish_once_and_keep_the_cache_immutable(self):
         text = b'DATA:\n  - type: tabulated n\n    data: |\n        0.5 1.5\n        1.0 1.4\n'
         barrier = Barrier(2)
-        replace = materials.os.replace
-        def synchronized_replace(source, destination):
+        def download(target):
             barrier.wait(timeout=10)
-            replace(source, destination)
-        with workspace() as home, patch.object(materials.urllib.request, 'urlopen', side_effect=lambda *a, **k: io.BytesIO(text)), \
-                patch.object(materials.os, 'replace', side_effect=synchronized_replace):
+            materials._download({'data': 'test.yml'}, target)
+        with workspace() as home, patch.object(materials.urllib.request, 'urlopen', side_effect=lambda *a, **k: io.BytesIO(text)) as request, \
+                patch.object(materials.os, 'replace', wraps=materials.os.replace) as replace:
             target = Path(home)/'materials'/'test.yml'
             with ThreadPoolExecutor(max_workers=2) as pool:
-                futures = [pool.submit(materials._download, {'data': 'test.yml'}, target) for _ in range(2)]
+                futures = [pool.submit(download, target) for _ in range(2)]
                 for future in futures:
                     future.result()
-            self.assertEqual(target.read_bytes(), text)
-            self.assertEqual(list(target.parent.iterdir()), [target])
+            with target.open('rb') as reader:
+                materials._download({'data': 'test.yml'}, target)
+                self.assertEqual(reader.read(), text)
+            request.assert_called_once()
+            replace.assert_called_once()
+            self.assertEqual(set(target.parent.iterdir()), {target, target.with_name(target.name + '.lock')})
+            self.assertEqual(list(target.parent.glob('*.partial')), [])
 
     def test_bundled_formulas_give_published_indices(self):
         # Catalogue values at the helium d line, 587.56 nm.

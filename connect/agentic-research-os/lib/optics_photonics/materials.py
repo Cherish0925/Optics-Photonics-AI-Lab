@@ -122,22 +122,27 @@ def _parsed(file):
 
 
 def _download(row, target):
-    url = SOURCE.format(commit=index()['commit'], path=urllib.parse.quote(row['data']))
-    with urllib.request.urlopen(url, timeout=60) as response:
-        data = response.read()
+    from .environments import locked
     target.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(dir=target.parent, prefix=target.name + '.', suffix='.partial', delete=False) as stream:
-        partial = Path(stream.name)
+    with locked(target.with_name(target.name + '.lock')):
+        # A pinned-commit cache is immutable. Publish once, without replacing a reader's open file on Windows.
+        if target.is_file():
+            return
+        url = SOURCE.format(commit=index()['commit'], path=urllib.parse.quote(row['data']))
+        with urllib.request.urlopen(url, timeout=60) as response:
+            data = response.read()
+        with tempfile.NamedTemporaryFile(dir=target.parent, prefix=target.name + '.', suffix='.partial', delete=False) as stream:
+            partial = Path(stream.name)
+            try:
+                stream.write(data)
+            except BaseException:
+                stream.close()
+                partial.unlink(missing_ok=True)
+                raise
         try:
-            stream.write(data)
-        except BaseException:
-            stream.close()
+            os.replace(partial, target)
+        finally:
             partial.unlink(missing_ok=True)
-            raise
-    try:
-        os.replace(partial, target)
-    finally:
-        partial.unlink(missing_ok=True)
 
 
 def page(material, path=None):
