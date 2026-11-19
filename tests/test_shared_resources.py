@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import select
 import sys
 import tempfile
 import time
@@ -47,8 +48,9 @@ Path(os.environ['OPTICS_RESULT_FILE']).write_text(json.dumps({'values':list(rang
         with tempfile.TemporaryDirectory() as home:
             with Wakeup(home) as wake:
                 notify(home)
-                start=time.monotonic();wake.wait(timeout=1)
-                self.assertLess(time.monotonic()-start,.5)
+                self.assertEqual(select.select([wake.socket], [], [], 1)[0], [wake.socket])
+                wake.wait(timeout=1)
+                self.assertEqual(select.select([wake.socket], [], [], 0)[0], [])
 
     def test_long_dependency_chain_and_unknown_resource(self):
         steps=[{'id':str(i),'tool':'arbitrary','after':[str(i-1)] if i else []} for i in range(15000)]
