@@ -103,7 +103,7 @@ def script(tool, connection, text, given, folder):
     if code:
         tail = (Path(folder) / languages.LOG_FILE).read_text(encoding='utf-8', errors='replace')[-3000:]
         raise RuntimeError(f'{Path(command[0]).name} exited with code {code}; {languages.LOG_FILE} ends with:\n{tail}')
-    return languages.described(languages.result(folder), folder)
+    return languages.described(languages.result(folder, name), folder)
 
 
 @contextmanager
@@ -195,7 +195,7 @@ def execute(tool, request, output):
         for distribution in package_map.get(module, []):
             try: versions[distribution] = importlib.metadata.version(distribution)
             except importlib.metadata.PackageNotFoundError: pass
-    record = {'software': tool, 'operation': 'script' if text else 'program' if request.get('source') else action,
+    record = {'software': tool, 'operation': 'script' if request.get('script') else 'program' if request.get('source') else action,
               'result': result, 'elapsed_s': time.time()-started,
               'environment': {'python': platform.python_version(), 'platform': platform.platform(), 'versions': versions, 'connector': __version__,
                               **({'executable': executable['executable'], 'language': executable.get('language')} if executable else {}),

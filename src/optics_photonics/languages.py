@@ -41,7 +41,8 @@ LANGUAGES = {
                           'https://www.maplesoft.com/support/help/maple/view.aspx?path=JSON']},
     'lua': {'suffix': '.lua', 'main': 'optics_main.lua',
             'command': ['{executable}', '{main}'],
-            'inputs': 'table', 'requires': 'a Lua interpreter, such as S4',
+            'inputs': 'table; JSON.null preserves null, JSON.array{} and JSON.object{} distinguish empty containers',
+            'requires': 'a Lua interpreter, such as S4',
             'sources': ['https://web.stanford.edu/group/fan/S4/tutorial.html']},
     'lsf': {'suffix': '.lsf', 'main': 'optics_main.lsf',
             'command': ['{executable}', '-nw', '-trust-script', '-exit', '-run', '{main}'],
@@ -93,20 +94,21 @@ def described(result, folder):
     if not isinstance(result, dict) or not isinstance(result.get('save'), dict):
         return result
     from . import arrays
-    spec = result.pop('save')
+    spec = result['save']
     numbers, descriptions = {}, {}
     for key, item in spec.get('arrays', {}).items():
-        shape, level = [], item['values']
-        while isinstance(level, list):
-            shape.append(len(level))
-            level = level[0] if level else None
-        flat = item['values'] if shape else [item['values']]
-        for _ in shape[1:]:
-            flat = [value for row in flat for value in row]
-        numbers[key] = (flat, shape)
+        def flatten(value):
+            if not isinstance(value, list):
+                return [value], []
+            children = [flatten(child) for child in value]
+            shape = children[0][1] if children else []
+            if any(child_shape != shape for _, child_shape in children):
+                raise ValueError(f'{key}: array rows must have the same shape')
+            return [number for values, _ in children for number in values], [len(value), *shape]
+        numbers[key] = flatten(item['values'])
         descriptions[key] = {k: v for k, v in item.items() if k != 'values'}
     written = arrays.write(Path(folder) / str(spec.get('file', 'data')), numbers, descriptions)
-    return {**result, 'data': written['data']}
+    return {**{key: value for key, value in result.items() if key != 'save'}, 'data': written['data']}
 
 
 def language(name):
@@ -120,7 +122,7 @@ def quoted(text, escapes):
 
 
 JULIA = {'\\': '\\\\', '"': '\\"', '$': '\\$', '\n': '\\n', '\r': '\\r', '\t': '\\t'}
-LUA = {'\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t', '\0': '\\0'}
+LUA = {'\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t', '\0': '\\000'}
 WOLFRAM = {'\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t'}
 MAPLE = WOLFRAM
 
@@ -146,13 +148,13 @@ def julia(value):
 
 
 def lua(value):
-    """A Lua expression for a JSON value; null becomes nil."""
-    if value is None: return 'nil'
+    """A Lua expression retaining JSON nulls and the distinction between lists and objects."""
+    if value is None: return 'JSON.null'
     if isinstance(value, bool): return 'true' if value else 'false'
     if isinstance(value, (int, float)): return number(value)
     if isinstance(value, str): return quoted(value, LUA)
-    if isinstance(value, list): return '{' + ', '.join(lua(v) for v in value) + '}'
-    if isinstance(value, dict): return '{' + ', '.join('[' + quoted(str(k), LUA) + '] = ' + lua(v) for k, v in value.items()) + '}'
+    if isinstance(value, list): return 'JSON.array{' + ', '.join(lua(v) for v in value) + '}'
+    if isinstance(value, dict): return 'JSON.object{' + ', '.join('[' + quoted(str(k), LUA) + '] = ' + lua(v) for k, v in value.items()) + '}'
     raise ValueError('Inputs are JSON values')
 
 
@@ -224,9 +226,13 @@ end
 '''
 
 LUA_WRITER = r'''
+JSON = {null = {}}
+local optics_array, optics_object = {}, {}
+function JSON.array(x) return setmetatable(x or {}, optics_array) end
+function JSON.object(x) return setmetatable(x or {}, optics_object) end
 local function optics_json(x)
   local kind = type(x)
-  if x == nil then return "null"
+  if x == nil or x == JSON.null then return "null"
   elseif kind == "boolean" then return x and "true" or "false"
   elseif kind == "number" then
     if x ~= x or x == math.huge or x == -math.huge then return "null" end
@@ -238,9 +244,17 @@ local function optics_json(x)
       return string.format("\\u%04x", c:byte())
     end)) .. '"'
   elseif kind == "table" then
-    local parts = {}
-    if #x > 0 or next(x) == nil then
-      for i = 1, #x do parts[#parts + 1] = optics_json(x[i]) end
+    local parts, length = {}, 0
+    local array = getmetatable(x) ~= optics_object
+    for k in pairs(x) do
+      if type(k) ~= "number" or k < 1 or k % 1 ~= 0 then array = false
+      else length = math.max(length, k) end
+    end
+    if getmetatable(x) == optics_array and not array then
+      error("A JSON array has only positive integer keys")
+    end
+    if array then
+      for i = 1, length do parts[#parts + 1] = optics_json(x[i]) end
       return "[" .. table.concat(parts, ",") .. "]"
     end
     for k, v in pairs(x) do parts[#parts + 1] = optics_json(tostring(k)) .. ":" .. optics_json(v) end
@@ -288,10 +302,10 @@ def main(name, folder, inputs):
                           f'optics_file := fopen({quoted(result, MAPLE)}, WRITE, TEXT):',
                           'fprintf(optics_file, "%s", JSON:-ToString(RESULT)):', 'fclose(optics_file):', ''])
     if name == 'lua':
-        return '\n'.join([f'INPUTS = {lua(inputs)}', f'OUTPUT_DIR = {quoted(folder.as_posix(), LUA)}',
+        return '\n'.join([LUA_WRITER, f'INPUTS = {lua(inputs)}', f'OUTPUT_DIR = {quoted(folder.as_posix(), LUA)}',
                           f'dofile({quoted(program, LUA)})',
                           'if RESULT == nil then error("Set RESULT to the result of the calculation") end',
-                          LUA_WRITER, f'local optics_file = assert(io.open({quoted(result, LUA)}, "w"))',
+                          f'local optics_file = assert(io.open({quoted(result, LUA)}, "w"))',
                           'optics_file:write(optics_json(RESULT))', 'optics_file:close()', ''])
     raise ValueError(name)
 
@@ -334,12 +348,18 @@ def command(name, executable, folder, *, project=None, threads=1, arguments=()):
     return out[:1] + list(arguments) + out[1:]
 
 
-def result(folder):
+def result(folder, name=None):
     """RESULT of the program, written by the main file."""
     file = Path(folder) / RESULT_FILE
     if not file.is_file():
         raise RuntimeError('The program finished without RESULT; set RESULT, and read ' + LOG_FILE + ' in the output folder')
-    return json.loads(file.read_text(encoding='utf-8'))
+    value = json.loads(file.read_text(encoding='utf-8'))
+    if name == 'lsf':
+        # jsonsave writes named workspace variables, even when only RESULT is requested.
+        if not isinstance(value, dict) or 'RESULT' not in value:
+            raise ValueError('Lumerical jsonsave did not return the RESULT variable')
+        return value['RESULT']
+    return value
 
 
 def guide(name):
