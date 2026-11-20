@@ -42,6 +42,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/`: Python,
 | `finesse/cavity` | Fabry-Perot transmission, reflection and stored power over frequency; linewidth, finesse, buildup | Airy function |
 | `opticomm/ber` | Bit and symbol error rates and GMI of QAM, PSK or PAM over additive noise and phase noise | theoretical BER |
 | `solcore/detailed_balance` | Detailed-balance solar-cell efficiency, Voc, Jsc and fill factor over band gap | currents integrated from the spectrum and Planck's law |
+| `scipy/resonances` | Resonances of a measured or computed transmission spectrum (CSV file or lists): wavelength, linewidth, Q and extinction of each dip or peak with standard errors, free spectral range, group index | exact spectrum of an all-pass ring: Q and free spectral range |
 | `scipy/fit_gaussian` | Least-squares Gaussian fit | residual |
 | `qutip/rabi` | Rabi oscillation of a two-level system | sin²(Ωt/2) |
 | `qutip/jaynes_cummings` | Emitter–cavity dynamics with losses; dressed states | one-excitation solution |

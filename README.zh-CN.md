@@ -48,7 +48,7 @@ optics-photonics array RUN_ID calculate/attempt-1/spectrum.npz --member R --imag
 1. **选软件。** `software_search` 按物理问题查找软件和封装程序，中英文皆可，光学概念的同义词与缩写互相匹配（[词表](data/vocabulary.json)）；`software_details` 返回每项软件的物理方法、接口、安装来源和封装程序。目录之外的工具用 `register_software` 加入。
 2. **连接环境。** 69 项软件带 pip、conda-forge 或 Julia 安装配方；`prepare_environment` 提前安装，提交计算也会自动准备缺少的环境。`bind_environment` 复用已有解释器或命令；`discover_native_software` 与 `bind_native_software` 查找并连接已安装的 SDK、可执行程序和 Windows 自动化服务。在线服务客户端及需在自身界面中操作的软件分别列在[连接通路](docs/NATIVE.zh-CN.md)中。
 3. **使用实测材料数据。** `materials` 给出 refractiveindex.info 数据库 3576 页（CC0）的 n、k 和文献，带 `dispersion` 时还给出群折射率、群速度色散和色散参数 D；SiO2、Si、Au、N-BK7、BBO 等常用名称离线可用，其他页面首次使用时下载。
-4. **运行程序。** 从 [39 套软件中的 56 个程序](skills/optical-computation/references/programs.md)选择并查看输入与物理模型，或使用软件完整原生 API 编写程序。Python `source` 和软件原生语言 `script` 接收输入与输出目录，返回 `RESULT`。`submit_calculation` 支持并行扫描与有界优化，`submit_workflow` 连接依赖或并行步骤。[参数研究](skills/optical-computation/references/studies.md)与[科学数组](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)说明输入、单位、坐标和文件如何在程序之间传递。
+4. **运行程序。** 从 [39 套软件中的 57 个程序](skills/optical-computation/references/programs.md)选择并查看输入与物理模型，或使用软件完整原生 API 编写程序。Python `source` 和软件原生语言 `script` 接收输入与输出目录，返回 `RESULT`。`submit_calculation` 支持并行扫描与有界优化，`submit_workflow` 连接依赖或并行步骤。[参数研究](skills/optical-computation/references/studies.md)与[科学数组](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)说明输入、单位、坐标和文件如何在程序之间传递。
 5. **继续与取回结果。** `run_status` 每次最多等待 25 秒，等待期间同一连接上的其他请求照常返回。运行不随连接断开而停止，用 `list_runs` 重新找到。`result_files`、`read_result`、`read_array` 分别返回文件列表、字节片段和 NPY/NPZ 数组的局部；`read_array` 加 `image` 时把所选部分画成 PNG 返回：曲线或带色标的二维图，标出坐标和单位。`resume_run` 重跑未完成步骤，保留已完成步骤。
 6. **采集 episode。** `sample_episodes` 在并行的软件进程中运行 Gymnasium 形式的环境，保存种子、动作、观测和奖励，供学习使用；中断或追加的采集会接着进行，不重复已完成的 episode（[接口说明](docs/LEARNING.md)）。
 
@@ -73,7 +73,8 @@ optics-photonics array RUN_ID calculate/attempt-1/spectrum.npz --member R --imag
 | 成像与光束 | `hcipy/psf` · `poppy/psf` · `prysm/mtf` · `lightpipes/gaussian` · `diffractio/apertures` · `scikitimage/registration` |
 | 镜头、光线、偏振 | `optiland/lens` · `optiland/trace` · `raytracing/abcd` · `sympy/abcd` · `sympy/fresnel` · `py-pol/polarization` |
 | 量子光学 | `qutip/rabi` · `qutip/jaynes_cummings` · `qutip/resonance_fluorescence` · `quantumoptics/jaynes_cummings` · `perceval/interference` · `strawberry/gaussian_state` |
-| 生物组织、X 射线、光伏、数据 | `scipy/tissue_layers` · `srw/undulator` · `solcore/detailed_balance` · `scipy/fit_gaussian` |
+| 生物组织、X 射线、光伏 | `scipy/tissue_layers` · `srw/undulator` · `solcore/detailed_balance` |
+| 实测数据 | `scipy/resonances` · `scipy/fit_gaussian` |
 | 实验仪器与全息图 | `pyvisa/sweep` · `bluesky/scan` · `slmsuite/spot_array` |
 
 同样的操作也可通过命令行、Python 和 TypeScript 使用；MCP 宿主还会得到六个提示（calculate、study、reproduce、connect、measure、continue），各篇指南也作为资源提供。目录中的通路描述软件接口，本机绑定决定实际可运行的能力；软件许可、平台要求和服务访问权限仍以所选软件为准。[发布说明](docs/RELEASE.md)记录各版本实际完成的验证。

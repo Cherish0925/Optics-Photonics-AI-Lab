@@ -104,7 +104,7 @@ class DeclarationCase(unittest.TestCase):
 
     def test_details_list_programs_and_return_one_source(self):
         listed = environments.details('scipy')['execution']
-        self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes', 'tissue_layers'])
+        self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonances', 'resonator', 'second_harmonic', 'slab_modes', 'tissue_layers'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
@@ -459,6 +459,30 @@ class ProgramPhysicsCase(unittest.TestCase):
             {'mu_a_per_mm': 0.5, 'mu_s_per_mm': 5.0, 'g': 0.8, 'n': 1.4, 'thickness_mm': 0.5}]})
         self.assertEqual(stack['absorbed'][1], 0)
         self.assertLess(abs(stack['checks']['balance']), 1e-6)
+
+    def test_resonances_of_a_spectrum_give_q_extinction_and_free_spectral_range(self):
+        import numpy as np
+        result = self.run_program('scipy', 'resonances')
+        self.assertEqual(result['count'], 2)
+        self.assertLess(abs(result['checks']['q_difference']), 0.02)
+        self.assertLess(abs(result['checks']['fsr_difference']), 1e-3)
+        self.assertAlmostEqual(result['group_index'][0], 4.2, places=2)
+        self.assertAlmostEqual(result['resonances'][0]['extinction_db'], 20 * math.log10(0.0298 / 0.01), delta=0.3)
+        # The same spectrum from a file in dB with a header line, and its complement as peaks.
+        saved = np.load(Path(self.folder.name) / f'scipy-resonances-{self.count}' / 'resonances.npz')
+        file = Path(self.folder.name) / 'spectrum.csv'
+        with file.open('w', encoding='utf-8') as stream:
+            stream.write('wavelength (nm),transmission (dB)\n')
+            stream.writelines(f'{x!r},{10 * math.log10(y)!r}\n' for x, y in zip(saved['wavelength_nm'].tolist(), saved['transmission'].tolist()))
+        from_file = self.run_program('scipy', 'resonances', {'file': str(file), 'decibel': True, 'round_trip_um': 2 * math.pi * 20})
+        self.assertAlmostEqual(from_file['mean_Q'] / result['mean_Q'], 1, places=6)
+        self.assertAlmostEqual(from_file['group_index'][0], result['group_index'][0], places=6)
+        self.assertIsNone(from_file['checks']['q_difference'])
+        peaks = self.run_program('scipy', 'resonances', {'wavelength_nm': saved['wavelength_nm'].tolist(),
+                                                         'transmission': (1 - saved['transmission']).tolist(), 'peaks': True, 'min_depth': 0.5})
+        self.assertAlmostEqual(peaks['resonances'][0]['wavelength_nm'], result['resonances'][0]['wavelength_nm'], places=4)
+        with self.assertRaisesRegex(ValueError, 'No resonance deeper'):
+            self.run_program('scipy', 'resonances', {'wavelength_nm': list(range(1500, 1560)), 'transmission': [1.0] * 60})
 
     def test_ray_optics_and_polarization(self):
         abcd = self.run_program('raytracing', 'abcd', {'elements': [{'space_m': 0.1}, {'focal_length_m': 0.05}, {'space_m': 0.1}], 'ray': [0.001, 0]})
