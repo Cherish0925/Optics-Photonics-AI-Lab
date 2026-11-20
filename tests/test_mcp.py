@@ -174,6 +174,22 @@ class ConcurrentRequestsCase(unittest.TestCase):
         self.assertIn('already in progress', message['error']['message'])
 
 
+class ToolListCase(unittest.TestCase):
+    def test_tools_that_only_read_are_marked_for_the_host(self):
+        from optics_photonics import mcp
+        tools = {item['name']: item for item in mcp.listed()}
+        self.assertEqual(set(tools), {name for name, _, _ in mcp.TOOLS})
+        self.assertLessEqual(mcp.READ_ONLY | mcp.OPEN_WORLD, set(tools))
+        self.assertTrue(tools['read_array']['annotations']['readOnlyHint'])
+        self.assertFalse(tools['submit_calculation']['annotations']['readOnlyHint'])
+        self.assertEqual([name for name, item in tools.items() if item['annotations']['destructiveHint']], ['cancel_run'])
+        for item in tools.values():
+            self.assertNotIn('\n', item['description'])
+            self.assertNotIn('  ', item['description'])
+        # The whole list stays small enough to sit in every session's context.
+        self.assertLess(sum(len(item['description']) for item in tools.values()), 9000)
+
+
 class ChildInputCase(unittest.TestCase):
     """While the server reads its stdin, a Windows child holding that pipe waits until the next request arrives."""
 

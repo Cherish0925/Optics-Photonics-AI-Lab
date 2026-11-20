@@ -80,7 +80,9 @@ class DeclarationCase(unittest.TestCase):
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
         one = environments.details('scipy', program='nlse')
-        self.assertTrue(one['source'].startswith('"""Pulse propagation'))
+        self.assertNotIn('source', one)   # the text comes on request
+        self.assertIn('source=true', one['run'])
+        self.assertTrue(environments.details('scipy', program='nlse', source=True)['source'].startswith('"""Pulse propagation'))
         self.assertEqual((one['about'], one['inputs']['length_km']['default']),
                          (programs.catalog()['scipy']['nlse']['about'], nlse['inputs']['length_km']['default']))
         with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: coupler, fiber_modes, fit_gaussian'):
