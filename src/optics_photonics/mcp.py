@@ -69,7 +69,8 @@ TOOLS = [
         abbreviations of one concept match (PSF, point spread function, 点扩散函数). Best matches first. An item names the
         packaged program that fits as program, ready for submit_calculation(tool, action); its routes (how the environment
         reaches the software); install (pip, conda or julia when a recipe installs it, manual otherwise); upstream_mcp when
-        its makers or community publish an MCP server; and in missing the query terms it lacks.''',
+        its makers or community publish an MCP server; and in missing the query terms it lacks. domain keeps the software
+        of a domain and the software with a packaged program of it.''',
          {'query': STRING, 'domain': {'enum': DOMAINS}, 'license_group': {'enum': ['open', 'paid', 'limited']},
           'offset': COUNT, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100},
           'language': {'enum': ['zh', 'en']}}),

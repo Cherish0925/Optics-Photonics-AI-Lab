@@ -25,6 +25,7 @@ PROGRAM = {
         'polarization': ('s', 's, p or both'),
         'incoherent': ([], 'positions in n (1 = first internal layer) of layers without interference'),
     },
+    'domains': ['film'],
     'results': 'spectrum.npz/.json with R, T, A over polarization, angle and wavelength; spectrum.csv; the first and last rows; mean and max of R, T, A over everything computed',
     'checks': 'energy_error: largest |1 - R - T| when every medium is lossless',
 }

@@ -28,6 +28,7 @@ PROGRAM = {
         'gmax': (3, 'plane-wave cutoff; increase until the frequencies converge'),
         'numeig': (6, 'number of bands'),
     },
+    'domains': ['periodic'],
     'results': 'bands.npz/.json with frequency over path position and band, kx and ky; complete gaps; light line of a slab',
     'checks': 'gaps between consecutive bands with their gap-midgap ratio',
 }

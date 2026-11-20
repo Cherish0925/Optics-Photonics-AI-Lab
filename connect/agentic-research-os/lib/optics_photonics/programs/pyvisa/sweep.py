@@ -40,6 +40,7 @@ PROGRAM = {
         'set_quantity': (['wavelength', 'nm'], 'name and unit of the applied values'),
         'read_quantity': (['wavelength read back', 'nm'], 'name and unit of the recorded numbers'),
     },
+    'domains': ['lab'],
     'results': 'sweep.npz/.json and sweep.csv: the applied values, the numbers read at each and the time of each reading; '
                'the identification; with resource "?", the resources found',
     'checks': 'readback_difference: largest difference of the reading from the applied value, for the simulated source',

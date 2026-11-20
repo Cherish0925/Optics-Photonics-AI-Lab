@@ -4,4 +4,4 @@ QuTiP and QuantumOptics.jl describe states and open-system dynamics; Perceval an
 
 Define basis ordering, Hilbert-space truncation, hbar convention, angular-frequency units, Hamiltonian terms, collapse operators and measured observables. Check trace, Hermiticity and population/energy behavior relevant to the model. Increase Fock-space cutoffs for populated modes; apparent convergence of one observable can hide truncated tails. Separate exact, sampled and approximate backends. State detector efficiency, loss and postselection before comparing photon statistics. Save random seeds and uncertainty for sampled estimates.
 
-Use software_details for the selected tool’s primary documentation and implementation links.
+Packaged programs: `qutip/jaynes_cummings`, `qutip/rabi`, `qutip/resonance_fluorescence`, `quantumoptics/jaynes_cummings`, `perceval/interference`, `strawberry/gaussian_state`; `software_details(tool, program=NAME)` describes one. Use software_details for the selected tool’s primary documentation and implementation links.

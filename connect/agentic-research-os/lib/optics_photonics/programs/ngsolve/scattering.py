@@ -34,6 +34,7 @@ PROGRAM = {
         'layer_um': (1.0, 'thickness of the absorbing layer'),
         'grid': (121, 'points per side of the saved field map; 0 skips the map'),
     },
+    'domains': ['em', 'scatter'],
     'results': 'field.npz/.json: |total field|^2 on a square grid and the scattered field on a circle; Q_sca, Q_abs, Q_ext; unknowns',
     'checks': 'field_difference: largest difference of the scattered field on the circle from the exact series, relative to its '
               'largest value; efficiency_difference: Q_sca minus the series',

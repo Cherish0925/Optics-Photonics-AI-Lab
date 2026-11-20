@@ -26,6 +26,7 @@ PROGRAM = {
         'span_fsr': (1.5, 'half-width of the frequency sweep in free spectral ranges'),
         'points': (4001, 'frequencies in the sweep'),
     },
+    'domains': ['laser'],
     'results': 'cavity.npz/.json with transmitted, reflected and circulating power over frequency offset; FSR, linewidth, finesse, buildup, Q',
     'checks': 'airy_difference: largest difference from the Airy functions; finesse_error: relative difference of the measured finesse',
 }

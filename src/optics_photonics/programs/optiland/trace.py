@@ -23,6 +23,7 @@ PROGRAM = {
         'wavelength_um': (0.55, 'wavelength in micrometres'),
         'pupil_points': ([[0, 0], [0, 0.5], [0, -0.5], [0.5, 0], [-0.5, 0]], 'normalized entrance-pupil coordinates [x, y] of the rays'),
     },
+    'domains': ['ray'],
     'results': 'rays.npz with ray coordinates at every surface; image.csv; centroid and RMS spot radius at the image',
     'checks': 'finite_intersections: rays that reached the image surface',
 }

@@ -31,6 +31,7 @@ PROGRAM = {
         'orders': (241, 'Fourier orders retained'),
         'grid': (256, 'samples of the unit cell along each side'),
     },
+    'domains': ['periodic'],
     'results': 'library.npz/.json: zeroth-order transmission, relative phase (unwrapped), total R and T over diameter; '
                'phase coverage and the diameter chosen for each phase level',
     'checks': 'energy_error: largest |1 - R - T| for lossless media; fresnel_difference: the cell without pillars against the Fresnel '

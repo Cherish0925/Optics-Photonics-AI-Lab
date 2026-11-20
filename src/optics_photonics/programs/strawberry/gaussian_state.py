@@ -27,6 +27,7 @@ PROGRAM = {
         'transmission': (0.9, 'loss channel transmission eta'),
         'cutoff': (40, 'largest photon number of the distribution'),
     },
+    'domains': ['quantum'],
     'results': 'state.npz/.json with the photon-number distribution; covariance, means, squeezing in dB, mean photon number, Mandel Q, g2(0)',
     'checks': 'analytic_difference: largest difference from the analytic squeezed vacuum (without displacement)',
 }

@@ -20,6 +20,7 @@ PROGRAM = {
         'n2': (1.5, 'index of the second medium'),
         'angle_deg': (30.0, 'angle of incidence in degrees at which the coefficients are evaluated'),
     },
+    'domains': ['film', 'wave'],
     'results': 'r_s, t_s, r_p, t_p as SymPy and LaTeX expressions; their values, R and T at the angle; Brewster and critical angles',
     'checks': 'energy errors |R + T - 1| for s and p; brewster_identity: r_p simplifies to 0 at atan(n2/n1)',
 }

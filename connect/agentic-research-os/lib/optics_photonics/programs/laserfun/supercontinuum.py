@@ -36,6 +36,7 @@ PROGRAM = {
         'points': (8192, 'time samples'),
         'saves': (100, 'distances at which the fields are saved'),
     },
+    'domains': ['fiber'],
     'results': 'propagation.npz/.json with spectral and temporal intensity over distance; output -30 dB spectral width; soliton order',
     'checks': 'photon_number_error (lossless), energy_error (lossless, without Raman and self-steepening)',
 }

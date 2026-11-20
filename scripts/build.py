@@ -62,8 +62,20 @@ def write_routes():
         file.write_text(text[:start] + '\n' + route_table(lang) + '\n' + text[end:], encoding='utf-8')
 
 
+def write_domain_programs():
+    """Each domain reference of the research Skill ends with the packaged programs of its domain."""
+    from optics_photonics import catalogue
+    for domain, *_ in json.loads((ROOT / 'data/domains.en.json').read_text(encoding='utf-8')):
+        file = ROOT / 'skills/optical-research/references' / (domain + '.md')
+        lines = file.read_text(encoding='utf-8').rstrip('\n').split('\n')
+        if not lines[-1].startswith(('Packaged programs: ', 'Use software_details')):
+            raise SystemExit(f'{file.name} ends with its line of packaged programs')
+        file.write_text('\n'.join(lines[:-1] + [catalogue.domain_line(domain)]) + '\n', encoding='utf-8')
+
+
 def main():
     write_routes()
+    write_domain_programs()
     subprocess.run([sys.executable,str(ROOT/"scripts/build_connect.py")],check=True)
     sets={}
     for lang in ('zh','en'):

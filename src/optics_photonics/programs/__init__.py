@@ -3,8 +3,8 @@
 A program is an ordinary native program: it reads INPUTS, writes files to
 OUTPUT_DIR and sets RESULT, using the full API of its software, so it can
 be run as it is or adapted. Its PROGRAM dictionary maps every input to a
-default value and a description, and states what the program returns and
-which checks it reports. submit_calculation(tool, action=NAME) runs one;
+default value and a description, names the domains the program belongs to,
+and states what the program returns and which checks it reports. submit_calculation(tool, action=NAME) runs one;
 software_details lists a tool's programs and returns the source of one.
 
 A program is written in Python, or in the language of software bound to its

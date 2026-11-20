@@ -32,6 +32,7 @@ PROGRAM = {
         'refine': (True, 'scan again around the fitted centre'),
         'seed': (1, 'seed of the noise'),
     },
+    'domains': ['lab'],
     'results': 'scan.npz/.json with positions and signal of each scan; per scan the fitted centre, width and amplitude with their '
                'standard errors, the run identifier and the number of documents',
     'checks': 'centre_difference and width_difference: last fitted centre and width minus those of the simulated detector',

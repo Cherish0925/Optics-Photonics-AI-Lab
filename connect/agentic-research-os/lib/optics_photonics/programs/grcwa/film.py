@@ -16,6 +16,7 @@ PROGRAM = {
         'polarization': ('s', 's or p'),
         'angle_deg': (0, 'angle of incidence in degrees'),
     },
+    'domains': ['film'],
     'results': 'R, T and 1 - R - T',
     'checks': 'one_minus_R_minus_T: zero for lossless layers',
 }

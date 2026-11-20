@@ -14,6 +14,7 @@ PROGRAM = {
         'moving': ([[0, 0, 1, 0], [0, 0, 0, 0], [0, 0, 0, 2], [0, 0, 0, 0]], 'image to align, same shape'),
         'upsample_factor': (1, 'subpixel precision: 1 / upsample_factor pixel'),
     },
+    'domains': ['imaging'],
     'results': 'shift in pixels [row, column], normalized error, global phase difference',
 }
 p = parameters(PROGRAM, INPUTS)

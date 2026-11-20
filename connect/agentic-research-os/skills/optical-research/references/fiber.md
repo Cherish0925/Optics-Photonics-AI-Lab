@@ -4,4 +4,4 @@ Use envelope propagation for long fibers when carrier-resolved Maxwell simulatio
 
 Specify the carrier, time axis, Fourier convention, pulse-energy or peak-power normalization, beta coefficients and their expansion origin. Distinguish angular frequency from ordinary frequency, and dB/km from inverse metres. Check time window, sample spacing and longitudinal step separately. Save spectra with the Jacobian appropriate to frequency or wavelength density. A constant spectral amplitude on a wavelength grid is not constant spectral density on a frequency grid. Use known dispersion-only and soliton limits when applicable.
 
-Use software_details for the selected tool’s primary documentation and implementation links.
+Packaged programs: `laserfun/supercontinuum`, `opticomm/ber`, `octave/bragg_grating`, `scipy/fiber_modes`, `scipy/nlse`; `software_details(tool, program=NAME)` describes one. Use software_details for the selected tool’s primary documentation and implementation links.

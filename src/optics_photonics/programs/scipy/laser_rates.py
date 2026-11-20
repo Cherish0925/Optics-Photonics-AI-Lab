@@ -36,6 +36,7 @@ PROGRAM = {
         'current_step_mA': ([75, 80], 'current before and after the step in mA; small-signal theory holds for small steps'),
         'duration_ns': (3.0, 'duration of the step response in ns'),
     },
+    'domains': ['laser'],
     'results': 'light_current.npz/.json; step.npz/.json with power and carrier density over time; thresholds, slope and relaxation frequency',
     'checks': 'threshold_error and slope_error against the analytic values; ringing_frequency_error of the step response at the final current',
 }

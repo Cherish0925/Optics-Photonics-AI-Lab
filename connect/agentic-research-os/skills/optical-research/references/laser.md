@@ -4,4 +4,4 @@ Lasers and cavities combine propagation, resonances, gain, loss and sometimes th
 
 Define round-trip phase, amplitude versus power loss, gain saturation, pump coupling, boundary conditions and thermal assumptions. Establish longitudinal/transverse mode meaning before interpreting an eigenvalue. For a two-mirror paraxial cavity, use the g-parameter stability condition only within that model; it does not prove stability with gain, apertures or active feedback. Compare transient time scales with cavity lifetime and material relaxation. A converged optical mode alone does not establish a stable laser operating point.
 
-Use software_details for the selected tool’s primary documentation and implementation links.
+Packaged programs: `lightpipes/gaussian`, `finesse/cavity`, `scipy/laser_rates`, `scipy/resonator`, `scipy/second_harmonic`; `software_details(tool, program=NAME)` describes one. Use software_details for the selected tool’s primary documentation and implementation links.

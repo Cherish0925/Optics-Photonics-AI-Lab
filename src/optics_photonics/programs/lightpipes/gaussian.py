@@ -23,6 +23,7 @@ PROGRAM = {
         'samples': (128, 'grid points per side'),
         'method': ('forvard', 'forvard (angular spectrum) or fresnel (LightPipes Fresnel convolution)'),
     },
+    'domains': ['wave', 'laser'],
     'results': 'beam.npz/.json with intensity and beam radius over distance, and the complex field at the last distance',
     'checks': 'radius_error: largest relative difference between computed and analytic beam radius',
 }

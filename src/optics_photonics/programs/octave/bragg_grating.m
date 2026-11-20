@@ -30,6 +30,7 @@
 %   "chirp_nm_per_cm": [0.0, "change of the local Bragg wavelength per centimetre"],
 %   "wavelength_nm": [{"start": 1549.5, "stop": 1550.7, "points": 601}, "vacuum wavelengths in nm: a list, or {start, stop, points}"],
 %   "sections": [200, "uniform sections of the grating"]},
+%  "domains": ["fiber"],
 %  "results": "spectrum.npz/.json: reflectance, transmittance and reflected group delay over wavelength; peak reflectance and its wavelength, the width of the band at half the peak, the mean delay slope inside it",
 %  "checks": "energy_error: largest |1 - R - T|; uniform_difference: largest difference of the section product from the closed form of the uniform grating with the same peak index change; peak_difference: its peak minus tanh^2(kappa L); delay_difference: relative difference of its delay at the peak from n_eff tanh(kappa L) / (kappa c)"}
 

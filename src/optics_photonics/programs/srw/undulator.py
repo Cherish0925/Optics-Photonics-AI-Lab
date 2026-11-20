@@ -35,6 +35,7 @@ PROGRAM = {
         'points': (3001, 'photon energies of the spectrum'),
         'cone_points': (61, 'points per side of the map across the central cone; 0 skips it'),
     },
+    'domains': ['xray'],
     'results': 'radiation.npz/.json: on-axis flux density over photon energy and across the central cone at the fundamental; '
                'energy and peak flux density of each odd harmonic; the field and K',
     'checks': 'fundamental_difference: relative difference of the spectral peak from the formula of the fundamental; '

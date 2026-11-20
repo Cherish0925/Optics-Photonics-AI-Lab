@@ -202,10 +202,37 @@ def ranked_index():
     return index
 
 
-def best_program(tool, terms):
-    """The packaged program of a tool matching the most query terms, then the most in its title, with those counts."""
+@lru_cache(maxsize=None)
+def domain_programs(domain):
+    """Per software ID, in catalogue order, its packaged programs of a domain; a program states its domains."""
+    found = {}
+    for item in catalogue():
+        names = [name for name, spec in programs.catalog().get(item['id'], {}).items() if domain in spec['domains']]
+        if names:
+            found[item['id']] = names
+    return found
+
+
+def domain_line(domain):
+    """The last line of a domain reference: the packaged programs of the domain, written by scripts/build.py."""
+    names = [f'`{tool}/{name}`' for tool, found in domain_programs(domain).items() for name in found
+             if programs.catalog()[tool][name]['file'].parent.name == tool]
+    listed = 'Packaged programs: ' + ', '.join(names) + '; `software_details(tool, program=NAME)` describes one. ' if names else ''
+    return listed + 'Use software_details for the selected tool’s primary documentation and implementation links.'
+
+
+def best_program(tool, terms, domain=None):
+    """The packaged program of a tool matching the most query terms, then the most in its title, with those counts.
+
+    With a domain only its programs of that domain count; without query terms the first of them is named.
+    """
     best, chosen = (0, 0), None
+    within = domain_programs(domain).get(tool, []) if domain else None
+    if within and not terms:
+        return best, within[0]
     for name, (title, details) in program_texts(tool).items():
+        if within is not None and name not in within:
+            continue
         score = (sum(any(p.search(title) or p.search(details) for p in patterns) for _, patterns in terms),
                  sum(any(p.search(title) for p in patterns) for _, patterns in terms))
         if score > best:
@@ -233,7 +260,8 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
     packaged programs, then with an installation recipe. A query
     of three or more terms also returns software one term short, which lists
     the terms it lacks in ``missing``. ``program`` is the packaged program
-    that matches the most terms.
+    that matches the most terms. With ``domain``, the software of that domain
+    and the software with a packaged program of it, which is then named.
     """
     if not isinstance(limit, int) or not 1 <= limit <= 100 or not isinstance(offset, int) or offset < 0:
         raise ValueError('Use offset >= 0 and limit from 1 to 100')
@@ -241,7 +269,9 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
     index = ranked_index()
     ranked = []
     for position, item in enumerate(catalogue(language)):
-        if domain and domain not in item['cats'] or license_group and item['group'] != license_group:
+        # A domain holds its software and the software that has a packaged program of that domain.
+        if domain and domain not in item['cats'] and item['id'] not in domain_programs(domain) or \
+                license_group and item['group'] != license_group:
             continue
         fields = index[item['id']]
         weights = [next((weight for weight, text in zip((4, 3, 2, 1), fields) if any(p.search(text) for p in patterns)), 0)
@@ -251,7 +281,9 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         packaged = programs.catalog().get(item['id'])
         # Packaged programs that install themselves, then packaged programs or a recipe, then the rest.
         runs = 0 if packaged and installs else 1 if packaged or installs else 2
-        fit, program = best_program(item['id'], terms) if terms else ((0, 0), None)
+        fit, program = best_program(item['id'], terms, domain) if terms or domain else ((0, 0), None)
+        if domain and domain not in item['cats'] and program is None:
+            continue  # present only through its programs of the domain, and none of them matches
         ranked.append((sum(map(bool, weights)), sum(weights), fit, runs, position, item, weights, program))
     best = max((entry[0] for entry in ranked), default=0)
     need = best if len(terms) < 3 else min(best, max(best - 1, (len(terms) + 1) // 2))

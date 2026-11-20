@@ -32,6 +32,7 @@ PROGRAM = {
         'polarization': ([0, 0, 1], 'electric field direction of the incident wave, normal to direction'),
         'average': (True, 'also compute cross sections averaged over orientations and polarizations'),
     },
+    'domains': ['scatter'],
     'results': 'cross_sections.npz/.json with Csca, Cext, Cabs (and orientation averages) over wavelength in nm^2; coupling; the wavelength of largest extinction',
     'checks': 'energy_error: largest |Cext - Csca| / Cext for lossless spheres; mie_difference for a single sphere',
 }

@@ -34,6 +34,7 @@ PROGRAM = {
         'radial_bins': (50, 'bins of the radial reflectance'),
         'seed': (1, 'seed of the random numbers'),
     },
+    'domains': ['bio'],
     'results': 'transport.npz/.json: absorbed fraction per mm and fluence rate over depth, diffuse reflectance per area over the distance '
                'from the beam; specular and diffuse reflectance, transmittance and absorbed fraction of each layer, with standard errors',
     'checks': 'balance: reflectances + transmittance + absorbed fraction - 1; reference_reflectance and reference_transmittance: '

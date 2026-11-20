@@ -27,6 +27,7 @@ PROGRAM = {
         'points_per_um': (400, 'grid points per micrometre'),
         'modes': (4, 'largest number of guided modes to report'),
     },
+    'domains': ['pic', 'em'],
     'results': 'modes.npz/.json with mode profiles and the index profile over x; effective indices; confinement in the layers',
     'checks': 'analytic_error: largest difference from the analytic effective indices of a symmetric three-layer slab',
 }

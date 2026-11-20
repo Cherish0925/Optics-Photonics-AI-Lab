@@ -23,6 +23,7 @@ PROGRAM = {
         'oversample': (1, 'oversampling of the detector in the calculation'),
         'zernike_rms_nm': ({}, 'RMS path difference in nm per Noll index, for example {"4": 30} for defocus'),
     },
+    'domains': ['imaging', 'wave'],
     'results': 'psf.fits; psf.npz/.json with the PSF over arcseconds; captured power and Strehl ratio',
     'checks': 'captured_power: fraction of the entrance power on the detector',
 }

@@ -22,6 +22,9 @@ def installed(module):
         return False
 
 
+DOMAINS = {row[0] for row in json.loads((Path(__file__).resolve().parents[1] / 'data/domains.en.json').read_text(encoding='utf-8'))}
+
+
 class DeclarationCase(unittest.TestCase):
     def test_programs_written_for_0_7_still_import_their_helpers(self):
         from optics_photonics import operations
@@ -40,6 +43,7 @@ class DeclarationCase(unittest.TestCase):
                     self.assertTrue(spec['title'].endswith('.'))
                     self.assertGreater(len(spec['about']), 100)
                     self.assertTrue(spec['results'])
+                    self.assertTrue(spec['domains'] and set(spec['domains']) <= DOMAINS, spec.get('domains'))
                     for key, (default, about) in spec['inputs'].items():
                         self.assertTrue(about.strip(), key)
                         json.dumps(default, allow_nan=False)
@@ -59,6 +63,21 @@ class DeclarationCase(unittest.TestCase):
         listed = set(re.findall(r'^\| `([\w-]+/\w+)`', text, re.M))
         # A program shared within a language family is listed once, under the tool that holds its file.
         self.assertEqual(listed, {spec['file'].parent.name + '/' + name for items in programs.catalog().values() for name, spec in items.items()})
+
+    def test_a_domain_holds_the_programs_that_declare_it(self):
+        self.assertEqual(catalogue.domain_programs('bio'), {'scipy': ['tissue_layers']})
+        found = catalogue.search('', domain='bio')['items']
+        self.assertEqual((found[0]['id'], found[0]['program']['name']), ('scipy', 'tissue_layers'))
+        # Software outside the domain appears only through a program of the domain that matches the query.
+        self.assertEqual(catalogue.search('fiber modes', domain='bio')['total'], 0)
+        self.assertEqual([(item['id'], item['program']['name']) for item in catalogue.search('second harmonic', domain='laser')['items']],
+                         [('scipy', 'second_harmonic')])
+        # Each domain reference of the research Skill ends with the programs of its domain, as build.py writes it.
+        folder = Path(__file__).resolve().parents[1] / 'skills/optical-research/references'
+        for domain in DOMAINS:
+            self.assertEqual((folder / (domain + '.md')).read_text(encoding='utf-8').rstrip('\n').split('\n')[-1], catalogue.domain_line(domain), domain)
+        every = {tool + '/' + name for domain in DOMAINS for tool, names in catalogue.domain_programs(domain).items() for name in names}
+        self.assertEqual(every, {tool + '/' + name for tool, items in programs.catalog().items() for name in items})
 
     def test_both_readmes_list_every_program(self):
         import re

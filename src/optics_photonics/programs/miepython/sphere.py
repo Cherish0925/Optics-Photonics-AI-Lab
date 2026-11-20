@@ -24,6 +24,7 @@ PROGRAM = {
         'medium_index': (1, 'index of the lossless surrounding medium: number or material name'),
         'angles_deg': ([], 'scattering angles in degrees for the angular pattern; empty skips it'),
     },
+    'domains': ['scatter'],
     'results': 'scattering.npz/.json with Q and cross sections over wavelength, and the angular pattern; scattering.csv; first and last rows',
     'checks': 'extinction_minus_scattering: largest |Qext - Qsca| for a lossless sphere',
 }

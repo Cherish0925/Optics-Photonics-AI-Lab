@@ -4,4 +4,4 @@ Model the forward measurement before selecting inversion. PSF/OTF formation, sen
 
 Record pixel pitch, magnification, wavelength, pupil, axial coordinates, camera offset/gain and units. A normalized display image is not raw measurement data. Treat registration shift as the transform applied to moving data, including axis order. For inverse problems compare predictions in the measurement domain, identify nonunique parameters and use held-out observations where they distinguish models. Save solver settings, initialization and residuals. Synthetic recovery alone does not show that an experimental noise/model mismatch has been resolved.
 
-Use software_details for the selected tool’s primary documentation and implementation links.
+Packaged programs: `poppy/psf`, `hcipy/psf`, `prysm/mtf`, `scikitimage/registration`; `software_details(tool, program=NAME)` describes one. Use software_details for the selected tool’s primary documentation and implementation links.

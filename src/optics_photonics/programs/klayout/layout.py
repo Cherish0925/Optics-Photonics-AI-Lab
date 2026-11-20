@@ -13,6 +13,7 @@ PROGRAM = {
         'datatype': (0, 'GDS datatype'),
         'dbu_um': (0.001, 'database unit in micrometres'),
     },
+    'domains': ['pic'],
     'results': 'layout.gds with one top cell',
 }
 p = parameters(PROGRAM, INPUTS)

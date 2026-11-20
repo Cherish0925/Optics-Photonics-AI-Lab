@@ -14,6 +14,7 @@ PROGRAM = {
         'omega_rad_s': (1, 'Rabi frequency in rad/s'),
         'times_s': ([0, 3.141592653589793, 6.283185307179586], 'times in seconds, starting at zero and increasing'),
     },
+    'domains': ['quantum'],
     'results': 'population.csv; first, last and largest population of the upper state',
     'checks': 'analytic_error: largest difference from sin^2(omega t / 2)',
 }

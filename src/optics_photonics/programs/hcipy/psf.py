@@ -23,6 +23,7 @@ PROGRAM = {
         'obstruction': (0, 'central obstruction diameter over the pupil diameter'),
         'zernike_rms_nm': ({}, 'RMS path difference in nm per Noll index, for example {"4": 30} for defocus'),
     },
+    'domains': ['imaging', 'wave'],
     'results': 'psf.npz/.json: intensity normalized to unit integral over the computed field, encircled energy; Strehl ratio',
     'checks': 'encircled energy at 1.22 lambda/D: 0.838 for an unobstructed, unaberrated pupil, approached as samples grow',
 }

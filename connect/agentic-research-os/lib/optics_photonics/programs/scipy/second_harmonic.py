@@ -46,6 +46,7 @@ PROGRAM = {
         'period_um': (None, 'poling period in um for quasi-phase matching; null takes the phase-matched period'),
         'points': (401, 'samples along the crystal and on each tuning curve'),
     },
+    'domains': ['laser'],
     'results': 'shg.npz/.json: efficiency along the crystal, and normalized efficiency over angle and wavelength detuning; '
                'phase-matching angle or period, walk-off, acceptance bandwidths, the efficiency at the crystal end and eta0',
     'checks': 'depletion_difference: integrated efficiency at delta k = 0 minus tanh^2(sqrt(eta0)); '

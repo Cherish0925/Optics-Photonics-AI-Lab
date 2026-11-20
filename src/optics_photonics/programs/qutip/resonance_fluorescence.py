@@ -23,6 +23,7 @@ PROGRAM = {
         'frequencies': ({'start': -20, 'stop': 20, 'points': 801}, 'spectrum frequencies relative to the laser'),
         'delays': ({'stop': 10, 'points': 201}, 'g2 delays from 0'),
     },
+    'domains': ['quantum'],
     'results': 'fluorescence.npz/.json with the spectrum and g2(tau); steady excited population; sideband positions',
     'checks': 'population_error against the analytic steady state; g2_zero = g2(0)',
 }

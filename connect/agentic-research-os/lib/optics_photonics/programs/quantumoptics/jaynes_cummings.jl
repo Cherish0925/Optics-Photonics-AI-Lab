@@ -23,6 +23,7 @@
 #   "duration_us": [2.0, "duration in microseconds"],
 #   "samples": [201, "times at which the state is recorded"],
 #   "cutoff": [20, "largest photon number of the Fock basis"]},
+#  "domains": ["quantum"],
 #  "results": "dynamics.npz/.json: excited-state population and mean photon number over time, with the exact population when there are no losses; the Rabi frequency and the final populations",
 #  "checks": "rabi_difference: largest difference of the excited-state population from the exact result (no losses); excitation_change: largest change of the total excitation number (no losses)"}
 using QuantumOptics

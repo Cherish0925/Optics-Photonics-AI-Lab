@@ -36,6 +36,7 @@ PROGRAM = {
         'steps_per_wavelength': (30, 'grid steps per wavelength in each material'),
         'margin_um': (1.5, 'distance from the core to the boundary of the computed window'),
     },
+    'domains': ['pic', 'em'],
     'results': 'modes.npz/.json with the field intensity of each mode over the cross-section; per mode n_eff, group index, TE fraction, effective area, power in the core',
     'checks': 'slab_difference: TE0 index of the slab of the same height by the same solver minus the root of the analytic dispersion relation',
 }

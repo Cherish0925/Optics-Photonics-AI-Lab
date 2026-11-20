@@ -4,4 +4,4 @@ PyVISA carries text commands to instruments on GPIB, USB, serial ports and the n
 
 Record the instrument model and firmware, its address, every setting sent, the settling, integration and averaging times, the detector range, and the time of each reading. Keep raw counts; subtract the dark signal and apply the detector and spectral calibrations as separate, stated steps before comparing with a model. Take the uncertainty from repeated measurements. Simulated devices (PyVISA-sim, ophyd.sim, the Micro-Manager demo configuration, slmsuite's simulated modulator and camera) exercise a procedure before hardware is connected; they do not model the device's physics. End a program by switching outputs off, also after a failure, and ask a person before raising power or voltage or moving a stage beyond the range they gave.
 
-Use software_details for the selected tool’s primary documentation and implementation links.
+Packaged programs: `pyvisa/sweep`, `bluesky/scan`; `software_details(tool, program=NAME)` describes one. Use software_details for the selected tool’s primary documentation and implementation links.

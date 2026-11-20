@@ -34,6 +34,7 @@ PROGRAM = {
         'sub_samples': (3, 'field samples per cell along each side'),
         'window': (2.0, 'side of the computational window in aperture diameters'),
     },
+    'domains': ['periodic', 'wave'],
     'results': 'metalens.npz/.json: pillar diameter and phase of every cell, the focal-plane intensity and its x cut; FWHM, Airy ratio, '
                'Strehl ratio, focusing efficiency, NA and library phase error',
     'checks': 'energy_error: |power in the focal plane / power after the lens - 1| over the propagating waves; '

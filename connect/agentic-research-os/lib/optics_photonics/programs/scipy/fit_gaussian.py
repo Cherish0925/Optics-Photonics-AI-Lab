@@ -14,6 +14,7 @@ PROGRAM = {
         'y': ([0.1353352832, 0.6065306597, 1, 0.6065306597, 0.1353352832], 'measured values at x'),
         'x_unit': ('mm', 'unit of x'),
     },
+    'domains': ['foundation'],
     'results': 'amplitude, center, sigma, parameter covariance; fit.csv with observed and fitted values',
     'checks': 'residual_rms: root mean square of observed minus fitted',
 }

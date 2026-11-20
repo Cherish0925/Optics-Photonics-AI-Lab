@@ -28,6 +28,7 @@ PROGRAM = {
         'target_ber': (1e-3, 'bit error rate whose required Eb/N0 is reported'),
         'seed': (1, 'random seed'),
     },
+    'domains': ['fiber'],
     'results': 'ber.npz/.json with BER, SER, GMI and theoretical BER over Eb/N0; the Eb/N0 that reaches target_ber',
     'checks': 'theory_difference: largest |log10(BER / BER_theory)| where at least 100 errors were counted and no phase noise',
 }

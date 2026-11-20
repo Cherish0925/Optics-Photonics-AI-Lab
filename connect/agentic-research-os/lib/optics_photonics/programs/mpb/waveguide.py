@@ -34,6 +34,7 @@ PROGRAM = {
         'resolution': (64, 'grid points per micrometre'),
         'cell_um': ([3.0, 2.5], 'supercell width and height'),
     },
+    'domains': ['pic', 'em'],
     'results': 'modes.npz/.json with effective index, group index and TE fraction over wavelength and mode; intensity of each mode at the first wavelength',
     'checks': 'edge_energy: largest fraction of mode energy in the outer tenth of the cell',
 }
