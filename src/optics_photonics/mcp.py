@@ -31,36 +31,199 @@ def guide(topic):
     return text.split('---', 2)[2].lstrip() if text.startswith('---') else text
 
 
-STRING = {'type':'string'}
+def tool(name, description, properties=None, required=None):
+    """One MCP tool: its description is written as wrapped text and sent as one paragraph."""
+    return name, ' '.join(description.split()), schema(properties, required)
+
+
 DOMAINS = [row[0] for row in json.loads((catalogue.resources()/'data'/'domains.en.json').read_text(encoding='utf-8'))]
 # Units in which a wavelength can be given: vacuum wavelength, frequency, wavenumber or photon energy.
 SPECTRAL_UNITS = [unit for kind in ('length', 'frequency', 'angular frequency', 'wavenumber', 'energy') for unit in data.UNITS[kind]]
+STRING = {'type': 'string'}
+BOOLEAN = {'type': 'boolean'}
+OBJECT = {'type': 'object'}
+POSITIVE = {'type': 'integer', 'minimum': 1}
+COUNT = {'type': 'integer', 'minimum': 0}
+STRINGS = {'type': 'array', 'items': {'type': 'string'}}
+SECONDS = {'type': 'number', 'exclusiveMinimum': 0}
+WAIT = {'type': 'number', 'minimum': 0, 'maximum': 25}
+QUANTITIES = {'type': 'object', 'additionalProperties': {'type': 'integer', 'minimum': 1}}
+VARIABLES = {'type': 'object', 'additionalProperties': {'type': 'string'}}
+
 TOOLS = [
-    ('read_guide', 'Read operating guidance as Markdown. optical-computation: how to connect software, submit programs and read results. optical-research: how to choose a physical model and software. The other topics are the references those two link to, by link name.', schema({'topic':{'enum':list(guides())}},['topic'])),
-    ('software_search', 'Find optical software and packaged programs by physical problem, method or name, in English or Chinese; filter by domain and license. Names of one concept match each other (PSF, point spread function, 点扩散函数). Best matches first, and among equal matches software with packaged programs; program names the packaged program that fits the query, ready for submit_calculation(tool, action=program); an item lists the query terms it lacks in missing. install is pip, conda or julia when prepare_environment can install the tool, manual when it needs its own installer; routes lists how the environment reaches it.', schema({'query':STRING,'domain':{'enum':DOMAINS},'license_group':{'enum':['open','paid','limited']},'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':100},'language':{'enum':['zh','en']}})),
-    ('software_details', 'Read one software: native interfaces, installation recipe, routes (python, session, executable, automation, service, inside: how the environment reaches it, with the program contract of its language), upstream MCP/Skills and its packaged programs, each with title, inputs (default and meaning), results and checks. program returns one packaged program with its physics and conventions and its source, to read or adapt and submit as source.', schema({'tool':STRING,'program':STRING,'language':{'enum':['zh','en']}},['tool'])),
-    ('materials', 'Refractive index n and extinction coefficient k from the refractiveindex.info database (3576 n,k pages, CC0) with references and conditions. material is a page ID shelf/book/page such as main/Si/Green-2008, or a common name such as SiO2, Si, Au or N-BK7; with wavelength (a number or list in unit, nm by default) the reply gives n and k, without it the page\'s range and references. dispersion adds the group index, the group velocity dispersion in fs^2/mm and D in ps/(nm km) from the page\'s dispersion formula. query searches book and page names; no arguments lists the common names. Pages other than the common ones are downloaded once.', schema({'material':STRING,'query':STRING,'dispersion':{'type':'boolean'},'wavelength':{'anyOf':[{'type':'number','exclusiveMinimum':0},{'type':'array','items':{'type':'number','exclusiveMinimum':0},'minItems':1,'maxItems':10000}]},'unit':{'enum':SPECTRAL_UNITS},'limit':{'type':'integer','minimum':1,'maximum':100}})),
-    ('register_software', 'Register a local research library, solver or executable that is not in the published catalogue. Provide its identity, module/distribution names and documentation sources; then use bind_environment. pip, conda (conda-forge packages), python (version specifier) and platforms form an installation recipe, so that prepare_environment and submissions install it. Registration does not download or execute it.', schema({'tool':STRING,'name':STRING,'description':STRING,'kind':{'enum':['python','command']},'modules':{'type':'array','items':STRING},'distributions':{'type':'array','items':STRING},'sources':{'type':'array','items':STRING},'pip':{'type':'array','items':STRING},'conda':{'type':'array','items':STRING},'python':STRING,'platforms':{'type':'array','items':{'enum':list(environments.PLATFORMS)}}},['tool','name','description'])),
-    ('registered_software', 'List locally registered research tools beyond the published software catalogue.', schema()),
-    ('environments', 'Read a short page of configured software. refresh=true checks only this page’s installed programs; tool selects one connection.', schema({'tool':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':100},'refresh':{'type':'boolean'}})),
-    ('discover_native_software', 'Find installed optical software of every kind without starting it: executables that run programs in their own language (MATLAB, Octave, Julia, wolframscript, Maple, Lumerical scripts, S4 Lua) or that Python programs drive (COMSOL batch, CST, ADDA, MCX, MMC, pbrt), modules that ship inside installations (JCMsuite jcmwave, Photon Design pdPythonLib, Lumerical lumapi, CST), Windows automation servers (FRED, CODE V, LightTools, OptiLayer), cloud credentials (Tidy3D) and the COMSOL, Lumerical, OpticStudio and CST session SDKs. Searches PATH, the usual installation folders, variables such as JCMROOT, roots and the Windows registry. Each found installation carries the arguments of bind_native_software. tool limits the search to one software and adds its routes: every way the environment reaches it, with the program contract of its language.', schema({'roots':{'type':'array','items':STRING},'tool':STRING})),
-    ('bind_native_software', 'Connect installed software by one route. route session (COMSOL, Lumerical, OpticStudio, CST): python and sdk_path; each calculation owns a session with the full native API. route executable: executable; submit_calculation(script=...) then runs a program in the software\'s own language, and source a Python program that drives it with RUN(arguments). route automation (Windows): progid; a Python program holds the server as APP. route python: python and sdk_path, the folder of a module that ships with the installation. Without route and executable, the first installation discover_native_software finds. python of an executable binding runs driver programs (default: the scipy environment, else this connector\'s); language sets the script language of an executable outside the catalogue; project is the Julia project.', schema({'tool':STRING,'route':{'enum':['session','executable','automation','python']},'executable':STRING,'python':STRING,'sdk_path':STRING,'progid':STRING,'project':STRING,'language':{'enum':list(languages.LANGUAGES)},'options':{'type':'object'},'threads':{'type':'integer','minimum':1},'concurrency':{'type':'integer','minimum':1},'requirements':{'type':'object','additionalProperties':{'type':'integer','minimum':1}},'env':{'type':'object','additionalProperties':STRING}},['tool'])),
-    ('prepare_environment', 'Install a tool from its recipe (pip, or conda-forge for software without wheels) into an environment of its own, in the background; returns a run ID. Submissions do this by themselves for a tool without an environment. packages adds requirements such as scipy or h5py to the tool\'s environment; python selects the base interpreter.', schema({'tool':STRING,'packages':{'type':'array','items':STRING},'python':STRING,'request_id':STRING},['tool'])),
-    ('bind_environment', 'Connect an existing scientific Python environment or an explicit native executable; installs nothing. Without tool, binds every catalogue or registered tool whose modules the python interpreter has, and keeps tools already connected.', schema({'tool':STRING,'python':STRING,'command':{'type':'array','items':STRING,'minItems':1},'threads':{'type':'integer','minimum':1},'concurrency':{'type':'integer','minimum':1},'cwd':STRING,'requirements':{'type':'object','additionalProperties':{'type':'integer','minimum':1}},'env':{'type':'object','additionalProperties':STRING}})),
-    ('compute_resources', 'Read or update shared CPU and named resource capacities (GPU, solver license, memory slots). Requirements are acquired together across all runs; adapters select the actual hardware or license.', schema({'cpu':{'type':'integer','minimum':1},'pools':{'type':'object','additionalProperties':{'type':'integer','minimum':1}}})),
-    ('submit_calculation', 'Start an independent background calculation and return its run ID; with wait (up to 25 seconds) also its state then, and, for one calculation that has finished, its RESULT, files and output folder or its error. action runs a packaged program listed by software_details, with inputs replacing its defaults; source runs a complete native Python program with INPUTS, OUTPUT_DIR and RESULT; script runs a program in the language of software bound to its executable (MATLAB, Octave, Julia, Wolfram Language, Maple, Lua, Lumerical script), which receives INPUTS and OUTPUT_DIR and sets RESULT. sweep maps inputs (name, or name.0 for one element of a list input) to lists of values or {start, stop, points, scale}: every combination (pairing product) or the lists in step (zip) runs as a point point-N; points are computed in groups, one process each, about four groups per CPU slot unless chunk sets the points per process; sweep_results tabulates them. optimize {variables: {input: [low, high]}, minimize or maximize: dotted RESULT path, method, evaluations} searches the variables inside one process (differential evolution, or nelder-mead from the current inputs) and keeps the best evaluation\'s files. run_id appends to an earlier run. A tool without an environment is first installed from its recipe, as step prepare.TOOL. Reuse request_id when retrying.', schema({'tool':STRING,'inputs':{'type':'object'},'action':STRING,'source':STRING,'script':STRING,'sweep':{'type':'object'},'pairing':{'enum':['product','zip']},'chunk':{'type':'integer','minimum':1},'optimize':{'type':'object'},'run_id':STRING,'name':STRING,'request_id':STRING,'timeout':{'type':'number','exclusiveMinimum':0},'wait':{'type':'number','minimum':0,'maximum':25}},['tool'])),
-    ('sweep_results', 'Tabulate the points of a sweep: each point\'s swept inputs, state and the RESULT values named in values (dotted paths such as checks.energy_error or R.0). minimize or maximize one value to get the best point. save writes sweep.npz/.json in the run folder, gridded over the swept inputs for a full product, for read_array.', schema({'run_id':STRING,'values':{'type':'array','items':STRING},'minimize':STRING,'maximize':STRING,'save':{'type':'boolean'},'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':1000}},['run_id'])),
-    ('sample_episodes', 'Collect complete episodes for learning in parallel worker processes. source defines make_env() with Gymnasium-style reset/step/close and make_policy(seed) returning an action function; task and policy need id and version. Each worker writes samples/trajectory.jsonl, samples/index.jsonl (one line per completed episode) and typed arrays. continue_from lists earlier runs whose completed episodes are not collected again. Details: read_guide episodes.', schema({'tool':STRING, 'source':STRING, 'task':{'type':'object'}, 'policy':{'type':'object'}, 'episodes':{'type':'integer','minimum':1}, 'workers':{'type':'integer','minimum':1}, 'max_steps':{'type':'integer','minimum':1}, 'seed':{'type':'integer','minimum':0}, 'inputs':{'type':'object'}, 'options':{'type':'object'}, 'continue_from':{'type':'array','items':STRING}, 'on_error':{'enum':['stop','continue']}, 'request_id':STRING, 'timeout':{'type':'number','exclusiveMinimum':0}}, ['tool','source','task','policy','episodes'])),
-    ('submit_workflow', 'Submit dependent or independent calculation steps in one request. Each step has id, tool, action (a packaged program), source (Python) or script (the software\'s own language), inputs, after, optional timeout and bindings. A binding {input_name: {step, path: [keys]}} copies a value from a predecessor result; {input_name: {step, file: "relative/path"}} gives the location of a file or folder that predecessor wrote, for large data. Supply run_id to append a batch to an existing research run.', schema({'steps':{'type':'array','items':{'type':'object'},'minItems':1},'name':STRING,'request_id':STRING,'run_id':STRING},['steps'])),
-    ('run_status', 'Read compact execution state. wait (0–25 seconds) waits for completion without repeated calls. Results stay in files by default; include_results returns step values. Calculations continue after disconnection.', schema({'run_id':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':200},'include_results':{'type':'boolean'},'wait':{'type':'number','minimum':0,'maximum':25}},['run_id'])),
-    ('cancel_run', 'Cancel a research run and its active calculations.', schema({'run_id':STRING},['run_id'])),
-    ('result_files', 'List files written so far by a research run, including running calculations. prefix such as "solve/attempt-1/" limits the listing to one step or folder. NPY/NPZ entries include dtype and shape, and the quantity, unit and axis names a program saved with them.', schema({'run_id':STRING,'prefix':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':500}},['run_id'])),
-    ('read_array', 'Read part of an NPY array or NPZ member without loading the whole file. index has one entry per leading axis: an integer selects a position and drops the axis; [start, stop, step] keeps it (Python slice rules, null for open ends); null keeps the whole axis. Beyond max_elements long axes are thinned by uniform steps while short axes (ports, components) stay whole; selection reports the steps used. Complex data returns real and imag; non-finite values are "nan", "inf", "-inf". When the program described the array, the reply adds description (quantity, unit, conventions), axes (coordinates and units of the returned values) and at (the position of each axis fixed by an integer). image draws a one- or two-dimensional selection as a PNG (auto: lines for one axis or a short second one, otherwise a map with a color bar; line; map) and returns the extremes and their positions instead of the values; part draws abs, real, imag, phase or power of complex values and scale log draws log10.', schema({'run_id':STRING,'file':STRING,'member':STRING,'index':{'type':'array','items':{'anyOf':[{'type':'integer'},{'type':'null'},{'type':'array','items':{'type':['integer','null']},'minItems':1,'maxItems':3}]}},'max_elements':{'type':'integer','minimum':1,'maximum':100000},'image':{'enum':['auto','line','map']},'part':{'enum':['abs','real','imag','phase','power']},'scale':{'enum':['linear','log']}},['run_id','file'])),
-    ('download_result', 'Copy a result file to a new destination on the MCP host computer. From another computer, read its content with read_result or read_array.', schema({'run_id':STRING,'file':STRING,'destination':STRING},['run_id','file','destination'])),
-    ('read_result', 'Read a bounded byte range of a result or log. Text returns UTF-8; binary returns base64. Use read_array for NPY/NPZ data.', schema({'run_id':STRING,'file':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':65536}},['run_id','file'])),
-    ('list_runs', 'Find previous and active research runs after reconnecting.', schema({'state':STRING,'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':200}})),
-    ('resume_run', 'Rerun unfinished steps of a stopped research run, keeping completed steps and previous output files.', schema({'run_id':STRING},['run_id'])),
+    tool('read_guide', '''
+        Read operating guidance as Markdown. optical-computation: how to connect software, submit programs and read results.
+        optical-research: how to choose a physical model and software. The other topics are the references those two link
+        to, by link name.''',
+         {'topic': {'enum': list(guides())}}, ['topic']),
+    tool('software_search', '''
+        Find optical software and packaged programs by physical problem, method or name, in English or Chinese; synonyms and
+        abbreviations of one concept match (PSF, point spread function, 点扩散函数). Best matches first. An item names the
+        packaged program that fits as program, ready for submit_calculation(tool, action); its routes (how the environment
+        reaches the software); install (pip, conda or julia when a recipe installs it, manual otherwise); and in missing the
+        query terms it lacks.''',
+         {'query': STRING, 'domain': {'enum': DOMAINS}, 'license_group': {'enum': ['open', 'paid', 'limited']},
+          'offset': COUNT, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100},
+          'language': {'enum': ['zh', 'en']}}),
+    tool('software_details', '''
+        Read one software: method, limits, license, routes (python, session, executable, automation, service, inside: how
+        the environment reaches it, with the program contract of its language), installation recipe and packaged programs,
+        each with inputs (default and meaning), results and checks. program returns one packaged program with its physics
+        and conventions; source adds its text, to adapt and submit.''',
+         {'tool': STRING, 'program': STRING, 'source': BOOLEAN, 'language': {'enum': ['zh', 'en']}}, ['tool']),
+    tool('materials', '''
+        Refractive index n and extinction coefficient k from the refractiveindex.info database (3576 pages, CC0) with
+        references. material is a common name (SiO2, Si, Au, N-BK7) or a page ID shelf/book/page (main/Si/Green-2008). With
+        wavelength (number or list in unit, nm by default): n and k; without: the page's range and references. dispersion
+        adds the group index, group velocity dispersion (fs^2/mm) and D (ps/(nm km)). query searches page names; no
+        arguments lists the common names. Other pages download once.''',
+         {'material': STRING, 'query': STRING, 'dispersion': BOOLEAN,
+          'wavelength': {'anyOf': [SECONDS, {'type': 'array', 'items': SECONDS, 'minItems': 1, 'maxItems': 10000}]},
+          'unit': {'enum': SPECTRAL_UNITS}, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100}}),
+    tool('register_software', '''
+        Register a local research library, solver or executable that is not in the published catalogue. Provide its
+        identity, module/distribution names and documentation sources; then use bind_environment. pip, conda (conda-forge
+        packages), python (version specifier) and platforms form an installation recipe, so that prepare_environment and
+        submissions install it. Registration does not download or execute it.''',
+         {'tool': STRING, 'name': STRING, 'description': STRING, 'kind': {'enum': ['python', 'command']},
+          'modules': STRINGS, 'distributions': STRINGS, 'sources': STRINGS, 'pip': STRINGS, 'conda': STRINGS,
+          'python': STRING, 'platforms': {'type': 'array', 'items': {'enum': list(environments.PLATFORMS)}}}, ['tool', 'name', 'description']),
+    tool('registered_software', '''
+        List locally registered research tools beyond the published software catalogue.'''),
+    tool('environments', '''
+        Read a short page of configured software. refresh=true checks only this page’s installed programs; tool selects one
+        connection.''',
+         {'tool': STRING, 'offset': COUNT, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100},
+          'refresh': BOOLEAN}),
+    tool('discover_native_software', '''
+        Find installed optical software without starting it: executables (MATLAB, Octave, Julia, wolframscript, Maple,
+        COMSOL, Lumerical, CST, S4, ADDA, MCX, MMC, pbrt), session SDKs (COMSOL, Lumerical, OpticStudio, CST), modules
+        inside installations (JCMsuite, Photon Design), Windows automation servers (FRED, CODE V, LightTools, OptiLayer) and
+        service credentials (Tidy3D, by presence). Searches PATH, usual installation folders, variables such as JCMROOT,
+        roots and the Windows registry. Each installation carries the arguments of bind_native_software. tool limits the
+        search to one software and adds its routes.''',
+         {'roots': STRINGS, 'tool': STRING}),
+    tool('bind_native_software', '''
+        Connect installed software by one route; without route or executable, the first installation
+        discover_native_software finds. session (COMSOL, Lumerical, OpticStudio, CST): python, sdk_path, options; a
+        calculation owns a session with the full native API. executable: executable; then script runs a program in the
+        software's language and source a Python program that drives it with RUN. automation (Windows): progid; a Python
+        program holds the server as APP. python: python and sdk_path, the folder of a module inside the installation.
+        language sets the script language of an executable outside the catalogue; project is a Julia project. Details:
+        read_guide native-software.''',
+         {'tool': STRING, 'route': {'enum': ['session', 'executable', 'automation', 'python']}, 'executable': STRING,
+          'python': STRING, 'sdk_path': STRING, 'progid': STRING, 'project': STRING,
+          'language': {'enum': list(languages.LANGUAGES)}, 'options': OBJECT, 'threads': POSITIVE,
+          'concurrency': POSITIVE, 'requirements': QUANTITIES, 'env': VARIABLES}, ['tool']),
+    tool('prepare_environment', '''
+        Install a tool from its recipe (pip, or conda-forge for software without wheels) into an environment of its own, in
+        the background; returns a run ID. Submissions do this by themselves for a tool without an environment. packages adds
+        requirements such as scipy or h5py to the tool's environment; python selects the base interpreter.''',
+         {'tool': STRING, 'packages': STRINGS, 'python': STRING, 'request_id': STRING}, ['tool']),
+    tool('bind_environment', '''
+        Connect an existing scientific Python environment or an explicit native executable; installs nothing. Without tool,
+        binds every catalogue or registered tool whose modules the python interpreter has, and keeps tools already
+        connected.''',
+         {'tool': STRING, 'python': STRING, 'command': {'type': 'array', 'items': STRING, 'minItems': 1},
+          'threads': POSITIVE, 'concurrency': POSITIVE, 'cwd': STRING, 'requirements': QUANTITIES, 'env': VARIABLES}),
+    tool('compute_resources', '''
+        Read or update shared CPU and named resource capacities (GPU, solver license, memory slots). Requirements are
+        acquired together across all runs; adapters select the actual hardware or license.''',
+         {'cpu': POSITIVE, 'pools': QUANTITIES}),
+    tool('submit_calculation', '''
+        Start a background calculation and return its run ID; with wait (up to 25 s) also its state and, once finished, its
+        RESULT, files and output folder, or its error. Give one of: action, a packaged program (software_details) with
+        inputs replacing its defaults; source, a complete Python program that receives INPUTS and OUTPUT_DIR and sets
+        RESULT; script, the same in the language of software bound to its executable (MATLAB, Octave, Julia, Wolfram, Maple,
+        Lua, Lumerical script). sweep {input: values or {start, stop, points}} runs every combination (pairing zip: in step)
+        as parallel points, tabulated by sweep_results. optimize {variables: {input: [low, high]}, minimize or maximize:
+        RESULT path} searches inside one process. A tool without an environment is installed from its recipe first. run_id
+        appends to a run; reuse request_id when retrying. Details: read_guide studies.''',
+         {'tool': STRING, 'inputs': OBJECT, 'action': STRING, 'source': STRING, 'script': STRING, 'sweep': OBJECT,
+          'pairing': {'enum': ['product', 'zip']}, 'chunk': POSITIVE, 'optimize': OBJECT, 'run_id': STRING,
+          'name': STRING, 'request_id': STRING, 'timeout': SECONDS, 'wait': WAIT}, ['tool']),
+    tool('sweep_results', '''
+        Tabulate the points of a sweep: each point's swept inputs, state and the RESULT values named in values (dotted paths
+        such as checks.energy_error or R.0). minimize or maximize one value to get the best point. save writes
+        sweep.npz/.json in the run folder, gridded over the swept inputs for a full product, for read_array.''',
+         {'run_id': STRING, 'values': STRINGS, 'minimize': STRING, 'maximize': STRING, 'save': BOOLEAN, 'offset': COUNT,
+          'limit': {'type': 'integer', 'minimum': 1, 'maximum': 1000}}, ['run_id']),
+    tool('sample_episodes', '''
+        Collect complete episodes for learning in parallel worker processes. source defines make_env() with Gymnasium-style
+        reset/step/close and make_policy(seed) returning an action function; task and policy need id and version. Each
+        worker writes samples/trajectory.jsonl, samples/index.jsonl (one line per completed episode) and typed arrays.
+        continue_from lists earlier runs whose completed episodes are not collected again. Details: read_guide episodes.''',
+         {'tool': STRING, 'source': STRING, 'task': OBJECT, 'policy': OBJECT, 'episodes': POSITIVE, 'workers': POSITIVE,
+          'max_steps': POSITIVE, 'seed': COUNT, 'inputs': OBJECT, 'options': OBJECT, 'continue_from': STRINGS,
+          'on_error': {'enum': ['stop', 'continue']}, 'request_id': STRING, 'timeout': SECONDS}, ['tool', 'source', 'task', 'policy', 'episodes']),
+    tool('submit_workflow', '''
+        Submit dependent or parallel calculation steps in one request. A step has id, tool, one of action, source or script,
+        inputs, and optionally after, bindings, requirements and timeout. A binding {input: {step, path: [keys]}} copies a
+        value from an earlier step's result; {input: {step, file: "relative/path"}} gives the location of a file or folder
+        it wrote. run_id appends steps to an existing run.''',
+         {'steps': {'type': 'array', 'items': OBJECT, 'minItems': 1}, 'name': STRING, 'request_id': STRING,
+          'run_id': STRING}, ['steps']),
+    tool('run_status', '''
+        Read compact execution state. wait (0–25 seconds) waits for completion without repeated calls. Results stay in files
+        by default; include_results returns step values. Calculations continue after disconnection.''',
+         {'run_id': STRING, 'offset': COUNT, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200},
+          'include_results': BOOLEAN, 'wait': WAIT}, ['run_id']),
+    tool('cancel_run', '''
+        Cancel a research run and its active calculations.''',
+         {'run_id': STRING}, ['run_id']),
+    tool('result_files', '''
+        List files written so far by a research run, including running calculations. prefix such as "solve/attempt-1/"
+        limits the listing to one step or folder. NPY/NPZ entries include dtype and shape, and the quantity, unit and axis
+        names a program saved with them.''',
+         {'run_id': STRING, 'prefix': STRING, 'offset': COUNT,
+          'limit': {'type': 'integer', 'minimum': 1, 'maximum': 500}}, ['run_id']),
+    tool('read_array', '''
+        Read part of an NPY array or NPZ member without loading the file. index has one entry per leading axis: an integer
+        selects a position and drops the axis, [start, stop, step] keeps a range, null the whole axis. Beyond max_elements
+        long axes are thinned uniformly; selection reports the steps. Complex data returns real and imag. A described array
+        adds description (quantity, unit, conventions), axes (coordinates of the returned values) and at (positions fixed by
+        integers). image draws a one- or two-dimensional selection as a PNG (auto, line or map) and returns the extremes
+        with their positions instead of the values; part selects abs, real, imag, phase or power; scale log draws log10.''',
+         {'run_id': STRING, 'file': STRING, 'member': STRING,
+          'index': {'type': 'array', 'items': {'anyOf': [{'type': 'integer'}, {'type': 'null'}, {'type': 'array', 'items': {'type': ['integer', 'null']}, 'minItems': 1, 'maxItems': 3}]}},
+          'max_elements': {'type': 'integer', 'minimum': 1, 'maximum': 100000},
+          'image': {'enum': ['auto', 'line', 'map']}, 'part': {'enum': ['abs', 'real', 'imag', 'phase', 'power']},
+          'scale': {'enum': ['linear', 'log']}}, ['run_id', 'file']),
+    tool('download_result', '''
+        Copy a result file to a new destination on the MCP host computer. From another computer, read its content with
+        read_result or read_array.''',
+         {'run_id': STRING, 'file': STRING, 'destination': STRING}, ['run_id', 'file', 'destination']),
+    tool('read_result', '''
+        Read a bounded byte range of a result or log. Text returns UTF-8; binary returns base64. Use read_array for NPY/NPZ
+        data.''',
+         {'run_id': STRING, 'file': STRING, 'offset': COUNT,
+          'limit': {'type': 'integer', 'minimum': 1, 'maximum': 65536}}, ['run_id', 'file']),
+    tool('list_runs', '''
+        Find previous and active research runs after reconnecting.''',
+         {'state': STRING, 'offset': COUNT, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200}}),
+    tool('resume_run', '''
+        Rerun unfinished steps of a stopped research run, keeping completed steps and previous output files.''',
+         {'run_id': STRING}, ['run_id']),
 ]
+
+
+# Hints describe possible effects, not permission to execute. run_status can restart a queued worker;
+# submissions and resumes run user programs, while bindings and resource settings replace configuration.
+READ_ONLY = {'read_guide', 'software_search', 'software_details', 'materials', 'registered_software', 'environments',
+             'discover_native_software', 'result_files', 'read_result', 'read_array', 'list_runs'}
+EXECUTING = {'prepare_environment', 'submit_calculation', 'submit_workflow', 'sample_episodes', 'resume_run', 'run_status'}
+SETTINGS = {'compute_resources', 'bind_environment', 'bind_native_software', 'register_software'}
+DESTRUCTIVE = EXECUTING | SETTINGS | {'cancel_run', 'sweep_results'}
+OPEN_WORLD = EXECUTING | {'materials'}
+
+
+def listed():
+    """The tools as tools/list sends them."""
+    return [{'name': name, 'description': description, 'inputSchema': spec,
+             'annotations': {'readOnlyHint': name in READ_ONLY, 'destructiveHint': name in DESTRUCTIVE,
+                             'idempotentHint': name in READ_ONLY or name in SETTINGS or name == 'cancel_run',
+                             'openWorldHint': name in OPEN_WORLD}}
+            for name, description, spec in TOOLS]
 
 
 def invoke(name, args, cancellation=None):
@@ -69,7 +232,7 @@ def invoke(name, args, cancellation=None):
     if name == 'materials':
         from . import materials
         return materials.lookup(**args)
-    if name == 'software_details': return environments.details(**args)
+    if name == 'software_details': return environments.details(**{'source': False, **args})
     if name == 'register_software': return environments.register(**args)
     if name == 'registered_software': return {'software': environments.registered()}
     if name == 'environments': return environments.page(**args)
@@ -263,7 +426,7 @@ def respond(method, params):
                 'instructions':INSTRUCTIONS}
     if method == 'ping': return {}
     if method == 'tools/list':
-        return {'tools':[{'name':n,'description':d,'inputSchema':s} for n,d,s in TOOLS]}
+        return {'tools': listed()}
     if method == 'resources/list':
         return {'resources':[{'uri':'optics://guides/'+name,'name':name,'mimeType':'text/markdown'} for name in guides()]}
     if method == 'resources/read':

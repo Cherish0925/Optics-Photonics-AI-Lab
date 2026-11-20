@@ -68,7 +68,7 @@ def main(argv=None):
             if a['wavelength'] and len(a['wavelength']) == 1: a['wavelength'] = a['wavelength'][0]
             result=materials.lookup(**a)
         elif command == 'info':
-            result=environments.details(**a)
+            result=environments.details(**a, source=bool(a['program']))
             if a['program']: print(result['source'], end=''); return
         elif command == 'register-software': result=environments.register(**a['definition'])
         elif command == 'registered-software': result={'software':environments.registered()}
@@ -124,9 +124,9 @@ def main(argv=None):
             from .packages import package
             result=package(a.pop('output'),**a)
         elif command in ('mcp','tools','call'):
-            from .mcp import serve, invoke, TOOLS
+            from .mcp import serve, invoke, listed
             if command=='mcp': serve(); return
-            if command=='tools': result={'tools':[{'name':n,'description':d,'inputSchema':s} for n,d,s in TOOLS]}
+            if command=='tools': result={'tools':listed()}
             else: result=invoke(a['tool'],a['arguments'])
         print(json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False))
     except (ValueError, KeyError, OSError, RuntimeError, subprocess.SubprocessError) as error:

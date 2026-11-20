@@ -79,8 +79,14 @@ class DeclarationCase(unittest.TestCase):
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
-        one = environments.details('scipy', program='nlse')
-        self.assertTrue(one['source'].startswith('"""Pulse propagation'))
+        from optics_photonics import mcp
+        one = mcp.invoke('software_details', {'tool': 'scipy', 'program': 'nlse'})
+        self.assertNotIn('source', one)   # the text comes on request
+        self.assertIn('source=true', one['run'])
+        source = environments.details('scipy', program='nlse')['source']  # retain the Python interface
+        self.assertTrue(source.startswith('"""Pulse propagation'))
+        self.assertEqual(mcp.invoke('software_details', {'tool': 'scipy', 'program': 'nlse', 'source': True})['source'], source)
+        self.assertNotIn('source', environments.details('scipy', program='nlse', source=False))
         self.assertEqual((one['about'], one['inputs']['length_km']['default']),
                          (programs.catalog()['scipy']['nlse']['about'], nlse['inputs']['length_km']['default']))
         with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: coupler, fiber_modes, fit_gaussian'):
