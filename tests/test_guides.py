@@ -90,6 +90,17 @@ class GuideCase(unittest.TestCase):
             for file in (ROOT / 'skills').rglob('*.md'):
                 self.assertEqual((ROOT / copy / file.relative_to(ROOT / 'skills')).read_bytes(), file.read_bytes(), (copy, file.name))
 
+    def test_prompt_arguments_remain_literal_and_require_text(self):
+        text = mcp.prompt('study', {'problem': 'fit the literal {parameters}', 'parameters': 'gap 100 to 300 nm'})
+        self.assertIn('Calculation: fit the literal {parameters}. Parameters: gap 100 to 300 nm',
+                      text['messages'][0]['content']['text'])
+        for value in (None, '', '  '):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'needs: problem'):
+                mcp.prompt('calculate', {'problem': value})
+        for value in (False, 0, ['lens'], {'task': 'lens'}):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'needs text for: problem'):
+                mcp.prompt('calculate', {'problem': value})
+
 
 class ArgumentCase(unittest.TestCase):
     def message(self, name, arguments):

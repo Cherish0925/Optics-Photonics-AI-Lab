@@ -77,8 +77,10 @@ TOOLS = [
         Read one software: method, limits, license, routes (python, session, executable, automation, service, inside: how
         the environment reaches it, with the program contract of its language), installation recipe and the names of its
         packaged programs. program returns one packaged program: its physics and conventions, every input with default
-        and meaning, results and checks; source adds its text, to adapt and submit.''',
-         {'tool': STRING, 'program': STRING, 'source': BOOLEAN, 'language': {'enum': ['zh', 'en']}}, ['tool']),
+        and meaning, results and checks; source adds its text, to adapt and submit. brief=false returns the complete
+        software record and all program input definitions.''',
+         {'tool': STRING, 'program': STRING, 'source': BOOLEAN, 'brief': {'type': 'boolean', 'default': True},
+          'language': {'enum': ['zh', 'en']}}, ['tool']),
     tool('materials', '''
         Refractive index n and extinction coefficient k from the refractiveindex.info database (3576 pages, CC0) with
         references. material is a common name (SiO2, Si, Au, N-BK7) or a page ID shelf/book/page (main/Si/Green-2008). With
@@ -259,29 +261,30 @@ PROMPTS = {
         Reproduce this published result in the optics research environment: {source}
 
         State the physical model, geometry, materials and every parameter the source gives, and which ones had to be
-        assumed. Choose the software with software_search (read_guide optical-research helps to choose the model), take
-        measured refractive indices from materials when the source names materials, and run the calculation. Compare
-        with the published values number by number, with the units and conventions made equal, and vary the numerical
-        resolution once to see how far the result still moves. Report agreement, differences and their likely origin.'''),
+        assumed. Choose the software with software_search (read_guide optical-research helps to choose the model).
+        Preserve the source's material model; use materials for missing optical constants and name that assumption.
+        Compare with the published values in the same units and conventions. Where discretization affects the result,
+        refine it enough to distinguish numerical error from a physical difference. Report agreement and differences.'''),
     'connect': ('Connect scientific software installed on this computer and confirm that it runs.', {
         'software': 'the software to connect, by name'}, '''
         Connect this installed software to the optics research environment: {software}
 
-        Find its ID with software_search and its routes with software_details. Find the installation with
-        discover_native_software(tool=ID) and bind it with bind_native_software, using the arguments discovery returns;
-        ask for the installation folder only when discovery finds nothing. Start licensed software with concurrency 1.
-        Then run one short calculation with submit_calculation to confirm the connection, and report the route, the
-        version, and what can be run now. read_guide native-software describes every route.'''),
+        Find its ID and routes with software_search and software_details. For an existing Python environment, use
+        bind_environment; for an installed executable or SDK, use discover_native_software then bind_native_software.
+        prepare_environment installs a missing tool from its recipe. Use the selected installation and available
+        license or device capacities; ask only for information that discovery and the project do not supply.
+        Run a short calculation through the chosen route, then report the version and connection.
+        read_guide native-software describes the routes.'''),
     'measure': ('Drive a laboratory instrument and record a measurement.', {
         'task': 'the instrument, what to set and what to read, with ranges and units'}, '''
         Carry out this measurement with the optics research environment: {task}
 
-        Start with read_guide lab. Find the library for the instrument with software_search (domain lab). List the
-        instruments the computer sees (the packaged program pyvisa/sweep with resource "?") and identify the one meant.
-        Before any command that changes an output, a power, a voltage or a position, state the command and the range
-        and ask the user to confirm. Bind the tool with concurrency 1. Record every setting, the time of each reading
-        and the raw values with data.save, switch outputs off at the end, and report the data file, the settings and
-        the run ID.'''),
+        Start with read_guide lab. Find the instrument library with software_search (domain lab) and use that library's
+        discovery method; pyvisa/sweep with resource "?" applies to VISA instruments. Reuse the experiment's controller
+        and device ownership. Execute within the equipment, actions and ranges already authorized; ask for missing
+        settings or a proposed change outside that scope. Use the existing named resource pools when several tools
+        share a device. Save settings, times and raw readings as they arrive. Apply the agreed finish or restoration
+        procedure, retain partial data after failures, and report the measurement with units and its saved files.'''),
     'continue': ('Pick up earlier work: what ran, what it found, what is unfinished.', {}, '''
         Continue the earlier work in the optics research environment.
 
@@ -304,12 +307,14 @@ def prompt(name, values):
         raise ValueError('Unknown prompt: ' + str(name) + '. Prompts: ' + ', '.join(PROMPTS))
     about, arguments, text = PROMPTS[name]
     values = values if isinstance(values, dict) else {}
-    missing = [key for key in arguments if not str(values.get(key, '')).strip()]
+    missing = [key for key in arguments if values.get(key) is None or values.get(key) == ''
+               or isinstance(values.get(key), str) and not values[key].strip()]
     if missing:
         raise ValueError(f"{name} needs: {', '.join(missing)}")
-    text = textwrap.dedent(text).strip()
-    for key in arguments:
-        text = text.replace('{' + key + '}', str(values[key]).strip())
+    invalid = [key for key in arguments if not isinstance(values[key], str)]
+    if invalid:
+        raise ValueError(f"{name} needs text for: {', '.join(invalid)}")
+    text = textwrap.dedent(text).strip().format_map({key: values[key].strip() for key in arguments})
     return {'description': about, 'messages': [{'role': 'user', 'content': {'type': 'text', 'text': text}}]}
 
 
@@ -535,7 +540,8 @@ INSTRUCTIONS = ' '.join('''
     Optics and photonics research environment: software for modelling, simulation, computation and laboratory instruments,
     run as background calculations that continue after disconnection.
     Find: software_search by physical problem, in English or Chinese, names the software and the packaged program that fits;
-    software_details gives its inputs, physics and routes; materials gives measured refractive indices.
+    software_details lists its programs and routes; request a program for its inputs and physics, and source when
+    adapting it. materials gives measured refractive indices.
     Run: submit_calculation with action (a packaged program), source (a Python program that receives INPUTS and OUTPUT_DIR
     and sets RESULT) or script (the same in the language of installed software). The first run installs the software from its
     recipe; wait returns a short result in the same call; sweep and optimize study parameters; submit_workflow chains steps.

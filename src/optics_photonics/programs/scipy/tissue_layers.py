@@ -11,10 +11,12 @@ probability for unpolarized light; packets of small weight end by roulette
 47, 131 (1995)). Packets carry energy and no phase, so there is no
 interference. The program returns the specular and diffuse reflectance,
 the transmittance, the absorbed fraction of each layer, the absorbed
-fraction per depth, which divided by mu_a is the fluence rate of a wide
-uniform beam per unit irradiance, and the diffuse reflectance per area
+fraction per depth, the fluence rate of a wide uniform beam per unit
+irradiance, and the diffuse reflectance per area
 against the distance from the beam. Statistical errors come from the
-spread over ten groups of packets. The same code computes a matched slab
+spread over ten groups of packets. Fluence is tallied from each packet's
+weight times its path length inside each depth bin, including transparent
+layers and bins that cross material interfaces. The same code computes a matched slab
 whose values are known (van de Hulst: mu_a 1, mu_s 9 per mm, g 0.75,
 0.2 mm thick: diffuse reflectance 0.09739, transmittance 0.66096).
 """
@@ -67,6 +69,8 @@ def transport(layers, n_above, n_below, packets, rng, depth_bins, radial_max, ra
     ux, uy, uz = np.zeros(packets), np.zeros(packets), np.ones(packets)
     weight, layer, left = np.full(packets, 1 - specular), np.zeros(packets, dtype=int), np.zeros(packets)
     absorbed_layer, depth, radial = np.zeros(len(layers)), np.zeros(depth_bins), np.zeros(radial_bins)
+    fluence, full_bins = np.zeros(depth_bins), np.zeros(depth_bins)
+    bin_width = edges[-1] / depth_bins
     reflected = transmitted = 0.0
     while weight.size:
         fresh = left == 0
@@ -80,7 +84,20 @@ def transport(layers, n_above, n_below, packets, rng, depth_bins, radial_max, ra
         step = np.where(hit, to_boundary, to_event)
         x += ux * step
         y += uy * step
-        z = np.where(hit, boundary, z + uz * step)
+        end_z = np.where(hit, boundary, z + uz * step)
+        # Track-length fluence: split each weighted path between the depth bins it crosses.
+        low, high = np.minimum(z, end_z), np.maximum(z, end_z)
+        first = np.clip((low / bin_width).astype(int), 0, depth_bins - 1)
+        last = np.clip((high / bin_width).astype(int), 0, depth_bins - 1)
+        crosses = first != last
+        np.add.at(fluence, first[~crosses], weight[~crosses] * step[~crosses])
+        density = weight[crosses] * step[crosses] / (high[crosses] - low[crosses])
+        np.add.at(fluence, first[crosses], density * ((first[crosses] + 1) * bin_width - low[crosses]))
+        np.add.at(fluence, last[crosses], density * (high[crosses] - last[crosses] * bin_width))
+        # A difference array adds the full interior bins without a packets-by-bins allocation.
+        np.add.at(full_bins, first[crosses] + 1, density * bin_width)
+        np.add.at(full_bins, last[crosses], -density * bin_width)
+        z = end_z
         left = np.where(hit, left - to_boundary * mu_t[layer], 0.0)
         alive = np.ones(weight.size, dtype=bool)
 
@@ -132,7 +149,8 @@ def transport(layers, n_above, n_below, packets, rng, depth_bins, radial_max, ra
         if not alive.all():
             x, y, z, ux, uy, uz, weight, layer, left = (v[alive] for v in (x, y, z, ux, uy, uz, weight, layer, left))
     return {'specular': specular, 'reflected': reflected / packets, 'transmitted': transmitted / packets,
-            'absorbed': absorbed_layer / packets, 'depth': depth / packets, 'radial': radial / packets}
+            'absorbed': absorbed_layer / packets, 'depth': depth / packets, 'radial': radial / packets,
+            'fluence': (fluence + np.cumsum(full_bins)) / packets}
 
 
 def groups(layers, n_above, n_below, packets, seed, depth_bins, radial_max, radial_bins):
@@ -152,6 +170,8 @@ if not layers or any(set(names) - set(layer) for layer in layers) or \
     raise ValueError('Each layer has ' + ', '.join(names) + '; coefficients are not negative, g lies inside (-1, 1), indices are at least 1, '
                      f'thickness is positive and packets is at least {GROUPS}')
 depth_bins, radial_bins, radial_max = int(p['depth_bins']), int(p['radial_bins']), float(p['radial_mm'])
+if min(depth_bins, radial_bins, radial_max) <= 0:
+    raise ValueError('depth_bins, radial_bins and radial_mm are positive')
 mean, error = groups(layers, float(p['n_above']), float(p['n_below']), int(p['packets']), int(p['seed']), depth_bins, radial_max, radial_bins)
 known, known_error = groups([{'mu_a_per_mm': 1.0, 'mu_s_per_mm': 9.0, 'g': 0.75, 'n': 1.0, 'thickness_mm': 0.2}], 1.0, 1.0,
                             50000, int(p['seed']) + 1, 1, 1.0, 1)
@@ -160,16 +180,13 @@ total = sum(layer['thickness_mm'] for layer in layers)
 z_edges = np.linspace(0, total, depth_bins + 1)
 z = (z_edges[:-1] + z_edges[1:]) / 2
 per_mm = mean['depth'] / (total / depth_bins)
-tops = np.cumsum([0.0] + [layer['thickness_mm'] for layer in layers])
-mu_a_at = np.asarray([layers[min(np.searchsorted(tops, value, side='right') - 1, len(layers) - 1)]['mu_a_per_mm'] for value in z])
-with np.errstate(divide='ignore', invalid='ignore'):
-    fluence = np.where(mu_a_at > 0, per_mm / mu_a_at, np.nan)
+fluence = mean['fluence'] / (total / depth_bins)
 r_edges = np.linspace(0, radial_max, radial_bins + 1)
 r = (r_edges[:-1] + r_edges[1:]) / 2
 area = np.pi * (r_edges[1:] ** 2 - r_edges[:-1] ** 2)
 saved = data.save(OUTPUT_DIR / 'transport', {
     'absorbed_per_mm': data.quantity(per_mm, 'absorbed fraction of the incident power per depth', unit='1/mm', axes=['depth_mm']),
-    'fluence_rate': data.quantity(fluence, 'fluence rate of a wide uniform beam per unit irradiance; empty where mu_a is 0', unit='1',
+    'fluence_rate': data.quantity(fluence, 'fluence rate of a wide uniform beam per unit irradiance, from weighted path lengths', unit='1',
                                   axes=['depth_mm']),
     'depth_mm': data.quantity(z, 'depth from the entrance surface', unit='mm'),
     'reflectance_per_area': data.quantity(mean['radial'] / area, 'diffuse reflectance per area for unit incident power', unit='1/mm^2',

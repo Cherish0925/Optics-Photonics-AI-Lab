@@ -16,7 +16,10 @@ T = (a^2 - 2 r a cos(phi) + r^2) / (1 - 2 r a cos(phi) + (r a)^2),
 phi = 2 pi n_g L / lambda, whose width is
 (1 - r a) lambda^2 / (pi n_g L sqrt(r a)), and compares the fit with it.
 With peaks, the peaks higher than min_depth of the highest are analysed
-instead. Resolve each resonance with several
+instead. Fit windows stop at the midpoints to neighbouring detected
+resonances, so one fit does not include another peak. Overlapping line
+shapes still require a multi-resonance model; independent Lorentzians do
+not separate their tails. Resolve each resonance with several
 samples per linewidth; a width near the sampling step is not a measurement.
 """
 import csv
@@ -79,6 +82,8 @@ if wavelength.size != signal.size or wavelength.size < 20:
     raise ValueError('Give at least 20 wavelengths with one transmission value each')
 order = np.argsort(wavelength)
 wavelength, signal = wavelength[order], signal[order]
+if not np.all(np.isfinite(wavelength)) or not np.all(np.isfinite(signal)) or np.any(np.diff(wavelength) <= 0):
+    raise ValueError('Wavelengths and transmission are finite, and wavelengths are distinct')
 if p['decibel']:
     signal = 10 ** (signal / 10)
 if not 0 < float(p['min_depth']) < 1 or float(p['window_widths']) < 1:
@@ -86,7 +91,7 @@ if not 0 < float(p['min_depth']) < 1 or float(p['window_widths']) < 1:
 
 sign = 1.0 if p['peaks'] else -1.0
 baseline = float(np.median(signal))
-step = float(np.median(np.diff(wavelength)))
+sample_index = np.arange(wavelength.size)
 scale = float(signal.max() - baseline) if p['peaks'] else abs(baseline)
 found, properties = find_peaks(sign * signal, prominence=float(p['min_depth']) * scale, width=1)
 
@@ -96,10 +101,14 @@ def lorentzian(x, base, amplitude, centre, width):
 
 
 table, fitted, squares, counted = [], np.full(signal.shape, np.nan), 0.0, 0
-for index, samples in zip(found, properties['widths']):
-    guess_width = max(samples, 2) * step
+for number, (index, left, right) in enumerate(zip(found, properties['left_ips'], properties['right_ips'])):
+    # Peak widths are fractional sample indices; map their crossings to the actual wavelength grid.
+    guess_width = max(np.interp(right, sample_index, wavelength) - np.interp(left, sample_index, wavelength),
+                      wavelength[index + 1] - wavelength[index - 1])
     half = float(p['window_widths']) * guess_width
-    near = np.abs(wavelength - wavelength[index]) <= half
+    low = (wavelength[found[number - 1]] + wavelength[index]) / 2 if number else wavelength[0]
+    high = (wavelength[found[number + 1]] + wavelength[index]) / 2 if number + 1 < len(found) else wavelength[-1]
+    near = (wavelength >= max(low, wavelength[index] - half)) & (wavelength <= min(high, wavelength[index] + half))
     if near.sum() < 8:
         continue
     try:
@@ -117,9 +126,10 @@ for index, samples in zip(found, properties['widths']):
     counted += int(near.sum())
     # Extinction of a dip: baseline over the transmission at its centre.
     ratio = (base - amplitude) / base if not p['peaks'] and base > 0 else None
+    samples = np.interp(centre + width / 2, wavelength, sample_index) - np.interp(centre - width / 2, wavelength, sample_index)
     table.append({'wavelength_nm': float(centre), 'wavelength_error_nm': float(errors[2]), 'width_pm': float(width * 1e3),
                   'width_error_pm': float(errors[3] * 1e3), 'Q': float(centre / width), 'Q_error': float(centre / width * errors[3] / width),
-                  'extinction_db': float(-10 * np.log10(ratio)) if ratio and ratio > 0 else None, 'samples_per_width': float(width / step)})
+                  'extinction_db': float(-10 * np.log10(ratio)) if ratio and ratio > 0 else None, 'samples_per_width': float(samples)})
 if not table:
     raise ValueError('No resonance deeper than min_depth was found; lower min_depth, or set peaks for a spectrum of peaks')
 

@@ -1,6 +1,6 @@
 {
   "name": "optics-photonics",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Optical research environment: solvers, native programs and episode sampling",
   "skills": [
     "skills/optical-computation",

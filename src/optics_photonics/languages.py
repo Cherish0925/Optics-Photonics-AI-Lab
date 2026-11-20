@@ -319,6 +319,15 @@ def functions_first(script):
     return script if found is None else '1;\n' + script[found.start():].rstrip() + '\n\n' + script[:found.start()]
 
 
+def octave_script(script):
+    """Adapt declared MATLAB scripts with trailing helpers; leave complete native Octave scripts unchanged."""
+    try:
+        declared = declaration(script, '.m')
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return script
+    return functions_first(script) if declared.get('language') == 'matlab' else script
+
+
 def prepare(name, script, inputs, folder):
     """Write the program, its inputs and the main file into folder; returns the main file."""
     spec = language(name)
@@ -336,7 +345,7 @@ def prepare(name, script, inputs, folder):
                              encoding='utf-8')
         (folder / (PROGRAM + spec['suffix'])).write_text(script, encoding='utf-8')
         return main_file
-    (folder / (PROGRAM + spec['suffix'])).write_text(functions_first(script) if name == 'octave' else script, encoding='utf-8')
+    (folder / (PROGRAM + spec['suffix'])).write_text(octave_script(script) if name == 'octave' else script, encoding='utf-8')
     main_file.write_text(main(name, folder, inputs), encoding='utf-8')
     return main_file
 

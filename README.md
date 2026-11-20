@@ -18,7 +18,7 @@ The [English](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-
 
 | Host | Install |
 | --- | --- |
-| Agentic Research OS | Download the [Research OS package](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/Optics-Photonics-0.9.0-ResearchOS.zip), extract it and install the directory containing `plugin.json`; it carries native executors for six system/architecture combinations, MCP, the catalogue and both Skills, and uses the host's Python. Or **Extensions → Plugins → Add from link** with `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`. |
+| Agentic Research OS | Download the [Research OS package](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/Optics-Photonics-0.10.0-ResearchOS.zip), extract it and install the directory containing `plugin.json`; it carries native executors for six system/architecture combinations, MCP, the catalogue and both Skills, and uses the host's Python. Or **Extensions → Plugins → Add from link** with `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`. |
 | Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`, then `codex plugin add optics-photonics@optics-photonics` |
 | Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`, then `claude plugin install optics-photonics@optics-photonics` |
 | Qiushi | Editions built on Research OS use the package above; other editions use `optics-photonics connect qiushi` for MCP or command access. |
@@ -26,7 +26,7 @@ The [English](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-
 | Any MCP host, Python, shell | Install the wheel below and register `optics-photonics mcp` as a stdio server. |
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/optics_photonics-0.9.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/optics_photonics-0.10.0-py3-none-any.whl"
 optics-photonics prepare tmm
 optics-photonics connect agentic-research-os --output optics-plugin
 ```
@@ -42,6 +42,8 @@ optics-photonics array RUN_ID calculate/attempt-1/spectrum.npz --member R --imag
 ```
 
 The search names the tool `tmm` and its packaged program `spectrum`. The submission installs tmm into an environment of its own the first time, computes the reflectance of five quarter-wave pairs designed for 600 nm (97.8 % there) and returns the result within the wait; if it replies `running`, `optics-photonics status RUN_ID --wait 25` waits further. The last command draws the reflectance over wavelength. An agent does the same through MCP: `software_search`, `submit_calculation(tool, action, inputs, wait)`, `read_array(image="auto")`.
+
+Optics connects models, solvers and measurement data. [IOP](https://github.com/EnvFoundry/IOP) manages shared instruments, experiment conditions and operation sequences. A research program can use the existing IOP client when a device is already controlled there, keeping simulation and measurement in one study without opening a second device connection.
 
 ## How a calculation runs
 

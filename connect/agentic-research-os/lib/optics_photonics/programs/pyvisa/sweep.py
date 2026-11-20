@@ -5,18 +5,24 @@ on GPIB, USB, a serial port or the network exchange text messages, most of
 them SCPI. The program opens the instrument at a VISA address, sends the
 setup commands, then for each value sends the set command with the value,
 waits, and sends the read query; the numbers of each reply are recorded
-with the time. The finish commands are sent at the end, also after a
-failure, so that an output can be switched off. Commands go to the
+with the time. Raw replies are saved as they arrive, including a reply
+that cannot be parsed. Every finish command is attempted at the end, also
+after a Python exception; process cancellation or a timeout can prevent
+this cleanup. Commands go to the
 instrument as given: its manual states the commands, ranges and settling
 times. Without a resource the program talks to a simulated tunable source
 (PyVISA-sim) that keeps the wavelength it is given, which shows the flow
 without hardware; resource "?" lists the instruments the backend finds
-and their identifications. An instrument serves one program at a time:
-bind this tool with concurrency 1.
+and, when requested, their identifications. Coordinate shared instruments
+through a common resource pool or their existing instrument service;
+a tool's concurrency setting does not lock a device across libraries.
 """
 import csv
+import json
 import re
+import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
 import numpy as np
 import pyvisa
@@ -42,7 +48,8 @@ PROGRAM = {
     },
     'domains': ['lab'],
     'results': 'sweep.npz/.json and sweep.csv: the applied values, the numbers read at each and the time of each reading; '
-               'the identification; with resource "?", the resources found',
+               'sweep.raw.jsonl retains each reply and setting even if a later reading fails; cleanup errors, if any, '
+               'are in sweep.cleanup.json; the identification; with resource "?", the resources found',
     'checks': 'readback_difference: largest difference of the reading from the applied value, for the simulated source',
 }
 p = parameters(PROGRAM, INPUTS)
@@ -67,6 +74,54 @@ resources:
 '''
 NUMBER = re.compile(r'[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?')
 
+cleanup_errors = []
+
+
+@contextmanager
+def managed(resource, name, finish=()):
+    """Close every acquired VISA resource; cleanup errors never replace an earlier failure."""
+    failed = False
+    try:
+        yield resource
+    except BaseException:
+        failed = True
+        raise
+    finally:
+        errors = []
+        for command in finish:
+            try:
+                resource.write(command)
+            except Exception as error:
+                errors.append({'command': command, 'error': f'{type(error).__name__}: {error}'})
+        try:
+            resource.close()
+        except Exception as error:
+            errors.append({'operation': name, 'error': f'{type(error).__name__}: {error}'})
+        if errors:
+            cleanup_errors.extend(errors)
+            message = 'Instrument cleanup failed: ' + '; '.join(item['error'] for item in errors)
+            try:
+                (Path(OUTPUT_DIR) / 'sweep.cleanup.json').write_text(
+                    json.dumps(cleanup_errors, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+            except OSError as error:
+                message += f'; could not save sweep.cleanup.json: {error}'
+            if failed:
+                print(message, file=sys.stderr)
+            else:
+                raise RuntimeError(message)
+
+
+@contextmanager
+def opened(manager, address, finish=()):
+    commands = []
+    with managed(manager.open_resource(address), 'instrument.close', commands) as instrument:
+        instrument.timeout = float(p['timeout_s']) * 1000
+        instrument.read_termination = instrument.write_termination = p['termination']
+        # A session that could not be configured must be closed without sending commands.
+        commands.extend(finish)
+        yield instrument
+
+
 simulated = not p['resource']
 if simulated:
     description = Path(OUTPUT_DIR) / 'simulated-instrument.yaml'
@@ -74,66 +129,58 @@ if simulated:
     manager = pyvisa.ResourceManager(str(description) + '@sim')
 else:
     manager = pyvisa.ResourceManager(p['backend']) if p['backend'] else pyvisa.ResourceManager()
-timeout_ms = float(p['timeout_s']) * 1000
 
-
-def opened(address):
-    instrument = manager.open_resource(address)
-    instrument.timeout = timeout_ms
-    instrument.read_termination = instrument.write_termination = p['termination']
-    return instrument
-
-
-if p['resource'] == '?':
-    listed = []
-    for address in manager.list_resources():
-        entry = {'resource': address}
-        try:
-            instrument = opened(address)
-            try:
-                entry['identification'] = instrument.query(p['identify'] or '*IDN?').strip()
-            finally:
-                instrument.close()
-        except Exception as error:   # an instrument that does not answer is still listed
-            entry['error'] = str(error)[:200]
-        listed.append(entry)
-    manager.close()
-    RESULT = {'resources': listed, 'backend': p['backend'] or 'installed VISA library', 'checks': {'readback_difference': None}}
-else:
-    if isinstance(p['values'], dict):
-        values = np.linspace(float(p['values']['start']), float(p['values']['stop']), int(p['values']['points']))
+with managed(manager, 'manager.close'):
+    if p['resource'] == '?':
+        listed = []
+        for address in manager.list_resources():
+            entry = {'resource': address}
+            if p['identify']:
+                try:
+                    with opened(manager, address) as instrument:
+                        entry['identification'] = instrument.query(p['identify']).strip()
+                except Exception as error:   # an instrument that does not answer is still listed
+                    entry['error'] = str(error)[:200]
+            listed.append(entry)
+        RESULT = {'resources': listed, 'backend': p['backend'] or 'installed VISA library', 'checks': {'readback_difference': None}}
     else:
-        values = np.atleast_1d(np.asarray(p['values'], dtype=float))
-    if values.size < 1 or '{value' not in p['set'] or not p['read'] or float(p['settle_s']) < 0:
-        raise ValueError('values is not empty, set contains {value}, read is a query and settle_s is not negative')
-    instrument = opened(SIMULATED if simulated else p['resource'])
-    identification, readings, times, replies = None, [], [], []
-    started = time.time()
-    try:
-        if p['identify']:
-            identification = instrument.query(p['identify']).strip()
-        for command in p['setup']:
-            instrument.write(command)
-        for value in values:
-            instrument.write(p['set'].format(value=float(value)))
-            if p['settle_s']:
-                time.sleep(float(p['settle_s']))
-            reply = instrument.query(p['read']).strip()
-            numbers = [float(text) for text in NUMBER.findall(reply)]
-            if not numbers:
-                raise ValueError(f'The reply to {p["read"]} holds no number: {reply[:200]!r}')
-            replies.append(reply)
-            readings.append(numbers)
-            times.append(time.time() - started)
-    finally:
-        try:
-            for command in p['finish']:
-                instrument.write(command)
-        finally:
-            instrument.close()
-            manager.close()
-    width = min(len(numbers) for numbers in readings)
-    table = np.asarray([numbers[:width] for numbers in readings])
+        if isinstance(p['values'], dict):
+            values = np.linspace(float(p['values']['start']), float(p['values']['stop']), int(p['values']['points']))
+        else:
+            values = np.atleast_1d(np.asarray(p['values'], dtype=float))
+        if values.size < 1 or '{value' not in p['set'] or not p['read'] or float(p['settle_s']) < 0:
+            raise ValueError('values is not empty, set contains {value}, read is a query and settle_s is not negative')
+        identification, readings, times = None, [], []
+        started = time.monotonic()
+        with opened(manager, SIMULATED if simulated else p['resource'], p['finish']) as instrument:
+            with (Path(OUTPUT_DIR) / 'sweep.raw.jsonl').open('w', encoding='utf-8') as raw:
+                if p['identify']:
+                    identification = instrument.query(p['identify']).strip()
+                for command in p['setup']:
+                    instrument.write(command)
+                for value in values:
+                    command = p['set'].format(value=float(value))
+                    instrument.write(command)
+                    if p['settle_s']:
+                        time.sleep(float(p['settle_s']))
+                    reply = instrument.query(p['read'])
+                    elapsed = time.monotonic() - started
+                    raw.write(json.dumps({'setting': float(value), 'command': command, 'query': p['read'],
+                                          'time_s': elapsed, 'unix_time_s': time.time(), 'reply': reply},
+                                         ensure_ascii=False, allow_nan=False) + '\n')
+                    raw.flush()
+                    numbers = [float(text) for text in NUMBER.findall(reply)]
+                    if not numbers:
+                        raise ValueError(f'The reply to {p["read"]} holds no number: {reply[:200]!r}')
+                    if readings and len(numbers) != len(readings[0]):
+                        raise ValueError(f'The reply to {p["read"]} holds {len(numbers)} numbers; '
+                                         f'expected {len(readings[0])}. Raw replies are in sweep.raw.jsonl')
+                    readings.append(numbers)
+                    times.append(elapsed)
+
+if p['resource'] != '?':
+    width = len(readings[0])
+    table = np.asarray(readings)
     (set_name, set_unit), (read_name, read_unit) = p['set_quantity'], p['read_quantity']
     saved = data.save(OUTPUT_DIR / 'sweep', {
         'reading': data.quantity(table[:, 0] if width == 1 else table, read_name, unit=read_unit,
@@ -149,6 +196,6 @@ else:
     RESULT = {
         'identification': identification, 'resource': 'simulated source' if simulated else p['resource'], 'steps': int(values.size),
         'first': [float(values[0]), *table[0].tolist()], 'last': [float(values[-1]), *table[-1].tolist()],
-        'elapsed_s': times[-1], 'data': saved['data'], 'files': ['sweep.csv'],
+        'elapsed_s': times[-1], 'data': saved['data'], 'files': ['sweep.csv', 'sweep.raw.jsonl'],
         'checks': {'readback_difference': float(np.abs(table[:, 0] - values).max()) if simulated else None},
     }

@@ -14,6 +14,17 @@ from optics_photonics.packages import package, managed_server
 
 
 class MarketplaceTests(unittest.TestCase):
+    def test_published_interfaces_share_the_package_version(self):
+        from optics_photonics import __version__
+        for filename in ('.claude-plugin/plugin.json', '.codex-plugin/plugin.json',
+                         'connect/agentic-research-os/plugin.json', 'connect/deepseek/package.json',
+                         'clients/typescript/package.json'):
+            with self.subTest(file=filename):
+                self.assertEqual(json.loads((ROOT / filename).read_text())['version'], __version__)
+        lock = json.loads((ROOT / 'clients/typescript/package-lock.json').read_text())
+        self.assertEqual(lock['version'], __version__)
+        self.assertEqual(lock['packages']['']['version'], __version__)
+
     @unittest.skipUnless(shutil.which('uv'), 'Marketplace launchers use uv; fixed-interpreter packages do not')
     def test_native_marketplaces_and_research_os_launch_after_relocation(self):
         requests = [

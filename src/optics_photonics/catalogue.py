@@ -282,6 +282,9 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         # Packaged programs that install themselves, then packaged programs or a recipe, then the rest.
         runs = 0 if packaged and installs else 1 if packaged or installs else 2
         fit, program = best_program(item['id'], terms, domain) if terms or domain else ((0, 0), None)
+        if domain and program is None and terms and all(weight == 4 for weight in weights):
+            # A software-name lookup should still find its programs in this domain. Hits from other programs do not qualify.
+            program = next(iter(domain_programs(domain).get(item['id'], [])), None)
         if domain and domain not in item['cats'] and program is None:
             continue  # present only through its programs of the domain, and none of them matches
         ranked.append((sum(map(bool, weights)), sum(weights), fit, runs, position, item, weights, program))

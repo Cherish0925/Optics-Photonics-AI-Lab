@@ -17,7 +17,9 @@
 % A uniform grating has the closed form
 % R = sinh^2(q L) / (cosh^2(q L) - s^2 / kappa^2), q^2 = kappa^2 - s^2, with
 % the peak tanh^2(kappa L) and the delay n_eff tanh(kappa L) / (kappa c)
-% there. The program runs in MATLAB and in GNU Octave.
+% there. With zero visibility there is no reflected wave: its peak wavelength,
+% bandwidth and delay are undefined (null in JSON, NaN in the saved delay array).
+% The program runs in MATLAB and in GNU Octave.
 %
 % PROGRAM
 % {"inputs": {
@@ -31,7 +33,7 @@
 %   "wavelength_nm": [{"start": 1549.5, "stop": 1550.7, "points": 601}, "vacuum wavelengths in nm: a list, or {start, stop, points}"],
 %   "sections": [200, "uniform sections of the grating"]},
 %  "domains": ["fiber"],
-%  "results": "spectrum.npz/.json: reflectance, transmittance and reflected group delay over wavelength; peak reflectance and its wavelength, the width of the band at half the peak, the mean delay slope inside it",
+%  "results": "spectrum.npz/.json: reflectance, transmittance and reflected group delay over wavelength; peak reflectance and its wavelength, the width of the band at half the peak, the mean delay slope inside it; peak wavelength, bandwidth and delays are null without reflection",
 %  "checks": "energy_error: largest |1 - R - T|; uniform_difference: largest difference of the section product from the closed form of the uniform grating with the same peak index change; peak_difference: its peak minus tanh^2(kappa L); delay_difference: relative difference of its delay at the peak from n_eff tanh(kappa L) / (kappa c)"}
 
 p = INPUTS;
@@ -62,33 +64,46 @@ plain = grating(lambda, p, L, centre, 0, 'uniform', p.sections);
 kappa = pi * p.visibility * p.index_change ./ lambda;
 s = 2 * pi * p.effective_index * (1 ./ lambda - 1 / centre) + 2 * pi * p.index_change ./ lambda;
 q = sqrt(complex(kappa .^ 2 - s .^ 2));
-exact = real(sinh(q * L) .^ 2 ./ (cosh(q * L) .^ 2 - s .^ 2 ./ kappa .^ 2));
+sh = L * ones(size(q));                    % sinh(q L) / q, including the limit q = 0
+nonzero = q ~= 0;
+sh(nonzero) = sinh(q(nonzero) * L) ./ q(nonzero);
+exact = abs(1i * kappa .* sh ./ (cosh(q * L) - 1i * s .* sh)) .^ 2;
 peak_wavelength = centre * (1 + p.index_change / p.effective_index);   % where s = 0
 near = peak_wavelength * (1 + [-1, 0, 1] * 1e-7);
 at_peak = grating(near, p, L, centre, 0, 'uniform', p.sections);
 kappa_peak = pi * p.visibility * p.index_change / peak_wavelength;
-exact_delay = p.effective_index * tanh(kappa_peak * L) / (kappa_peak * c);
-delays = group_delay(at_peak, near, c);
+delay_difference = NaN;
+if kappa_peak > 0
+  exact_delay = p.effective_index * tanh(kappa_peak * L) / (kappa_peak * c);
+  delays = group_delay(at_peak, near, c);
+  delay_difference = delays(2) / exact_delay - 1;
+end
 
 [peak, at] = max(R);
-inside = find(R >= peak / 2);
-band = wavelength(inside(end)) - wavelength(inside(1));
-slope = 0;
-if numel(inside) > 2
-  fit = polyfit(wavelength(inside), delay(inside) * 1e12, 1);
-  slope = fit(1);
+peak_position = NaN;
+band = NaN;
+slope = NaN;
+if peak > 0
+  peak_position = wavelength(at);
+  inside = find(R >= peak / 2);
+  band = wavelength(inside(end)) - wavelength(inside(1));
+  slope = 0;
+  if numel(inside) > 2
+    fit = polyfit(wavelength(inside), delay(inside) * 1e12, 1);
+    slope = fit(1);
+  end
 end
 
 RESULT = struct();
 RESULT.peak_reflectance = peak;
-RESULT.peak_wavelength_nm = wavelength(at);
+RESULT.peak_wavelength_nm = peak_position;
 RESULT.bandwidth_nm = band;
 RESULT.delay_slope_ps_per_nm = slope;
 RESULT.coupling_times_length = kappa_peak * L;
 RESULT.checks = struct('energy_error', max(abs(1 - R - T)), ...
   'uniform_difference', max(abs(abs(plain) .^ 2 - exact)), ...
   'peak_difference', abs(at_peak(2)) ^ 2 - tanh(kappa_peak * L) ^ 2, ...
-  'delay_difference', delays(2) / exact_delay - 1);
+  'delay_difference', delay_difference);
 over = {{'wavelength_nm'}};
 RESULT.save = struct('file', 'spectrum', 'arrays', struct( ...
   'wavelength_nm', struct('values', wavelength, 'quantity', 'vacuum wavelength', 'unit', 'nm'), ...
@@ -129,6 +144,10 @@ end
 
 function delay = group_delay(rho, lambda, c)
   % Seconds: -(lambda^2 / 2 pi c) d(phase)/d(lambda), by central differences inside and one-sided at the ends.
+  if ~any(abs(rho))
+    delay = NaN(size(lambda));
+    return;
+  end
   phase = unwrap(angle(rho));
   slope = zeros(size(lambda));
   slope(2:end-1) = (phase(3:end) - phase(1:end-2)) ./ (lambda(3:end) - lambda(1:end-2));

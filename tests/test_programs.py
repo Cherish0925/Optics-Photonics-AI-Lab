@@ -484,6 +484,51 @@ class ProgramPhysicsCase(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'No resonance deeper'):
             self.run_program('scipy', 'resonances', {'wavelength_nm': list(range(1500, 1560)), 'transmission': [1.0] * 60})
 
+    def test_resonance_windows_and_resolution_use_the_local_wavelength_grid(self):
+        import numpy as np
+        # A densely sampled remote band must not shrink the fit window of a well-resolved resonance.
+        wavelength = np.concatenate([np.linspace(1500, 1510, 10001), np.linspace(1540, 1560, 1001)])
+        transmission = 1 - 0.8 * 0.1 ** 2 / ((wavelength - 1550) ** 2 + 0.1 ** 2)
+        result = self.run_program('scipy', 'resonances', {'wavelength_nm': wavelength.tolist(), 'transmission': transmission.tolist()})
+        self.assertEqual(result['count'], 1)
+        resonance = result['resonances'][0]
+        self.assertAlmostEqual(resonance['wavelength_nm'], 1550, places=7)
+        self.assertAlmostEqual(resonance['width_pm'], 200, places=5)
+        self.assertAlmostEqual(resonance['samples_per_width'], 10, places=5)
+        json.dumps(result, allow_nan=False)
+
+    def test_adjacent_resonances_do_not_enter_each_others_fit_windows(self):
+        import numpy as np
+        wavelength = np.linspace(1548, 1552, 4001)
+        centres = (1549.5, 1550.5)
+        transmission = 1 - sum(0.4 * 0.1 ** 2 / ((wavelength - centre) ** 2 + 0.1 ** 2) for centre in centres)
+        result = self.run_program('scipy', 'resonances', {'wavelength_nm': wavelength.tolist(), 'transmission': transmission.tolist()})
+        self.assertEqual(result['count'], 2)
+        for resonance, centre in zip(result['resonances'], centres):
+            self.assertAlmostEqual(resonance['wavelength_nm'], centre, delta=0.002)
+            # The small residual bias is from the neighbour's tail; an independent Lorentzian is not a multi-peak model.
+            self.assertAlmostEqual(resonance['width_pm'], 200, delta=5)
+        self.assertAlmostEqual(result['fsr_nm'][0], 1.0, delta=0.003)
+
+    def test_tissue_fluence_integrates_paths_across_interfaces_and_clear_layers(self):
+        import numpy as np
+        # One depth bin straddles two absorbing media: its fluence is the integral of Beer-Lambert intensity,
+        # not total absorption divided by the coefficient at the bin centre.
+        self.run_program('scipy', 'tissue_layers', {'packets': 100000, 'depth_bins': 1, 'layers': [
+            {'mu_a_per_mm': 0.1, 'mu_s_per_mm': 0.0, 'g': 0.0, 'n': 1.0, 'thickness_mm': 0.4},
+            {'mu_a_per_mm': 10.0, 'mu_s_per_mm': 0.0, 'g': 0.0, 'n': 1.0, 'thickness_mm': 0.6}]})
+        stored = np.load(Path(self.folder.name) / f'scipy-tissue_layers-{self.count}' / 'transport.npz')
+        expected = (1 - np.exp(-0.04)) / 0.1 + np.exp(-0.04) * (1 - np.exp(-6)) / 10
+        self.assertAlmostEqual(stored['fluence_rate'][0], expected, delta=0.003)
+        # A matched transparent layer has unit fluence in every bin even though no absorption event occurs.
+        clear = self.run_program('scipy', 'tissue_layers', {'packets': 10, 'depth_bins': 7, 'layers': [
+            {'mu_a_per_mm': 0.0, 'mu_s_per_mm': 0.0, 'g': 0.0, 'n': 1.0, 'thickness_mm': 2.0}]})
+        stored = np.load(Path(self.folder.name) / f'scipy-tissue_layers-{self.count}' / 'transport.npz')
+        np.testing.assert_allclose(stored['fluence_rate'], np.ones(7), atol=1e-12)
+        self.assertEqual(clear['transmittance'], 1.0)
+        self.assertEqual(clear['absorbed'], [0.0])
+        json.dumps(clear, allow_nan=False)
+
     def test_ray_optics_and_polarization(self):
         abcd = self.run_program('raytracing', 'abcd', {'elements': [{'space_m': 0.1}, {'focal_length_m': 0.05}, {'space_m': 0.1}], 'ray': [0.001, 0]})
         self.assertAlmostEqual(abcd['ray_out'][0], -0.001, places=12)
@@ -698,6 +743,15 @@ class InverseDesignCase(unittest.TestCase):
 
 @environment('ngsolve')
 class FiniteElementCase(unittest.TestCase):
+    def test_an_index_matched_cylinder_has_zero_scattering_and_finite_checks(self):
+        for polarization in ('tm', 'te'):
+            result = calculate('ngsolve', 'scattering', {'index': 1.0, 'polarization': polarization, 'grid': 0})
+            for name in ('Q_sca', 'Q_abs', 'Q_ext'):
+                self.assertAlmostEqual(result[name], 0.0, delta=1e-12)
+            self.assertLess(result['checks']['field_difference'], 1e-12)
+            self.assertLess(abs(result['checks']['efficiency_difference']), 1e-12)
+            json.dumps(result, allow_nan=False)
+
     def test_a_cylinder_scatters_as_its_exact_series_in_both_polarizations(self):
         for inputs in ({}, {'polarization': 'te'}, {'polarization': 'te', 'index': [0.14, 3.0], 'radius_um': 0.05, 'wavelength_um': 0.4,
                                                      'air_um': 0.4, 'layer_um': 0.4, 'elements_per_wavelength': 10, 'grid': 0}):
@@ -770,6 +824,38 @@ class ScanCase(unittest.TestCase):
         self.assertLess(abs(result['checks']['centre_difference']), 5 * second['centre_error'] + 1e-3)
         self.assertAlmostEqual(sum(second['range']) / 2, first['centre'], places=9)
         self.assertEqual(first['documents'], 41 + 3)   # start, descriptor, one event per position, stop
+
+
+class BraggGratingCase(unittest.TestCase):
+    def test_zero_visibility_has_no_reflected_band_or_delay(self):
+        import shutil
+        from optics_photonics import native, studies
+        executable = os.environ.get('OPTICS_TEST_OCTAVE') or shutil.which('octave-cli') or shutil.which('octave')
+        if not executable:
+            self.skipTest('Octave is not installed')
+        with workspace() as folder:
+            home = Path(folder) / 'home'
+            native.bind('octave', executable=executable, path=home)
+            for visibility in (0.0, 1.0):
+                reply = studies.submit('octave', action='bragg_grating', inputs={'visibility': visibility, 'sections': 20}, wait=25, path=home)
+                self.assertEqual(reply['state'], 'succeeded', reply)
+                result = reply['result']
+                self.assertLess(result['checks']['energy_error'], 1e-10)
+                self.assertLess(result['checks']['uniform_difference'], 1e-10)
+                self.assertLess(abs(result['checks']['peak_difference']), 1e-10)
+                json.dumps(result, allow_nan=False)
+                if visibility:
+                    self.assertGreater(result['peak_reflectance'], 0.5)
+                    self.assertGreater(result['bandwidth_nm'], 0)
+                    self.assertLess(abs(result['checks']['delay_difference']), 1e-3)
+                    self.assertTrue(math.isfinite(result['delay_slope_ps_per_nm']))
+                else:
+                    self.assertEqual(result['peak_reflectance'], 0.0)
+                    for name in ('peak_wavelength_nm', 'bandwidth_nm', 'delay_slope_ps_per_nm'):
+                        self.assertIsNone(result[name])
+                    self.assertIsNone(result['checks']['delay_difference'])
+                    delay = jobs.read_array(reply['run_id'], 'calculate/attempt-1/spectrum.npz', member='delay_ps', path=home)
+                    self.assertTrue(delay['values'] and all(value == 'nan' for value in delay['values']))
 
 
 @unittest.skipUnless(SCIENCE and installed('meep'), 'Meep and MPB come from conda-forge')

@@ -18,7 +18,7 @@
 
 | 宿主 | 安装方式 |
 | --- | --- |
-| Agentic Research OS | 下载 [Research OS 插件包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/Optics-Photonics-0.9.0-ResearchOS.zip)，解压后安装包含 `plugin.json` 的目录；包内有六种系统与架构的原生执行程序、MCP、软件目录和两个 Skills，使用宿主自带的 Python。也可以在 **Extensions → Plugins → Add from link** 填入 `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`。 |
+| Agentic Research OS | 下载 [Research OS 插件包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/Optics-Photonics-0.10.0-ResearchOS.zip)，解压后安装包含 `plugin.json` 的目录；包内有六种系统与架构的原生执行程序、MCP、软件目录和两个 Skills，使用宿主自带的 Python。也可以在 **Extensions → Plugins → Add from link** 填入 `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`。 |
 | Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再 `codex plugin add optics-photonics@optics-photonics` |
 | Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再 `claude plugin install optics-photonics@optics-photonics` |
 | Qiushi | 基于 Research OS 的版本使用上面的插件包；其他版本用 `optics-photonics connect qiushi` 生成 MCP 或命令入口。 |
@@ -26,7 +26,7 @@
 | 其他 MCP 宿主、Python、命令行 | 安装下面的 wheel，把 `optics-photonics mcp` 注册为 stdio 服务。 |
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/optics_photonics-0.9.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/optics_photonics-0.10.0-py3-none-any.whl"
 optics-photonics prepare tmm
 optics-photonics connect agentic-research-os --output optics-plugin
 ```
@@ -42,6 +42,8 @@ optics-photonics array RUN_ID calculate/attempt-1/spectrum.npz --member R --imag
 ```
 
 搜索给出软件 `tmm` 和它的封装程序 `spectrum`。提交时第一次会把 tmm 装进它自己的环境，然后计算按 600 nm 设计的五对四分之一波长膜的反射率（600 nm 处 97.8 %），在等待时间内返回结果；若返回 `running`，用 `optics-photonics status RUN_ID --wait 25` 继续等。最后一条命令把反射率随波长画成图。智能体通过 MCP 做同样的事：`software_search`、`submit_calculation(tool, action, inputs, wait)`、`read_array(image="auto")`。
+
+Optics 连接物理模型、求解软件与测量数据；[IOP](https://github.com/EnvFoundry/IOP) 管理共享仪器、实验条件和操作序列。设备已由 IOP 控制时，研究程序复用它的客户端，让仿真与测量进入同一项研究，并保持设备控制关系一致。
 
 ## 一次计算怎么进行
 

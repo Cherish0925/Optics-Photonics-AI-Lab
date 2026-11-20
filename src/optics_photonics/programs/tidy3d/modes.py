@@ -9,7 +9,10 @@ beside it (a rib). An index is a number, [n, k] or a material from the
 materials tool at the wavelength. For each mode the program reports the
 effective index, the group index, the fraction of the transverse electric
 field energy along the width (near 1 for a quasi-TE mode), the effective
-area and the share of the power in the core. The grid is refined from
+area and the share of the power in the core. Media are constructed from
+n,k at this one wavelength: the group index includes waveguide dispersion
+but not the database material dispersion. A native Tidy3D program with
+frequency-dependent media is needed to include that dispersion. The grid is refined from
 steps_per_wavelength; without subpixel averaging the index converges
 linearly with the grid step. The same solver computes the slab of the same
 height, uniform along the width, and its TE0 index is compared with the
@@ -37,7 +40,8 @@ PROGRAM = {
         'margin_um': (1.5, 'distance from the core to the boundary of the computed window'),
     },
     'domains': ['pic', 'em'],
-    'results': 'modes.npz/.json with the field intensity of each mode over the cross-section; per mode n_eff, group index, TE fraction, effective area, power in the core',
+    'results': 'modes.npz/.json with the field intensity of each mode over the cross-section; per mode n_eff, group index without '
+               'database material dispersion, TE fraction, effective area, power in the core',
     'checks': 'slab_difference: TE0 index of the slab of the same height by the same solver minus the root of the analytic dispersion relation',
 }
 p = parameters(PROGRAM, INPUTS)

@@ -37,7 +37,7 @@ PROGRAM = {
     'domains': ['em', 'scatter'],
     'results': 'field.npz/.json: |total field|^2 on a square grid and the scattered field on a circle; Q_sca, Q_abs, Q_ext; unknowns',
     'checks': 'field_difference: largest difference of the scattered field on the circle from the exact series, relative to its '
-              'largest value; efficiency_difference: Q_sca minus the series',
+              'largest value, or absolute for a zero scattered field (unit incident amplitude); efficiency_difference: Q_sca minus the series',
 }
 p = parameters(PROGRAM, INPUTS)
 radius, wavelength, air, layer = (float(p[key]) for key in ('radius_um', 'wavelength_um', 'air_um', 'layer_um'))
@@ -102,7 +102,9 @@ q_abs = float(np.real(loss) / (2 * radius))
 # Exact series: u = sum_m i^m a_m H_m(k r) exp(i m phi) outside the cylinder.
 x = k * radius
 m = np.arange(-int(x + 4 * x ** (1 / 3) + 12), int(x + 4 * x ** (1 / 3) + 12) + 1)
-if tm:
+if eps == 1:
+    coefficients = np.zeros(m.size, dtype=complex)  # Identical media have no scattering; avoid cancellation in the Bessel quotient.
+elif tm:
     coefficients = -(n * jvp(m, n * x) * jv(m, x) - jv(m, n * x) * jvp(m, x)) / (n * jvp(m, n * x) * hankel1(m, x) - jv(m, n * x) * h1vp(m, x))
 else:
     coefficients = -(jvp(m, n * x) * jv(m, x) - n * jv(m, n * x) * jvp(m, x)) / (jvp(m, n * x) * hankel1(m, x) - n * jv(m, n * x) * h1vp(m, x))
@@ -129,8 +131,10 @@ if side:
         'y_um': data.quantity(axis, 'position across the direction of incidence', unit='um'),
     })
 saved = data.save(OUTPUT_DIR / 'field', arrays)
+field_scale = float(np.abs(exact).max())
+field_difference = float(np.abs(values - exact).max()) / (field_scale if field_scale else 1.0)
 RESULT = {
     'Q_sca': q_sca, 'Q_abs': q_abs, 'Q_ext': q_sca + q_abs, 'series': {'Q_sca': exact_sca, 'Q_ext': exact_ext},
     'index': [n.real, n.imag], 'unknowns': int(space.ndof), 'elements': int(mesh.ne), 'data': saved['data'], 'materials': pages,
-    'checks': {'field_difference': float(np.abs(values - exact).max() / np.abs(exact).max()), 'efficiency_difference': q_sca - exact_sca},
+    'checks': {'field_difference': field_difference, 'efficiency_difference': q_sca - exact_sca},
 }

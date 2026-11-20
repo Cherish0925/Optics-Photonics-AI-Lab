@@ -78,13 +78,15 @@ if p['refine']:
     fit = passes[0][2]
     passes.append(measure(fit['centre'] - 3 * fit['width'], fit['centre'] + 3 * fit['width']))
 saved = data.save(OUTPUT_DIR / 'scan', {
-    'position': data.quantity(np.asarray([position for position, _, _ in passes]), 'motor position at each step', unit='1', axes=['scan', 'step']),
-    'signal': data.quantity(np.asarray([signal for _, signal, _ in passes]), 'detector signal at each step', unit='1', axes=['scan', 'step']),
+    'position': data.quantity(np.asarray([position for position, _, _ in passes]), 'motor position at each step', unit='1',
+                              axes=['scan', 'step'], simulated=True, source='ophyd.sim'),
+    'signal': data.quantity(np.asarray([signal for _, signal, _ in passes]), 'detector signal at each step', unit='1',
+                            axes=['scan', 'step'], simulated=True, source='ophyd.sim'),
     'scan': data.quantity(np.arange(len(passes)), 'scan number', unit='1'),
     'step': data.quantity(np.arange(points), 'step of the scan', unit='1'),
 })
 last = passes[-1][2]
 RESULT = {
-    'scans': [fit for _, _, fit in passes], 'data': saved['data'],
+    'simulated': True, 'source': 'ophyd.sim', 'scans': [fit for _, _, fit in passes], 'data': saved['data'],
     'checks': {'centre_difference': last['centre'] - float(p['centre']), 'width_difference': last['width'] - float(p['width'])},
 }
