@@ -10,13 +10,6 @@ EXAMPLES = {tool: (name, programs.inputs(programs.catalog()[tool][name])) for to
 NOTES = {tool: programs.catalog()[tool][name]['about'] for tool, name in _NAMES.items()}
 
 
-def details(tool):
-    from . import native
-    adapter = native.details(tool)
-    items = [] if tool not in EXAMPLES else [{'name': EXAMPLES[tool][0], 'inputs_example': EXAMPLES[tool][1], 'description': NOTES[tool]}]
-    return {'operations': items, 'native_program': True, **({'session_adapter': adapter} if adapter else {})}
-
-
 def calculate(tool, action, p, output):
     return programs.run(tool, action, p, output)
 

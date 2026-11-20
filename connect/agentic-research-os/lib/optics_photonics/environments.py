@@ -137,15 +137,18 @@ def software(tool, language='en', path=None):
     return catalogue_software(tool, language)
 
 
-REPEATED = ('interface', 'sources', 'upstream', 'native_program', 'routes')
+# What a software_details reply shows of a catalogue entry, and what it leaves out of its connection record:
+# fields the entry already states, and sentences that are the same for every software.
+ENTRY = ('id', 'name', 'group', 'cats', 'method', 'summary', 'api', 'license', 'compute', 'usage', 'limit', 'sources')
+OMITTED = ('interface', 'sources', 'upstream', 'native_program', 'routes', 'execution', 'environment', 'session_adapter')
 
 
 def details(tool, language='en', path=None, program=None, source=False):
-    """One software entry with its connection and what it can run; each fact appears once.
+    """One software entry with its connection, its routes and the programs it runs; each fact appears once.
 
     With program, that packaged program's physics, inputs, results and checks; with source also its text, to adapt.
     """
-    from . import operations, programs
+    from . import native, programs, routes
     item = software(tool, language, path)
     if program is not None:
         spec = programs.details(tool, program)
@@ -157,11 +160,24 @@ def details(tool, language='en', path=None, program=None, source=False):
                                                                   ' parameters(PROGRAM, INPUTS) checks the inputs it declares.')}
         return {**reply, 'run': f'submit_calculation(tool, action="{program}", inputs={{...}}) replaces defaults; '
                                 f'source=true here returns the program text, to adapt and submit as {how}.'}
-    if item.get('origin') != 'local':
-        # connections.json repeats these catalogue fields so that the file can be read on its own.
-        item = {**item, 'connection': {key: value for key, value in item['connection'].items() if key not in REPEATED}}
-    from . import routes
-    return {**item, 'routes': routes.routes(tool, path), 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
+    if item.get('origin') == 'local':
+        reply = dict(item)
+    else:
+        reply = {key: item[key] for key in ENTRY}
+        # An MCP server or Skill of the software's own makers or community, where one was located.
+        upstream = {kind: item[kind] for kind in ('mcp', 'skill') if item[kind]['kind'] != 'unverified'}
+        if upstream:
+            reply['upstream'] = upstream
+        reply['connection'] = {key: value for key, value in item['connection'].items() if key not in OMITTED}
+    reply['routes'] = routes.routes(tool, path)
+    listed = programs.listing(tool)
+    reply['programs'] = listed
+    if listed:
+        reply['program_details'] = 'software_details(tool, program=NAME) gives the physics, input defaults and meanings, results and checks'
+    session = native.details(tool)
+    if session:
+        reply['session'] = session
+    return reply
 
 
 def registered(path=None):

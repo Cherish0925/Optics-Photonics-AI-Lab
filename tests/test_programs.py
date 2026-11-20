@@ -23,18 +23,12 @@ def installed(module):
 
 
 class DeclarationCase(unittest.TestCase):
-    def test_legacy_operation_discovery_delegates_to_the_same_programs(self):
+    def test_programs_written_for_0_7_still_import_their_helpers(self):
         from optics_photonics import operations
         name, example = operations.EXAMPLES['scipy']
         self.assertEqual(name, 'fit_gaussian')
         self.assertEqual(example, programs.inputs(programs.catalog()['scipy'][name]))
-        details = environments.details('scipy')['execution']
-        self.assertEqual(details['operations'][0]['name'], name)
-        self.assertTrue(details['operations'][0]['description'])
-        self.assertEqual(details['operations'][0]['inputs_example'], example)
-        found = catalogue.search('scipy')['items']
-        for item in found:
-            self.assertEqual(item['operations'], item['programs'])
+        self.assertEqual(operations.complex_number([1, 2]), 1 + 2j)
 
     def test_every_program_declares_its_physics_inputs_and_results(self):
         connections = catalogue.connections()
@@ -66,6 +60,15 @@ class DeclarationCase(unittest.TestCase):
         # A program shared within a language family is listed once, under the tool that holds its file.
         self.assertEqual(listed, {spec['file'].parent.name + '/' + name for items in programs.catalog().values() for name, spec in items.items()})
 
+    def test_both_readmes_list_every_program(self):
+        import re
+        files = {spec['file'].parent.name + '/' + name for items in programs.catalog().values() for name, spec in items.items()}
+        for name in ('README.md', 'README.zh-CN.md'):
+            text = (Path(__file__).resolve().parents[1] / name).read_text(encoding='utf-8')
+            rows = [line for line in text.splitlines() if line.startswith('| ') and ' · `' in line]
+            self.assertEqual(set(re.findall(r'`([\w-]+/\w+)`', '\n'.join(rows))), files, name)
+            self.assertIn(f'{len(files)} ', text)
+
     def test_inputs_replace_defaults_and_unknown_names_list_the_accepted_ones(self):
         spec = programs.catalog()['tmm']['spectrum']
         merged = programs.parameters(spec, {'thickness_nm': [80]})
@@ -74,24 +77,35 @@ class DeclarationCase(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Unknown input thickness; this program takes: n, thickness_nm'):
             programs.parameters(spec, {'thickness': [80]})
 
-    def test_details_list_programs_and_return_one_source(self):
-        listed = environments.details('scipy')['execution']
+    def test_details_list_programs_and_return_one_with_its_physics_or_source(self):
+        listed = environments.details('scipy')
         self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes', 'tissue_layers'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
-        self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
-        self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
+        # The listing stays short: titles and input names; one program brings defaults, physics and source.
+        self.assertEqual(nlse['inputs'], list(programs.catalog()['scipy']['nlse']['inputs']))
+        self.assertEqual(set(nlse), {'name', 'title', 'inputs'})
+        self.assertIn('program=NAME', listed['program_details'])
+        self.assertLess(len(json.dumps(listed)), 5000)
+        for absent in ('mcp', 'skill', 'stage', 'route', 'execution'):
+            self.assertNotIn(absent, listed)   # facts that are the same for every software, or say that nothing was found
+        self.assertNotIn('environment', listed['connection'])
+        self.assertEqual(environments.details('lumerical')['upstream']['mcp']['kind'], 'official')
         one = environments.details('scipy', program='nlse')
         self.assertNotIn('source', one)   # the text comes on request
         self.assertIn('source=true', one['run'])
         self.assertTrue(environments.details('scipy', program='nlse', source=True)['source'].startswith('"""Pulse propagation'))
         self.assertEqual((one['about'], one['inputs']['length_km']['default']),
-                         (programs.catalog()['scipy']['nlse']['about'], nlse['inputs']['length_km']['default']))
+                         (programs.catalog()['scipy']['nlse']['about'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0]))
         with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: coupler, fiber_modes, fit_gaussian'):
             environments.details('scipy', program='fft')
-        native = environments.details('lumerical')['execution']
+        native = environments.details('lumerical')
         self.assertEqual(native['programs'], [])
-        self.assertIn('solve_project', native['session_adapter']['actions'])
-        self.assertEqual(catalogue.search('tmm')['items'][0]['programs'], ['spectrum'])
+        self.assertNotIn('program_details', native)
+        self.assertIn('solve_project', native['session']['actions'])
+        found = catalogue.search('tmm')['items'][0]
+        self.assertEqual((found['programs'], found['routes'], found['install']), (['spectrum'], ['python'], 'pip'))
+        self.assertNotIn('upstream_mcp', found)
+        self.assertEqual(catalogue.search('lumerical')['items'][0]['upstream_mcp'], 'official')
 
     def test_submission_checks_the_program_and_its_inputs(self):
         with workspace() as home:

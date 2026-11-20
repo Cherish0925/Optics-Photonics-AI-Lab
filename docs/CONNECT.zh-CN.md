@@ -171,4 +171,4 @@ environments.bind('lab-wave-model', python=sys.executable, threads=2, concurrenc
 随后用该 ID 提交完整研究程序、并行工作流或 episode 采样。C/C++、Java、Julia 等可执行程序使用 `kind='command'` 登记并绑定命令数组，沿用请求文件、输出目录和 JSON 结果接口。程序应将输出写入该任务的 OUTPUT_DIR，避免并行计算共享临时文件。登记不代替软件本身的安装与许可。
 
 `optics-photonics connect portable --output DIR` creates an Agent Plugins package with root plugin.json, mcp.json and skills/.
-`read_guide` 工具和 MCP 资源 `optics://guides/TOPIC` 按需返回两个 Skills 及其每一份参考文件。
+`read_guide` 工具和 MCP 资源 `optics://guides/TOPIC` 按需返回两个 Skills 及其每一份参考文件。支持 MCP 提示的宿主会列出六个起点，每个都是一类工作的完整指令：`calculate`、`study`、`reproduce`、`connect`、`measure`、`continue`。工具标注区分了只读工具，宿主可以不经询问直接运行它们。

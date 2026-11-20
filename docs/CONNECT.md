@@ -174,4 +174,4 @@ MCP exposes `register_software` and `registered_software`; `software_details` re
 
 `optics-photonics connect portable --output DIR` creates an Agent Plugins package with root plugin.json, mcp.json and skills/.
 Portable packages use a bare `uv` command and plugin-relative paths, so moving or updating a package does not retain paths from its author’s computer. `connect codex --managed-python` and `connect claude --managed-python` generate similarly movable native packages. Local packages generated without that option retain the selected Python.
-The `read_guide` tool and the MCP resources `optics://guides/TOPIC` return both Skills and each of their references on demand.
+The `read_guide` tool and the MCP resources `optics://guides/TOPIC` return both Skills and each of their references on demand. A host that shows MCP prompts lists six starting points, each a complete instruction for one kind of work: `calculate`, `study`, `reproduce`, `connect`, `measure` and `continue`. Tool annotations mark the tools that only read, so a host can run them without asking.

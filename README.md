@@ -4,7 +4,7 @@
 
 # Optics-Photonics AI Lab
 
-A research environment for optics and photonics that agents and researchers install as a Python package, MCP server, plugin or Skills. It selects software from a catalogue of 99 tools, reaches each by the routes it offers (Python modules, owned sessions, its own executable and language, Windows automation servers, services), runs complete native research programs in their own environments, keeps long calculations running after the agent disconnects, and returns scientific files that can be read in parts. Its physical framework is **Field + Matter + Interaction**.
+A research environment for optics and photonics that agents and researchers install as a Python package, MCP server, plugin or Skills. It selects software from a catalogue of 110 tools for modelling, simulation, computation and laboratory instruments, reaches each by the routes it offers (Python modules, owned sessions, its own executable and language, Windows automation servers, services), runs complete native research programs in their own environments, keeps long calculations running after the agent disconnects, and returns scientific files that can be read in parts. Its physical framework is **Field + Matter + Interaction**.
 
 | Read | Explore the data | Build on it |
 | --- | --- | --- |
@@ -45,14 +45,39 @@ The search names the tool `tmm` and its packaged program `spectrum`. The submiss
 
 ## How a calculation runs
 
-1. **Choose software.** `software_search` finds software and packaged programs by physical problem, in English or Chinese, with synonyms and abbreviations of optical concepts ([vocabulary](data/vocabulary.json)); `software_details` returns the physical method, interfaces, installation source and packaged programs of each catalogue entry. `register_software` adds a tool outside the catalogue.
-2. **Connect its environment.** 59 tools install from recipes: pip through uv; conda-forge for Meep, MPB, FEniCSx, Gmsh, HoloPy, GNU Octave and Julia; Julia's package manager for QuantumOptics.jl and Luna.jl. A submission for a tool without an environment installs it first, and `prepare_environment` does so ahead of time; `bind_environment` reuses an existing interpreter (without a tool, every tool it provides) or executable. Installed software of every other kind is found by `discover_native_software` — on PATH, in the usual installation folders, through variables such as `JCMROOT` and in the Windows registry — and connected by `bind_native_software`: the executables of MATLAB, Mathematica, Maple, COMSOL, Lumerical, CST, S4, ADDA, MCX, MMC and pbrt, the session SDKs of COMSOL, Lumerical, OpticStudio and CST, modules inside installations (JCMsuite, Photon Design), automation servers (FRED, CODE V, LightTools, OptiLayer) and services (Tidy3D, Speos). Software that runs scripts only inside its own window is listed as such ([installed software](docs/NATIVE.md)).
+1. **Choose software.** `software_search` finds software and packaged programs by physical problem, in English or Chinese, with the synonyms and abbreviations of optical concepts ([vocabulary](data/vocabulary.json)). `software_details` gives the method, interfaces, routes, installation and programs of an entry; `register_software` adds a tool outside the catalogue.
+2. **Connect it.** 69 tools install from recipes into environments of their own, at the first submission or ahead of time with `prepare_environment`; `bind_environment` reuses an existing interpreter. Installed software is found by `discover_native_software` (PATH, the usual installation folders, variables such as `JCMROOT`, the Windows registry) and connected by `bind_native_software`, by one of the routes below ([installed software](docs/NATIVE.md)).
 3. **Use measured material data.** `materials` returns n and k of 3576 refractiveindex.info pages (CC0) with references, and with `dispersion` the group index, group velocity dispersion and D; common names such as SiO2, Si, Au, N-BK7 and BBO work offline, other pages download once.
-4. **Run a packaged program or write one.** 48 packaged programs cover thin films, gratings, metasurface phase libraries and metalenses, FDTD stacks and ring resonators, photonic bands and photonic-crystal slabs, waveguide and fiber modes with fiber dispersion, Mie scattering, sphere clusters and discrete-dipole scattering of particles (ADDA), point spread functions and MTF, Gaussian beams and aperture diffraction, directional couplers from their supermodes and photonic circuits, Fabry-Perot cavities and resonator modes, fiber pulses and supercontinuum, second-harmonic generation and phase matching, laser dynamics, optical communication, solar cells, quantum optics in Python and Julia, squeezed light and multi-photon interference, Fresnel derivations, ray tracing, lens analysis with Seidel aberrations, inverse design of a waveguide bend and layouts; each declares its inputs and reports checks against a conservation law or an analytic limit, and its source can be adapted ([programs](skills/optical-computation/references/programs.md)). A Python program of one's own receives `INPUTS` and `OUTPUT_DIR`, uses the solver's full native API and sets `RESULT`; a `script` does the same in the language of installed software (MATLAB, Octave, Julia, Wolfram Language, Maple, Lua for S4, Lumerical script), and a Python program drives an installed executable with `RUN`; an executable of one's own uses the same files through environment variables. `submit_calculation` returns a run ID at once, and with `wait` the result of a calculation that finishes within it; with `sweep` it computes every combination of input values in parallel, which `sweep_results` tabulates with the best point, and with `optimize` it searches inputs within bounds for the best result inside one process ([parameter studies](skills/optical-computation/references/studies.md)); `submit_workflow` adds dependent or parallel steps; a later step receives values, or the locations of files, from earlier ones. `data.save` writes arrays with their units, axes and conventions, so the next program and `read_array` know what the numbers mean ([data](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)).
-5. **Continue and read results.** `run_status` waits up to 25 s per call; other requests on the same connection are answered meanwhile. Runs survive disconnection and are found again with `list_runs`. `result_files`, `read_result` and `read_array` return file listings, byte ranges and parts of NPY/NPZ arrays; `read_array` with `image` returns the selection drawn as a PNG, lines or a map with its coordinates, units and color bar. `resume_run` reruns unfinished steps and keeps completed ones.
-6. **Collect episodes.** `sample_episodes` runs Gymnasium-style environments in parallel solver workers and stores seeds, actions, observations and rewards for learning; an interrupted or extended collection continues without repeating completed episodes ([episodes](docs/LEARNING.md)).
+4. **Run a packaged program or write one.** The 55 packaged programs below declare their inputs and report checks against a conservation law, an analytic limit or a second solver; each runs as it is or is adapted from its source ([programs](skills/optical-computation/references/programs.md)). A program of one's own receives `INPUTS` and `OUTPUT_DIR`, uses the software's full native API and sets `RESULT`: Python `source`, a `script` in the language of installed software, or Python that drives an installed executable with `RUN`.
+5. **Study parameters and chain steps.** `submit_calculation` returns a run ID at once, and with `wait` the result of a calculation that finishes within it. `sweep` computes every combination of input values in parallel and `sweep_results` tabulates them with the best point; `optimize` searches inputs within bounds ([parameter studies](skills/optical-computation/references/studies.md)). `submit_workflow` chains steps that receive values and files from earlier ones. `data.save` writes arrays with their units, axes and conventions, so the next program and `read_array` know what the numbers mean ([data](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)).
+6. **Continue and read results.** `run_status` waits up to 25 s per call while other requests are answered. Runs survive disconnection and are found again with `list_runs`; `resume_run` reruns unfinished steps and keeps completed ones. `result_files`, `read_result` and `read_array` return file listings, byte ranges and parts of NPY/NPZ arrays; with `image`, `read_array` draws the selection as lines or a map with coordinates, units and color bar.
+7. **Collect episodes.** `sample_episodes` runs Gymnasium-style environments in parallel solver workers and stores seeds, actions, observations and rewards for learning; an interrupted or extended collection continues without repeating completed episodes ([episodes](docs/LEARNING.md)).
 
-The same operations are available as `optics-photonics` commands, a Python API and a TypeScript client. Every packaged program has been run against its analytic or second-solver reference, those of Meep and MPB in their conda-forge environment; the four commercial session adapters have run against SDK doubles, not yet against licensed solvers. Scripts in Octave, Julia and Lua, S4 and the ADDA program have run against the real software; the MATLAB, Wolfram Language, Maple and Lumerical script bridges follow the vendors' documented commands and wait for licensed installations.
+| Route | Software | What runs |
+| --- | --- | --- |
+| python | 77 entries: a module from a recipe (pip through uv, conda-forge, Julia's package manager) or inside an installation (JCMsuite, Photon Design) | Python `source` |
+| session | COMSOL, Lumerical, OpticStudio, CST | Python with a session the job owns |
+| executable | MATLAB, GNU Octave, Julia, Mathematica, Maple, QuantumOptics.jl, Luna.jl, S4, COMSOL, Lumerical, CST, ADDA, MCX, MMC, pbrt | `script` in the software's language; Python that drives it with `RUN` |
+| automation | FRED, CODE V, LightTools, OptiLayer, LabVIEW (Windows) | Python holding the server as `APP` |
+| service | Tidy3D cloud, Speos server, FIMMWAVE | Python client of the server |
+| inside | 17 applications whose scripts run only in their own window | files written for it and read from it |
+
+| Field | Packaged programs |
+| --- | --- |
+| Thin films, gratings, metasurfaces | `tmm/spectrum` · `grcwa/film` · `grcwa/grating` · `grcwa/metasurface` · `scipy/metalens` |
+| Electromagnetics and inverse design | `meep/stack` · `meep/ring` · `ngsolve/scattering` · `ceviche/bend` |
+| Photonic crystals | `mpb/bands` · `legume/bands` · `s4/crystal_slab` |
+| Waveguides, circuits, layout | `mpb/waveguide` · `tidy3d/modes` · `scipy/slab_modes` · `scipy/coupler` · `sax/circuit` · `gdsfactory/waveguide` · `klayout/layout` |
+| Fibers and communications | `scipy/fiber_modes` · `scipy/nlse` · `laserfun/supercontinuum` · `octave/bragg_grating` · `opticomm/ber` |
+| Lasers, resonators, nonlinear optics | `scipy/resonator` · `scipy/laser_rates` · `finesse/cavity` · `scipy/second_harmonic` |
+| Scattering | `miepython/sphere` · `treams/cluster` · `adda/particle` |
+| Imaging and beams | `hcipy/psf` · `poppy/psf` · `prysm/mtf` · `lightpipes/gaussian` · `diffractio/apertures` · `scikitimage/registration` |
+| Lenses, rays, polarization | `optiland/lens` · `optiland/trace` · `raytracing/abcd` · `sympy/abcd` · `sympy/fresnel` · `py-pol/polarization` |
+| Quantum optics | `qutip/rabi` · `qutip/jaynes_cummings` · `qutip/resonance_fluorescence` · `quantumoptics/jaynes_cummings` · `perceval/interference` · `strawberry/gaussian_state` |
+| Tissue, X-rays, photovoltaics, data | `scipy/tissue_layers` · `srw/undulator` · `solcore/detailed_balance` · `scipy/fit_gaussian` |
+| Laboratory instruments | `pyvisa/sweep` · `bluesky/scan` |
+
+The same operations are available as `optics-photonics` commands, a Python API and a TypeScript client; an MCP host also receives six prompts (calculate, study, reproduce, connect, measure, continue) and the guides as resources. Every packaged program has run against its reference: those of Meep and MPB in their conda-forge environment, those in Octave, Julia and Lua in the real software. Three parts await licensed software or hardware: the commercial session adapters (run against SDK doubles), the MATLAB, Wolfram Language, Maple and Lumerical script bridges (written to the vendors' documented commands) and the instrument programs (run on simulated devices).
 
 ## Execution
 
@@ -66,7 +91,7 @@ A Rust executor owns solver processes, cancellation and deadlines. Python connec
 
 ## Catalogue
 
-- **29 commercial**, **65 open-source** and **3 free-with-restrictions** tools. Free clients, paid solvers, academic licenses and external PDKs are distinguished.
+- **30 commercial**, **77 open-source** and **3 free-with-restrictions** tools in 15 domains, from geometrical optics to laboratory instruments. Free clients, paid solvers, academic licenses and external PDKs are distinguished.
 - Each entry records physical methods, use cases, programming interfaces, compute environment, license, application basis, limitations and primary sources. Reviewed **2026-10-20**.
 - API, CLI and macros are listed separately from **official / community / unverified** MCP servers and agent Skills. A documentation MCP is not treated as a solver interface.
 - Stable `id` values are shared by both languages. Agents start at [`llms.txt`](llms.txt) and read [`llms-full.txt`](llms-full.txt) or the JSON.
@@ -81,6 +106,7 @@ Models connect through the physical quantities they exchange:
 | Pulse → link → receiver | Complex envelope, time grid, dispersion, nonlinearity, noise | Luna, py-fmas, RP Fiber Power, VPI, OptiCommPy |
 | Thermomechanics → cavity → readout | Deformation, index changes, operating point, noise spectra | COMSOL, Finesse, HCIPy |
 | Sample → propagation → reconstruction | The measured observable and its forward operator | MCX, MMC, PyNX, pyDHM, HoloPy |
+| Model → instrument → data | Settings sent, raw readings with their times, calibration, uncertainty | PyVISA, pylablib, Bluesky, python-seabreeze, LabVIEW |
 
 Units, reference frames, field conventions and model assumptions must match at each connection.
 
@@ -108,6 +134,7 @@ python scripts/package_marketplace.py
 | `src/render.py`, `scripts/build.py` | Website and document generation |
 | `examples/` | Native programs, solver sessions and the episode example |
 | `foundations/` | Field · Matter · Interaction framework |
+| `AGENTS.md` | Map, commands and conventions for changing the repository |
 
 ## License
 

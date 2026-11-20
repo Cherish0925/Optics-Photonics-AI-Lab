@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 import math
 import sys
+import textwrap
 import threading
 from . import __version__, catalogue, data, environments
 from . import jobs, languages, signals
@@ -29,6 +30,13 @@ def guide(topic):
     text = guides()[topic].read_text(encoding='utf-8')
     # Skill front matter addresses Skill loaders, not readers.
     return text.split('---', 2)[2].lstrip() if text.startswith('---') else text
+
+
+def summary(topic):
+    """The first sentence of a guide, as the description of its resource."""
+    body = ' '.join(line for line in guide(topic).splitlines() if line.strip() and not line.startswith(('#', '|', '-', '```')))
+    sentence = body.split('. ')[0].rstrip('.')
+    return sentence if len(sentence) <= 240 else sentence[:237].rsplit(' ', 1)[0] + ' …'
 
 
 def tool(name, description, properties=None, required=None):
@@ -60,16 +68,16 @@ TOOLS = [
         Find optical software and packaged programs by physical problem, method or name, in English or Chinese; synonyms and
         abbreviations of one concept match (PSF, point spread function, 点扩散函数). Best matches first. An item names the
         packaged program that fits as program, ready for submit_calculation(tool, action); its routes (how the environment
-        reaches the software); install (pip, conda or julia when a recipe installs it, manual otherwise); and in missing the
-        query terms it lacks.''',
+        reaches the software); install (pip, conda or julia when a recipe installs it, manual otherwise); upstream_mcp when
+        its makers or community publish an MCP server; and in missing the query terms it lacks.''',
          {'query': STRING, 'domain': {'enum': DOMAINS}, 'license_group': {'enum': ['open', 'paid', 'limited']},
           'offset': COUNT, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100},
           'language': {'enum': ['zh', 'en']}}),
     tool('software_details', '''
         Read one software: method, limits, license, routes (python, session, executable, automation, service, inside: how
-        the environment reaches it, with the program contract of its language), installation recipe and packaged programs,
-        each with inputs (default and meaning), results and checks. program returns one packaged program with its physics
-        and conventions; source adds its text, to adapt and submit.''',
+        the environment reaches it, with the program contract of its language), installation recipe and the names of its
+        packaged programs. program returns one packaged program: its physics and conventions, every input with default
+        and meaning, results and checks; source adds its text, to adapt and submit.''',
          {'tool': STRING, 'program': STRING, 'source': BOOLEAN, 'language': {'enum': ['zh', 'en']}}, ['tool']),
     tool('materials', '''
         Refractive index n and extinction coefficient k from the refractiveindex.info database (3576 pages, CC0) with
@@ -221,6 +229,85 @@ def listed():
                                                                            'bind_native_software', 'register_software'),
                              'openWorldHint': name in OPEN_WORLD}}
             for name, description, spec in TOOLS]
+
+
+# Starting points a host offers to its user, each a complete instruction for one kind of work in this environment.
+PROMPTS = {
+    'calculate': ('Compute an optical quantity with the packaged program or the software that fits.', {
+        'problem': 'what to compute, with the known values and their units'}, '''
+        Compute this in the optics research environment: {problem}
+
+        Find the software and the packaged program with software_search and read the program's inputs, physics and checks
+        with software_details(tool, program=NAME). Submit it with submit_calculation and wait; when no packaged program
+        fits, adapt the closest one or write a complete program for the software's own API. Read the checks of the result
+        before trusting the numbers, and look at the main curve or map with read_array(image="auto"). Report the model
+        and its assumptions, every input with its unit, the result, the checks and the run ID.'''),
+    'study': ('Vary parameters of a calculation: a sweep, its table and refinement, or an optimization.', {
+        'problem': 'the calculation and the quantity of interest',
+        'parameters': 'the parameters to vary, with ranges and units'}, '''
+        Study how the result depends on the parameters. Calculation: {problem}. Parameters: {parameters}
+
+        Run one point first and read its checks. Then submit_calculation with sweep for a map over the ranges
+        (sweep_results tabulates it and names the best point) or with optimize for the best value within bounds;
+        read_guide studies explains both. Refine around what the first sweep shows instead of a finer grid everywhere.
+        Report the table or the optimum with units, how the checks behave across the range, and the run IDs.'''),
+    'reproduce': ('Reproduce a published result and compare the numbers.', {
+        'source': 'the paper, figure, table or textbook result to reproduce'}, '''
+        Reproduce this published result in the optics research environment: {source}
+
+        State the physical model, geometry, materials and every parameter the source gives, and which ones had to be
+        assumed. Choose the software with software_search (read_guide optical-research helps to choose the model), take
+        measured refractive indices from materials when the source names materials, and run the calculation. Compare
+        with the published values number by number, with the units and conventions made equal, and vary the numerical
+        resolution once to see how far the result still moves. Report agreement, differences and their likely origin.'''),
+    'connect': ('Connect scientific software installed on this computer and confirm that it runs.', {
+        'software': 'the software to connect, by name'}, '''
+        Connect this installed software to the optics research environment: {software}
+
+        Find its ID with software_search and its routes with software_details. Find the installation with
+        discover_native_software(tool=ID) and bind it with bind_native_software, using the arguments discovery returns;
+        ask for the installation folder only when discovery finds nothing. Start licensed software with concurrency 1.
+        Then run one short calculation with submit_calculation to confirm the connection, and report the route, the
+        version, and what can be run now. read_guide native-software describes every route.'''),
+    'measure': ('Drive a laboratory instrument and record a measurement.', {
+        'task': 'the instrument, what to set and what to read, with ranges and units'}, '''
+        Carry out this measurement with the optics research environment: {task}
+
+        Start with read_guide lab. Find the library for the instrument with software_search (domain lab). List the
+        instruments the computer sees (the packaged program pyvisa/sweep with resource "?") and identify the one meant.
+        Before any command that changes an output, a power, a voltage or a position, state the command and the range
+        and ask the user to confirm. Bind the tool with concurrency 1. Record every setting, the time of each reading
+        and the raw values with data.save, switch outputs off at the end, and report the data file, the settings and
+        the run ID.'''),
+    'continue': ('Pick up earlier work: what ran, what it found, what is unfinished.', {}, '''
+        Continue the earlier work in the optics research environment.
+
+        list_runs shows the runs with their states; run_status gives the steps of one, result_files and read_result its
+        outputs. Summarize what each recent run computed and found, which runs are still running or stopped (resume_run
+        reruns unfinished steps and keeps finished ones), and propose the next step. Do not rerun what has finished.'''),
+}
+
+
+def prompts():
+    """The prompts as prompts/list sends them."""
+    return [{'name': name, 'description': about, 'arguments': [{'name': key, 'description': meaning, 'required': True}
+                                                                for key, meaning in arguments.items()]}
+            for name, (about, arguments, _) in PROMPTS.items()]
+
+
+def prompt(name, values):
+    """The message of a prompt with its arguments filled in."""
+    if name not in PROMPTS:
+        raise ValueError('Unknown prompt: ' + str(name) + '. Prompts: ' + ', '.join(PROMPTS))
+    about, arguments, text = PROMPTS[name]
+    values = values if isinstance(values, dict) else {}
+    missing = [key for key in arguments if not str(values.get(key, '')).strip()]
+    if missing:
+        raise ValueError(f"{name} needs: {', '.join(missing)}")
+    text = textwrap.dedent(text).strip()
+    for key in arguments:
+        text = text.replace('{' + key + '}', str(values[key]).strip())
+    return {'description': about, 'messages': [{'role': 'user', 'content': {'type': 'text', 'text': text}}]}
 
 
 def invoke(name, args, cancellation=None):
@@ -419,31 +506,41 @@ def respond(method, params):
         proposed = params.get('protocolVersion')
         return {'protocolVersion':proposed if proposed in SUPPORTED else '2025-11-25',
                 'serverInfo':{'name':'optics-photonics','version':__version__},
-                'capabilities':{'tools':{'listChanged':False},'resources':{}},
+                'capabilities':{'tools':{'listChanged':False},'resources':{},'prompts':{}},
                 'instructions':INSTRUCTIONS}
     if method == 'ping': return {}
     if method == 'tools/list':
         return {'tools': listed()}
     if method == 'resources/list':
-        return {'resources':[{'uri':'optics://guides/'+name,'name':name,'mimeType':'text/markdown'} for name in guides()]}
+        return {'resources':[{'uri':'optics://guides/'+name,'name':name,'description':summary(name),'mimeType':'text/markdown'}
+                             for name in guides()]}
     if method == 'resources/read':
         uri = params.get('uri','')
         name = uri.removeprefix('optics://guides/')
         if uri != 'optics://guides/'+name or name not in guides():
             raise ValueError('Unknown optical guide')
         return {'contents':[{'uri':uri,'mimeType':'text/markdown','text':guide(name)}]}
+    if method == 'prompts/list':
+        return {'prompts': prompts()}
+    if method == 'prompts/get':
+        return prompt(params.get('name'), params.get('arguments'))
     return None
 
 
 SUPPORTED = {'2025-11-25','2025-06-18','2025-03-26','2024-11-05'}
-INSTRUCTIONS = ('Optics and photonics research environment. Flow: software_search (any language, synonyms and abbreviations; it names '
-                'the packaged program that fits) and software_details to choose software and see its packaged programs; materials for refractive indices; submit_calculation runs a packaged program (action) or '
-                'a complete program (source receives INPUTS and OUTPUT_DIR and sets RESULT; script does the same in the language of an installed software), installs the software from its recipe '
-                'when needed, and with sweep or optimize runs a parameter study; its wait returns the result of a short calculation '
-                'in the same call; submit_workflow chains steps; run_status with wait to follow; result_files, read_result, read_array and sweep_results to read results. Runs continue after '
-                'disconnection; list_runs finds them. read_guide optical-computation explains execution, read_guide '
-                'optical-research the choice of model and software. Installed commercial and executable software: discover_native_software, then bind_native_software. '
-                'Solver installation and licenses remain those of the upstream software.')
+INSTRUCTIONS = ' '.join('''
+    Optics and photonics research environment: software for modelling, simulation, computation and laboratory instruments,
+    run as background calculations that continue after disconnection.
+    Find: software_search by physical problem, in English or Chinese, names the software and the packaged program that fits;
+    software_details gives its inputs, physics and routes; materials gives measured refractive indices.
+    Run: submit_calculation with action (a packaged program), source (a Python program that receives INPUTS and OUTPUT_DIR
+    and sets RESULT) or script (the same in the language of installed software). The first run installs the software from its
+    recipe; wait returns a short result in the same call; sweep and optimize study parameters; submit_workflow chains steps.
+    Read: run_status with wait, then result_files, read_result, read_array and sweep_results; read the checks of a result
+    before trusting it. list_runs finds earlier runs.
+    Installed commercial or executable software: discover_native_software, then bind_native_software.
+    read_guide optical-computation explains execution, read_guide optical-research the choice of model and software.
+    Licenses remain those of the upstream software.'''.split())
 
 
 def serve(input_stream=None, output_stream=None):

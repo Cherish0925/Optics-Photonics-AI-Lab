@@ -108,7 +108,7 @@ class ConnectionTests(unittest.TestCase):
         # Tool calls complete independently; replies are matched by request ID.
         messages=sorted((json.loads(s) for s in out.getvalue().splitlines()),key=lambda m:m['id'])
         self.assertEqual([m['id'] for m in messages],[1,2,3,4])
-        self.assertEqual(messages[1]['result']['structuredContent']['execution']['programs'][0]['name'],'spectrum')
+        self.assertEqual(messages[1]['result']['structuredContent']['programs'][0]['name'],'spectrum')
         self.assertTrue(messages[2]['result']['isError'])
         self.assertEqual(messages[-1]['result'],{})
 

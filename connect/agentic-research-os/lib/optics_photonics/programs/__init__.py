@@ -58,19 +58,19 @@ def inputs(spec):
     return {name: value for name, (value, _) in spec['inputs'].items()}
 
 
-def details(tool, name=None):
-    """What a software_details reply shows of each program of a tool; with name, of that one including its physics."""
-    def described(name, spec):
-        return {'name': name, 'title': spec['title'], **({'language': spec['language']} if spec.get('language') else {}),
-                **({'about': spec['about']} if name == chosen else {}),
-                'inputs': {key: {'default': value, 'about': about} for key, (value, about) in spec['inputs'].items()},
-                'results': spec['results'], 'checks': spec.get('checks', '')}
-    chosen = name
-    found = catalog().get(tool, {})
-    if name is not None:
-        source(tool, name)   # an unknown name lists the programs of the tool
-        return described(name, found[name])
-    return [described(key, spec) for key, spec in found.items()]
+def listing(tool):
+    """The programs of a tool as a software_details reply lists them: name, title and the names of the inputs."""
+    return [{'name': name, 'title': spec['title'], **({'language': spec['language']} if spec.get('language') else {}),
+             'inputs': list(spec['inputs'])} for name, spec in catalog().get(tool, {}).items()]
+
+
+def details(tool, name):
+    """One program with its physics, every input's default and meaning, its results and checks."""
+    source(tool, name)   # an unknown name lists the programs of the tool
+    spec = catalog()[tool][name]
+    return {'name': name, 'title': spec['title'], **({'language': spec['language']} if spec.get('language') else {}), 'about': spec['about'],
+            'inputs': {key: {'default': value, 'about': about} for key, (value, about) in spec['inputs'].items()},
+            'results': spec['results'], 'checks': spec.get('checks', '')}
 
 
 def source(tool, name):
