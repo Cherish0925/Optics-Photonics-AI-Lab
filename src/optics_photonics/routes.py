@@ -280,7 +280,7 @@ def bind(tool, *, route=None, executable=None, python=None, sdk_path=None, progi
         raise ValueError('route is executable, automation or python; sessions bind with python and sdk_path')
     connection.update(chosen)
     item = environments.software(tool, path=path)
-    if item.get('origin') == 'local':
+    if item.get('origin') in ('local', 'integration'):
         connection['definition'] = item
     environments.update('tools', tool, connection, path)
     return {'tool': tool, **connection}

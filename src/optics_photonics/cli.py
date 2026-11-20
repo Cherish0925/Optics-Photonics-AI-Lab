@@ -21,6 +21,9 @@ def main(argv=None):
     info = commands.add_parser('info'); info.add_argument('tool'); info.add_argument('--language',choices=('zh','en'),default='en'); info.add_argument('--program', help='print the source of this packaged program')
     register = commands.add_parser('register-software'); register.add_argument('definition', type=object_argument)
     commands.add_parser('registered-software')
+    integrations = commands.add_parser('integrations', help='installed software packages and their guides')
+    integrations.add_argument('integration', nargs='?'); integrations.add_argument('topic', nargs='?')
+    integrations.add_argument('--language', choices=('en','zh'), default='en'); integrations.add_argument('--refresh', action='store_true')
     env = commands.add_parser('environments')
     discovery = commands.add_parser('discover', help='find installed software and how to bind it'); discovery.add_argument('--root', dest='roots', action='append'); discovery.add_argument('--tool')
     native_bind = commands.add_parser('bind-native', help='connect installed software by a route'); native_bind.add_argument('tool'); native_bind.add_argument('--route', choices=('session','executable','automation','python')); native_bind.add_argument('--executable'); native_bind.add_argument('--progid'); native_bind.add_argument('--project'); native_bind.add_argument('--language'); native_bind.add_argument('--python'); native_bind.add_argument('--sdk-path'); native_bind.add_argument('--options', type=object_argument, default={}); native_bind.add_argument('--threads', type=int, default=1); native_bind.add_argument('--concurrency', type=int, default=1); native_bind.add_argument('--requirements', type=object_argument); native_bind.add_argument('--env', type=object_argument)
@@ -55,6 +58,7 @@ def main(argv=None):
     material=commands.add_parser('materials', help='n and k of a material from the refractiveindex.info database'); material.add_argument('material', nargs='?'); material.add_argument('--query'); material.add_argument('--wavelength', type=float, nargs='+'); material.add_argument('--unit', default='nm'); material.add_argument('--limit', type=int, default=20); material.add_argument('--dispersion', action='store_true', help='also the group index, GVD and D')
     sweep=commands.add_parser('sweep',help='Tabulate the points of a sweep'); sweep.add_argument('run_id'); sweep.add_argument('--value',dest='values',action='append',help='dotted RESULT path; repeat for more'); best=sweep.add_mutually_exclusive_group(); best.add_argument('--minimize'); best.add_argument('--maximize'); sweep.add_argument('--save',action='store_true'); sweep.add_argument('--offset',type=int,default=0); sweep.add_argument('--limit',type=int,default=100)
     runs=commands.add_parser('runs'); runs.add_argument('--state'); runs.add_argument('--offset',type=int,default=0); runs.add_argument('--limit',type=int,default=20)
+    runs.add_argument('--search'); runs.add_argument('--tool'); runs.add_argument('--before')
     commands.add_parser('mcp')
     commands.add_parser('tools')
     call=commands.add_parser('call'); call.add_argument('tool'); call.add_argument('arguments',type=object_argument)
@@ -72,6 +76,9 @@ def main(argv=None):
             if a['program']: print(result['source'], end=''); return
         elif command == 'register-software': result=environments.register(**a['definition'])
         elif command == 'registered-software': result={'software':environments.registered()}
+        elif command == 'integrations':
+            from .mcp import invoke
+            result=invoke('software_integrations', a)
         elif command == 'environments': result={'environments':environments.available()}
         elif command in ('discover', 'bind-native'):
             from . import native

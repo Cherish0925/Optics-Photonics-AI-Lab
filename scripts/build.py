@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Generate the bilingual catalogue and machine-readable resource views (stdlib)."""
 from pathlib import Path
-import collections,json,subprocess,sys
+import collections,json,os,subprocess,sys
+
+# Published catalogues contain repository sources, never the builder's local integrations.
+os.environ['OPTICS_BUILTIN_ONLY'] = '1'
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
@@ -93,6 +96,12 @@ def main():
 > Independent optical and photonic research software: native programs, background calculations, simulation sessions, MCP, Skills and Agent plugins.
 
 Reviewed: 2026-10-20. Schema version: 1.0. {len(sets['en'])} tools / product families in {len(domains)} task domains.
+
+## Start a task
+
+- [Computation guide](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/blob/main/skills/optical-computation/SKILL.md): choose an environment, run a calculation, inspect results and continue saved work; detailed topics load on demand.
+- [Research guide](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/blob/main/skills/optical-research/SKILL.md): frame the physical question, choose a method and interpret the calculation.
+- [Independent integrations](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/blob/main/skills/optical-computation/references/integrations.md): add software, programs and guides in separately maintained packages.
 
 ## Foundations
 

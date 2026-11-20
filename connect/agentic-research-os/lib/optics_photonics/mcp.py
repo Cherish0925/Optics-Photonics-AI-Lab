@@ -100,6 +100,11 @@ TOOLS = [
           'python': STRING, 'platforms': {'type': 'array', 'items': {'enum': list(environments.PLATFORMS)}}}, ['tool', 'name', 'description']),
     tool('registered_software', '''
         List locally registered research tools beyond the published software catalogue.'''),
+    tool('software_integrations', '''
+        List installed software integration packages, their programs and guides, and any load errors. With integration
+        and topic, read one package guide. refresh reloads installed metadata after an install, upgrade or removal;
+        it does not import scientific libraries or run their code.''',
+         {'integration': STRING, 'topic': STRING, 'language': {'enum': ['en', 'zh']}, 'refresh': BOOLEAN}),
     tool('environments', '''
         Read a short page of configured software. refresh=true checks only this page’s installed programs; tool selects one
         connection.''',
@@ -209,17 +214,23 @@ TOOLS = [
          {'run_id': STRING, 'file': STRING, 'offset': COUNT,
           'limit': {'type': 'integer', 'minimum': 1, 'maximum': 65536}}, ['run_id', 'file']),
     tool('list_runs', '''
-        Find previous and active research runs after reconnecting.''',
-         {'state': STRING, 'offset': COUNT, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200}}),
+        Find previous and active research runs by name, run ID, request ID or software. tool and state filter the results.
+        Pass next_before as before for a stable next page while other runs arrive; offset remains available. Returns
+        compact summaries, software names and step counts; run_status gives details.''',
+         {'search': STRING, 'tool': STRING, 'before': STRING,
+          'state': {'enum': sorted(jobs.TERMINAL | {'queued', 'running'})}, 'offset': COUNT,
+          'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200}}),
     tool('resume_run', '''
-        Rerun unfinished steps of a stopped research run, keeping completed steps and previous output files.''',
+        Continue unfinished steps of a stopped run, keeping completed work and previous output files. Python programs
+        can restore CHECKPOINT state; built-in optimization and grouped sweeps reuse saved evaluations. Read the error
+        and progress first; read_guide continuation explains the program contract.''',
          {'run_id': STRING}, ['run_id']),
 ]
 
 
 # Hints describe possible effects, not permission to execute. run_status can restart a queued worker;
 # submissions and resumes run user programs, while bindings and resource settings replace configuration.
-READ_ONLY = {'read_guide', 'software_search', 'software_details', 'materials', 'registered_software', 'environments',
+READ_ONLY = {'read_guide', 'software_search', 'software_details', 'materials', 'registered_software', 'software_integrations', 'environments',
              'discover_native_software', 'result_files', 'read_result', 'read_array', 'list_runs'}
 EXECUTING = {'prepare_environment', 'submit_calculation', 'submit_workflow', 'sample_episodes', 'resume_run', 'run_status'}
 SETTINGS = {'compute_resources', 'bind_environment', 'bind_native_software', 'register_software'}
@@ -327,6 +338,14 @@ def invoke(name, args, cancellation=None):
     if name == 'software_details': return environments.details(**{'source': False, 'brief': True, **args})
     if name == 'register_software': return environments.register(**args)
     if name == 'registered_software': return {'software': environments.registered()}
+    if name == 'software_integrations':
+        from . import integrations
+        if args.get('integration') is not None or args.get('topic') is not None:
+            if not args.get('integration') or not args.get('topic'):
+                raise ValueError('Read a package guide with both integration and topic; omit both to list packages')
+            if args.get('refresh'): integrations.listing(refresh=True)
+            return integrations.guide(args['integration'], args['topic'], language=args.get('language', 'en'))
+        return integrations.listing(refresh=args.get('refresh', False))
     if name == 'environments': return environments.page(**args)
     if name in ('discover_native_software','bind_native_software'):
         from . import native
@@ -546,8 +565,10 @@ INSTRUCTIONS = ' '.join('''
     and sets RESULT) or script (the same in the language of installed software). The first run installs the software from its
     recipe; wait returns a short result in the same call; sweep and optimize study parameters; submit_workflow chains steps.
     Read: run_status with wait, then result_files, read_result, read_array and sweep_results; read the checks of a result
-    before trusting it. list_runs finds earlier runs.
+    before trusting it. list_runs searches earlier runs by name, request ID or software.
     Installed commercial or executable software: discover_native_software, then bind_native_software.
+    software_integrations lists independently installed programs and their on-demand guides.
+    Long programs save explicit state with CHECKPOINT; read_guide continuation explains recovery through resume_run.
     read_guide optical-computation explains execution, read_guide optical-research the choice of model and software.
     Licenses remain those of the upstream software.'''.split())
 

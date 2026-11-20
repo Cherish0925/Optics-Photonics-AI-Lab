@@ -6,11 +6,19 @@ export type Step = { id:string; tool:string; source?:string; script?:string; act
   after?:string[]; bindings?:Record<string,{step:string;path?:(string|number)[];file?:string}>; timeout?:number; requirements?:Record<string,number>;
   optimize?:Record<string,unknown>; point?:Record<string,unknown>; points?:{id:string;point:Record<string,unknown>;inputs:Record<string,unknown>}[] };
 export type Submission = {run_id:string;request_id:string;state?:string;counts?:Record<string,number>;result?:unknown;files?:string[];output?:string;error?:string};
-export type SweepPoint = {step:string;id:string;state:string;point:Record<string,unknown>;values:Record<string,unknown>;error?:string};
+export type SweepPoint = {step:string;id:string;state:string;point:Record<string,unknown>;values:Record<string,unknown>;error?:string;output?:string};
 export type SweepTable = {run_id:string;points:number;states:Record<string,number>;swept:string[];values:string[];rows:SweepPoint[];
   next_offset:number|null;best?:(SweepPoint&{goal:string;path:string})|null;saved?:string|null};
+export type RunState = 'queued'|'running'|'succeeded'|'failed'|'cancelled'|'blocked'|'interrupted';
+export type RunSummary = {id:string;name:string;state:RunState;created:number;finished:number|null;tools:string[];counts:Record<string,number>};
+export type RunPage = {runs:RunSummary[];next_offset:number|null;next_before:string|null};
+export type SavedProgress = {path:string;kind:'program'|'optimization'|'points'} &
+  ({saved:number;files:number;error?:never}|{error:string;saved?:never;files?:never});
+export type Integration = {id:string;distribution:string;version:string;entry:string;software:string[];programs:string[];
+  guides:{name:string;title:string;language:string;tools:string[]}[]};
+export type IntegrationPage = {packages:Integration[];errors:{id:string;distribution:string;version:string;entry:string;error:string}[]};
 export type RunStatus = {id:string;state:string;counts:Record<string,number>;next_offset:number|null;
-  steps:{id:string;state:string;output?:string;result?:unknown;error?:string;attempt:number}[]};
+  steps:{id:string;state:string;output?:string;result?:unknown;error?:string;attempt:number;progress?:SavedProgress[]}[]};
 export type Options = {command?:string;args?:string[];home?:string;env?:NodeJS.ProcessEnv;timeout?:number};
 type Pending = {resolve:(value:any)=>void;reject:(error:Error)=>void;timer:ReturnType<typeof setTimeout>;release:()=>void};
 export type RequestOptions = {signal?:AbortSignal};
@@ -45,7 +53,7 @@ export class OpticsLab {
   static async connect(options:Options={}) {
     const client=new OpticsLab(options);
     try {
-      await client.request('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'optics-typescript',version:'0.9.0'}});
+      await client.request('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'optics-typescript',version:'0.11.0'}});
       client.notify('notifications/initialized');
       return client;
     } catch(error) { client.close(); throw error; }
@@ -88,9 +96,20 @@ export class OpticsLab {
   async call<T=unknown>(name:string,arguments_:Record<string,unknown>={},options:RequestOptions={}):Promise<T> {
     const result=await this.request('tools/call',{name,arguments:arguments_},options);
     if(result.isError) throw new Error(result.content?.map((c:{text?:string})=>c.text??'').join('\n')||'Optics operation failed');
-    return result.structuredContent as T;
+    if(result.structuredContent !== undefined) return result.structuredContent as T;
+    const text=result.content?.find((c:{type:string;text?:string})=>c.type==='text')?.text;
+    if(typeof text!=='string') throw new Error('Optics tool returned no structured or text result: '+name);
+    try {return JSON.parse(text) as T;} catch {return text as T;}
   }
   search(query='',options:Record<string,unknown>={}) {return this.call('software_search',{...options,query});}
+  /** Read only the program, source or operating guide needed for this task. */
+  details(tool:string,options:{program?:string;source?:boolean;brief?:boolean;language?:'en'|'zh'}={}) {return this.call<Record<string,unknown>>('software_details',{tool,...options});}
+  async guide(topic:string) {
+    const result=await this.call<{text:string}|string>('read_guide',{topic});
+    return typeof result==='string'?result:result.text;
+  }
+  integrations(refresh=false) {return this.call<IntegrationPage>('software_integrations',{refresh});}
+  integrationGuide(integration:string,topic:string,language:'en'|'zh'='en') {return this.call<{integration:string;topic:string;language:string;text:string}>('software_integrations',{integration,topic,language});}
   environments(options:Record<string,unknown>={}) {return this.call('environments',options);}
   resources(cpu?:number,pools?:Record<string,number>) {return this.call('compute_resources',{...(cpu===undefined?{}:{cpu}),...(pools===undefined?{}:{pools})});}
   submit(steps:Step[],options:{name?:string;request_id?:string;run_id?:string}={}) {return this.call<Submission>('submit_workflow',{steps,...options});}
@@ -105,6 +124,10 @@ export class OpticsLab {
   status(run_id:string,options:{wait?:number;offset?:number;limit?:number;include_results?:boolean;signal?:AbortSignal}={}) {
     const {signal,...query}=options;
     return this.call<RunStatus>('run_status',{run_id,...query},{signal});
+  }
+  /** Find work after reconnecting. Use next_before for stable pages while new runs arrive. */
+  runs(options:{search?:string;tool?:string;state?:RunState;before?:string;offset?:number;limit?:number}={}) {
+    return this.call<RunPage>('list_runs',options);
   }
   async wait(run_id:string,options:{signal?:AbortSignal;timeout?:number}={}) {
     const end=options.timeout===undefined?Infinity:Date.now()+options.timeout;

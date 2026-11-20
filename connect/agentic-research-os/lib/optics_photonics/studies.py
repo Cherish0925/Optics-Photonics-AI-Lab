@@ -157,27 +157,29 @@ def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product
                        ('requirements', requirements)):
         if value:
             step[key] = value
-    existing = jobs.step_ids(run_id, path) if run_id else set()
-    if sweep is None:
-        number = 1
-        while ('calculate' if number == 1 else f'calculate-{number}') in existing:
-            number += 1
-        steps = [{'id': 'calculate' if number == 1 else f'calculate-{number}', **step}]
-    else:
-        spec = programs.catalog().get(tool, {}).get(action) if action and not source and not script else None
-        # A group step point-0001-0094 holds points 1 to 94.
-        used = [int(found[2] or found[1]) for found in map(re.compile(r'point-(\d+)(?:-(\d+))?$').match, existing) if found]
-        points = expand(step, sweep, pairing, max(used, default=0) + 1, programs.inputs(spec) if spec else None)
-        if chunk is not None and (type(chunk) is not int or chunk < 1):
-            raise ValueError('chunk is a positive number of points per process')
-        configuration = environments.read(path)['tools'].get(tool, {})
-        # External programs accept one request per invocation; they need not implement our worker's grouping protocol.
-        size = 1 if configuration.get('kind') == 'command' else chunk or max(1, math.ceil(len(points) / (4 * jobs.resources(path=path)['cpu'])))
-        steps = grouped(points, size)
     # The call, not its numbered steps, identifies a retried request.
     call = {'tool': tool, 'inputs': step['inputs'], 'action': action, 'source': source, **({'script': script} if script else {}), 'sweep': sweep, 'pairing': pairing,
             'optimize': optimize, 'chunk': chunk, 'timeout': timeout, 'requirements': requirements, 'name': name, 'run_id': run_id}
-    submitted = jobs.submit(steps, name=name, request_id=request_id, run_id=run_id, path=path, _payload={'calculation': call})
+    submitted = jobs.reuse(request_id, {'calculation': call}, path)
+    if submitted is None:
+        existing = jobs.step_ids(run_id, path) if run_id else set()
+        if sweep is None:
+            number = 1
+            while ('calculate' if number == 1 else f'calculate-{number}') in existing:
+                number += 1
+            steps = [{'id': 'calculate' if number == 1 else f'calculate-{number}', **step}]
+        else:
+            spec = programs.catalog().get(tool, {}).get(action) if action and not source and not script else None
+            # A group step point-0001-0094 holds points 1 to 94.
+            used = [int(found[2] or found[1]) for found in map(re.compile(r'point-(\d+)(?:-(\d+))?$').match, existing) if found]
+            points = expand(step, sweep, pairing, max(used, default=0) + 1, programs.inputs(spec) if spec else None)
+            if chunk is not None and (type(chunk) is not int or chunk < 1):
+                raise ValueError('chunk is a positive number of points per process')
+            configuration = environments.read(path)['tools'].get(tool, {})
+            # External programs accept one request per invocation; they need not implement our worker's grouping protocol.
+            size = 1 if configuration.get('kind') == 'command' else chunk or max(1, math.ceil(len(points) / (4 * jobs.resources(path=path)['cpu'])))
+            steps = grouped(points, size)
+        submitted = jobs.submit(steps, name=name, request_id=request_id, run_id=run_id, path=path, _payload={'calculation': call})
     if not wait:
         return submitted
     original = jobs.submitted_steps(submitted['request_id'], path)
@@ -231,6 +233,12 @@ def table(run_id, values=None, minimize=None, maximize=None, save=False, offset=
             state = 'succeeded' if 'result' in entry else 'failed' if 'error' in entry else row['state']
             item = {'step': row['id'], 'id': key, 'state': state, 'point': point,
                     'values': {path_: pick(entry['result'], path_) if 'result' in entry else None for path_ in chosen}}
+            if 'result' in entry:
+                root = (environments.home(path) / 'runs' / run_id).resolve()
+                folder = (root / row['id'] / f"attempt-{row['attempt']}" /
+                          entry.get('output', key if 'points' in spec else '.')).resolve()
+                if folder.is_relative_to(root):
+                    item['output'] = folder.relative_to(root).as_posix() + '/'
             error = entry.get('error') or (row['error'] if state != 'succeeded' else None)
             if error:
                 item['error'] = error[-300:]

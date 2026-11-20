@@ -18,7 +18,7 @@
 
 | 宿主 | 安装方式 |
 | --- | --- |
-| Agentic Research OS | 下载 [Research OS 插件包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/Optics-Photonics-0.10.0-ResearchOS.zip)，解压后安装包含 `plugin.json` 的目录；包内有六种系统与架构的原生执行程序、MCP、软件目录和两个 Skills，使用宿主自带的 Python。也可以在 **Extensions → Plugins → Add from link** 填入 `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`。 |
+| Agentic Research OS | 下载 [Research OS 插件包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.0/Optics-Photonics-0.11.0-ResearchOS.zip)，解压后安装包含 `plugin.json` 的目录；包内有六种系统与架构的原生执行程序、MCP、软件目录和两个 Skills，使用宿主自带的 Python。也可以在 **Extensions → Plugins → Add from link** 填入 `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`。 |
 | Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再 `codex plugin add optics-photonics@optics-photonics` |
 | Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再 `claude plugin install optics-photonics@optics-photonics` |
 | Qiushi | 基于 Research OS 的版本使用上面的插件包；其他版本用 `optics-photonics connect qiushi` 生成 MCP 或命令入口。 |
@@ -26,7 +26,7 @@
 | 其他 MCP 宿主、Python、命令行 | 安装下面的 wheel，把 `optics-photonics mcp` 注册为 stdio 服务。 |
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/optics_photonics-0.10.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.0/optics_photonics-0.11.0-py3-none-any.whl"
 optics-photonics prepare tmm
 optics-photonics connect agentic-research-os --output optics-plugin
 ```
@@ -47,11 +47,11 @@ Optics 连接物理模型、求解软件与测量数据；[IOP](https://github.c
 
 ## 一次计算怎么进行
 
-1. **选软件。** `software_search` 按物理问题查找软件和封装程序，中英文皆可，光学概念的同义词与缩写互相匹配（[词表](data/vocabulary.json)）；`software_details` 返回每项软件的物理方法、接口、安装来源和封装程序。目录之外的工具用 `register_software` 加入。
+1. **选软件。** `software_search` 按物理问题查找软件和封装程序，中英文皆可，光学概念的同义词与缩写互相匹配（[词表](data/vocabulary.json)）；`software_details` 返回每项软件的物理方法、接口、安装来源和封装程序。目录之外的本地工具用 `register_software` 加入。[独立接入包](skills/optical-computation/references/integrations.md)可通过普通 Python 分发包提供软件配方、程序和指南；`software_integrations` 列出它们，读取时不会导入求解器。
 2. **连接环境。** 69 项软件带 pip、conda-forge 或 Julia 安装配方；`prepare_environment` 提前安装，提交计算也会自动准备缺少的环境。`bind_environment` 复用已有解释器或命令；`discover_native_software` 与 `bind_native_software` 查找并连接已安装的 SDK、可执行程序和 Windows 自动化服务。在线服务客户端及需在自身界面中操作的软件分别列在[连接通路](docs/NATIVE.zh-CN.md)中。
 3. **使用实测材料数据。** `materials` 给出 refractiveindex.info 数据库 3576 页（CC0）的 n、k 和文献，带 `dispersion` 时还给出群折射率、群速度色散和色散参数 D；SiO2、Si、Au、N-BK7、BBO 等常用名称离线可用，其他页面首次使用时下载。
 4. **运行程序。** 从 [39 套软件中的 57 个程序](skills/optical-computation/references/programs.md)选择并查看输入与物理模型，或使用软件完整原生 API 编写程序。Python `source` 和软件原生语言 `script` 接收输入与输出目录，返回 `RESULT`。`submit_calculation` 支持并行扫描与有界优化，`submit_workflow` 连接依赖或并行步骤。[参数研究](skills/optical-computation/references/studies.md)与[科学数组](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)说明输入、单位、坐标和文件如何在程序之间传递。
-5. **继续与取回结果。** `run_status` 每次最多等待 25 秒，等待期间同一连接上的其他请求照常返回。运行不随连接断开而停止，用 `list_runs` 重新找到。`result_files`、`read_result`、`read_array` 分别返回文件列表、字节片段和 NPY/NPZ 数组的局部；`read_array` 加 `image` 时把所选部分画成 PNG 返回：曲线或带色标的二维图，标出坐标和单位。`resume_run` 重跑未完成步骤，保留已完成步骤。
+5. **继续与取回结果。** `run_status` 每次最多等待 25 秒，等待期间同一连接上的其他请求照常返回。运行不随连接断开而停止，用 `list_runs(search=..., tool=...)` 重新找到；新增任务期间，游标分页仍保持稳定。`result_files`、`read_result`、`read_array` 分别返回文件列表、字节片段和 NPY/NPZ 数组的局部；`read_array` 加 `image` 时把所选部分画成 PNG 返回：曲线或带色标的二维图，标出坐标和单位。`resume_run` 保留成功步骤和分组扫描中已完成的参数点。Python 程序可用 `CHECKPOINT` 保存显式状态与模型文件，内置优化会复用已完成的评估。[接续指南](skills/optical-computation/references/continuation.md)和[衍射实例](examples/continuation/)说明长程序内部的恢复。
 6. **采集 episode。** `sample_episodes` 在并行的软件进程中运行 Gymnasium 形式的环境，保存种子、动作、观测和奖励，供学习使用；中断或追加的采集会接着进行，不重复已完成的 episode（[接口说明](docs/LEARNING.md)）。
 
 | 通路 | 软件 | 运行什么 |

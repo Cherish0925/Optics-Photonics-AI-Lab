@@ -6,7 +6,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-from . import programs
+from . import integrations, programs
 
 
 def resources():
@@ -15,23 +15,41 @@ def resources():
 
 
 @lru_cache(maxsize=2)
-def catalogue(language='en'):
+def builtin_catalogue(language='en'):
     if language not in {'en', 'zh'}:
         raise ValueError('Use en or zh for language')
     return json.loads((resources() / 'data' / f'catalogue.{language}.json').read_text(encoding='utf-8'))
 
 
 @lru_cache(maxsize=1)
-def connections():
+def builtin_connections():
     return json.loads((resources() / 'data' / 'connections.json').read_text(encoding='utf-8'))
 
 
+@integrations.synchronized
+@lru_cache(maxsize=2)
+def catalogue(language='en'):
+    from . import integrations
+    return [*builtin_catalogue(language), *(descriptions[language] for package in integrations.registry()['packages']
+                                           for descriptions in package['software'].values())]
+
+
+@integrations.synchronized
+@lru_cache(maxsize=1)
+def connections():
+    from . import integrations
+    return {**builtin_connections(), **{tool: record for package in integrations.registry()['packages']
+                                       for tool, record in package['connections'].items()}}
+
+
+@integrations.synchronized
 def software(tool, language='en'):
     item = next((x for x in catalogue(language) if x['id'] == tool), None)
     if item is None:
         similar = difflib.get_close_matches(str(tool), [x['id'] for x in catalogue(language)], n=3)
         raise ValueError('Unknown software ID: ' + str(tool) + ('. Similar: ' + ', '.join(similar) if similar else '') +
-                         '. software_search finds IDs; register_software adds a tool outside the catalogue')
+                         '. software_search finds IDs; software_integrations lists installed packages and errors; '
+                         'register_software adds a tool outside the catalogue')
     return {**item, 'connection': connections()[tool]}
 
 
@@ -153,6 +171,7 @@ def domain_names(language):
     return {row[0]: ' '.join(row[1:]) for row in rows}
 
 
+@integrations.synchronized
 @lru_cache(maxsize=None)
 def program_texts(tool):
     """Per packaged program of a tool, as indexed words: its title, and its physics, inputs and results."""
@@ -161,6 +180,7 @@ def program_texts(tool):
             for name, spec in programs.catalog().get(tool, {}).items()}
 
 
+@integrations.synchronized
 @lru_cache(maxsize=1)
 def search_index():
     """Per software ID, all searchable text in both languages and its programs' titles and physics; the web pages embed it."""
@@ -170,7 +190,7 @@ def search_index():
         domains = domain_names(language)
         for item in catalogue(language):
             text = ' '.join(str(item[key]) for key in fields)
-            text += ' ' + ' '.join(domains[key] for key in item['cats'])
+            text += ' ' + ' '.join(domains.get(key, key) for key in item['cats'])
             index[item['id']] = index.get(item['id'], '') + ' ' + normalized(text)
     for tool, found in programs.catalog().items():
         index[tool] += ' ' + normalized(' '.join(spec['title'] + ' ' + spec['about'] for spec in found.values()))
@@ -184,6 +204,7 @@ def search_index():
     return index
 
 
+@integrations.synchronized
 @lru_cache(maxsize=1)
 def ranked_index():
     """Per software ID, in both languages: its names; method, summary and program titles; domains; other text and program details."""
@@ -192,7 +213,7 @@ def ranked_index():
         domains = domain_names(language)
         for item in catalogue(language):
             texts = (item['id'] + ' ' + item['name'], item['method'] + ' ' + item['summary'],
-                     ' '.join(domains[key] for key in item['cats']),
+                     ' '.join(domains.get(key, key) for key in item['cats']),
                      ' '.join(str(item[key]) for key in ('api', 'usage', 'compute', 'license')))
             before = index.get(item['id'], ('', '', '', ''))
             index[item['id']] = tuple(a + words(b) for a, b in zip(before, texts))
@@ -202,6 +223,7 @@ def ranked_index():
     return index
 
 
+@integrations.synchronized
 @lru_cache(maxsize=None)
 def domain_programs(domain):
     """Per software ID, in catalogue order, its packaged programs of a domain; a program states its domains."""
@@ -240,6 +262,7 @@ def best_program(tool, terms, domain=None):
     return best, chosen
 
 
+@integrations.synchronized
 @lru_cache(maxsize=None)
 def route_kinds(tool):
     """The kinds of route by which the environment reaches a catalogued tool, unattended ones first."""
@@ -247,6 +270,7 @@ def route_kinds(tool):
     return list(dict.fromkeys(route['route'] for route in routes.routes(tool, record=connections()[tool])))
 
 
+@integrations.synchronized
 def search(query='', domain=None, license_group=None, offset=0, limit=20, language='en'):
     """Rank software by the concepts of the query it matches.
 

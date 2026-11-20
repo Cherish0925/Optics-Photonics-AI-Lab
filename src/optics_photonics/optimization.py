@@ -13,12 +13,13 @@ at a dotted path of RESULT to minimize or maximize. Methods:
 
 Bounds are enforced by searching the unit cube. An evaluation that fails, or
 whose RESULT lacks the objective, counts as infinitely bad and is recorded.
-history.jsonl grows with every evaluation and best/ always holds the files of
-the best evaluation so far, so a stopped optimization keeps its progress.
+history.jsonl grows with every evaluation. The optimization checkpoint names
+the current best files while running or stopped; best/ holds them on completion.
 Only the standard library is used.
 """
 import json
 import math
+import os
 from pathlib import Path
 import random
 import shutil
@@ -179,28 +180,71 @@ def differential_evolution(f, n, evaluations, seed=0, start=None, tolerance=1e-8
     return members[k], values[k], used, False
 
 
-def run(execute, inputs, spec, output, defaults=None):
+def run(execute, inputs, spec, output, defaults=None, *, checkpoint=None):
     """Optimize: execute(inputs, folder) runs the program once and returns its RESULT."""
     from . import arrays, studies
     spec = checked(spec)
-    output = Path(output)
+    output = Path(output).resolve()
     keys = list(spec['variables'])
     bounds = [spec['variables'][key] for key in keys]
     sign = 1.0 if spec['goal'] == 'minimize' else -1.0
     probe = json.loads(json.dumps(inputs))
     for key, bound in zip(keys, bounds):
         studies.assign(probe, key, value_of(bound, 0.5), defaults)  # a key that addresses nothing fails here, once
-    trial, best_folder = output / 'evaluations' / 'current', output / 'best'
-    history, log = [], (output / 'history.jsonl').open('w', encoding='utf-8')
+    final_folder, best_folder = output / 'best', None
+    history = []
     best = {'score': math.inf, 'values': None, 'result': None, 'objective': None}
     seen = {}
+    restored = checkpoint.load() if checkpoint is not None else None
+    if restored is not None:
+        if (not isinstance(restored, dict) or restored.get('search') != 1
+                or type(restored.get('evaluations')) is not int or restored['evaluations'] < 0
+                or not isinstance(restored.get('best'), dict) or 'history' not in checkpoint.files):
+            raise ValueError('Saved optimization progress is incomplete; inspect its checkpoint and history')
+        with checkpoint.files['history'].open(encoding='utf-8') as stream:
+            for number in range(1, restored['evaluations'] + 1):
+                try:
+                    entry = json.loads(next(stream))
+                    if (entry.get('evaluation') != number or not isinstance(entry.get('variables'), dict)
+                            or not ('error' in entry or isinstance(entry.get('objective'), (int, float))
+                                    and math.isfinite(entry['objective']))):
+                        raise ValueError('invalid evaluation')
+                except (StopIteration, ValueError, TypeError, AttributeError) as error:
+                    raise ValueError(f'Saved optimization history is incomplete at evaluation {number}') from error
+                history.append(entry)
+                seen[json.dumps(entry['variables'], sort_keys=True)] = sign * entry['objective'] if 'objective' in entry else math.inf
+        best.update(restored['best'])
+        if best['values'] is not None:
+            best['score'] = sign * best['objective']
+            best_folder = checkpoint.files.get('best')
+            if best_folder is None:
+                raise ValueError('Saved optimization progress has no best model files')
+    prior = set(seen)
+    reused = set()
+    log = (output / 'history.jsonl').open('w', encoding='utf-8')
+    for entry in history:
+        log.write(json.dumps(entry, allow_nan=False) + '\n')
+    log.flush()
+
+    def save():
+        if checkpoint is not None:
+            log.flush()
+            os.fsync(log.fileno())
+            checkpoint.save({'search': 1, 'evaluations': len(history),
+                             'best': {key: value for key, value in best.items() if key != 'score'}},
+                            files={'history': output / 'history.jsonl', **({'best': best_folder} if best_folder else {})})
 
     def objective(u):
+        nonlocal best_folder
         chosen = {key: value_of(bound, x) for key, bound, x in zip(keys, bounds, u)}
         tag = json.dumps(chosen, sort_keys=True)
         if tag in seen:  # integer variables can map different positions to one input
+            if tag in prior:
+                reused.add(tag)
             return seen[tag]
         entry = {'evaluation': len(history) + 1, 'variables': chosen}
+        trial = output / 'evaluations' / ('evaluation-' + str(entry['evaluation']).zfill(6))
+        old_best = best_folder
         score = math.inf
         try:
             given = json.loads(json.dumps(inputs))
@@ -214,8 +258,7 @@ def run(execute, inputs, spec, output, defaults=None):
                 raise ValueError(f"RESULT has no finite number at {spec['path']}")
             entry['objective'], score = float(value), sign * float(value)
             if score < best['score']:
-                shutil.rmtree(best_folder, ignore_errors=True)
-                trial.rename(best_folder)
+                best_folder = trial
                 best.update(score=score, values=chosen, result=result, objective=float(value), evaluation=entry['evaluation'])
         except Exception as error:  # a failed evaluation is a bad point, not the end of the search
             entry['error'] = f'{type(error).__name__}: {error}'[-500:]
@@ -223,6 +266,13 @@ def run(execute, inputs, spec, output, defaults=None):
         log.write(json.dumps(entry, allow_nan=False) + '\n')
         log.flush()
         seen[tag] = score
+        save()
+        # An older attempt stays intact. Within this attempt the committed state
+        # no longer names the previous best, so its large files can be released.
+        if old_best and old_best != best_folder and old_best.is_relative_to(output / 'evaluations'):
+            shutil.rmtree(old_best, ignore_errors=True)
+        if trial != best_folder:
+            shutil.rmtree(trial, ignore_errors=True)
         return score
 
     start = [position_of(bound, studies.pick({**(defaults or {}), **inputs}, key)) for key, bound in zip(keys, bounds)]
@@ -236,12 +286,18 @@ def run(execute, inputs, spec, output, defaults=None):
             point, _, used, converged = differential_evolution(objective, len(keys), budget - polish, spec['seed'], start, tolerance)
             if polish and best['values'] is not None:
                 _, _, _, converged = nelder_mead(objective, point, polish, tolerance, step=0.02)
+        if best_folder is not None:
+            if best_folder != final_folder:
+                # Keep the previous snapshot valid until the new one commits.
+                shutil.copytree(best_folder, final_folder, dirs_exist_ok=True)
+                best_folder = final_folder
+            save()
     finally:
         log.close()
-        shutil.rmtree(output / 'evaluations', ignore_errors=True)
     if best['values'] is None:
         failures = [entry.get('error') for entry in history if entry.get('error')]
         raise RuntimeError(f'All {len(history)} evaluations failed; the last: {failures[-1] if failures else "no result"}')
+    shutil.rmtree(output / 'evaluations', ignore_errors=True)
     named, taken = {}, set()
     axis = [{'name': 'evaluation', 'start': 1, 'step': 1}]
     columns = {'objective': ([entry.get('objective') for entry in history], f"{spec['path']} of each evaluation")}
@@ -258,5 +314,6 @@ def run(execute, inputs, spec, output, defaults=None):
                  {name: {'quantity': quantity, 'axes': axis} for name, (_, _, quantity) in named.items()})
     return {'best': best['values'], 'objective': {'path': spec['path'], 'goal': spec['goal'], 'value': best['objective']},
             'method': spec['method'], 'evaluations': len(history), 'failed': sum('error' in entry for entry in history),
+            **({'reused_evaluations': len(reused)} if checkpoint is not None else {}),
             'converged': converged, 'best_evaluation': best['evaluation'], 'result': best['result'],
             'files': 'best/', 'history': 'history.npz'}

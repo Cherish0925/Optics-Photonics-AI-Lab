@@ -15,6 +15,7 @@ import tempfile
 import urllib.request
 import venv
 from .catalogue import software as catalogue_software, catalogue
+from . import integrations
 
 
 def home(path=None):
@@ -104,7 +105,7 @@ def register(tool, name, description, *, kind='python', modules=None, distributi
     if not isinstance(tool, str) or not re.fullmatch(r'[a-z0-9][a-z0-9_.-]{0,99}', tool):
         raise ValueError('Use a lowercase software ID with letters, digits, dots, hyphens or underscores')
     if any(item['id'] == tool for item in catalogue()):
-        raise ValueError('This ID belongs to the published catalogue; bind its environment directly')
+        raise ValueError('This ID belongs to the published catalogue or an installed integration; bind its environment directly')
     if not isinstance(name, str) or not name.strip() or not isinstance(description, str) or not description.strip():
         raise ValueError('Provide a software name and description')
     if kind not in ('python', 'command'):
@@ -131,10 +132,19 @@ def register(tool, name, description, *, kind='python', modules=None, distributi
 
 
 def software(tool, language='en', path=None):
-    local = read(path).get('software', {}).get(tool)
+    configured = read(path)
+    local = configured.get('software', {}).get(tool)
     if local is not None:
         return local
-    return catalogue_software(tool, language)
+    try:
+        return catalogue_software(tool, language)
+    except ValueError:
+        # Removing an integration does not invalidate an already connected
+        # interpreter or the definition retained with its scientific runs.
+        bound = configured['tools'].get(tool, {}).get('definition')
+        if bound and bound.get('origin') == 'integration':
+            return bound
+        raise
 
 
 REPEATED = ('interface', 'sources', 'upstream', 'native_program', 'routes')
@@ -144,6 +154,7 @@ ENTRY = ('id', 'name', 'group', 'cats', 'method', 'summary', 'api', 'license', '
 UNIFORM = ('execution', 'environment', 'session_adapter')
 
 
+@integrations.synchronized
 def details(tool, language='en', path=None, program=None, source=True, brief=False):
     """One software entry with its connection, its routes and what it can run.
 
@@ -152,7 +163,7 @@ def details(tool, language='en', path=None, program=None, source=True, brief=Fal
     brief=True, which MCP also requests, states each fact once: the programs by name with the names of their
     inputs, an upstream MCP server or Skill only where one was located, and no sentence common to all software.
     """
-    from . import operations, programs, routes
+    from . import integrations, operations, programs, routes
     item = software(tool, language, path)
     if program is not None:
         spec = programs.details(tool, program)
@@ -168,16 +179,19 @@ def details(tool, language='en', path=None, program=None, source=True, brief=Fal
         # connections.json repeats these catalogue fields so that the file can be read on its own.
         item = {**item, 'connection': {key: value for key, value in item['connection'].items() if key not in REPEATED}}
     found = routes.routes(tool, path)
+    references = integrations.references(tool, language)
+    guides = {'integration_guides': references} if references else {}
     if not brief:
-        return {**item, 'routes': found, 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
+        return {**item, **guides, 'routes': found, 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
     if item.get('origin') != 'local':
         located = {kind: item[kind] for kind in ('mcp', 'skill') if item[kind]['kind'] != 'unverified'}
         item = {**{key: item[key] for key in ENTRY}, **({'upstream': located} if located else {}),
+                **({'integration': item['integration']} if item.get('integration') else {}),
                 'connection': {key: value for key, value in item['connection'].items() if key not in UNIFORM}}
     listed = programs.listing(tool)
     hint = {'program_details': 'software_details(tool, program=NAME) gives the physics, input defaults and meanings, '
                                'results and checks'} if listed else {}
-    return {**item, 'routes': found, 'execution': {'programs': listed, **hint, **operations.details(tool, brief=True)}}
+    return {**item, **guides, 'routes': found, 'execution': {'programs': listed, **hint, **operations.details(tool, brief=True)}}
 
 
 def registered(path=None):
@@ -291,7 +305,7 @@ def bind(tool=None, *, python=None, command=None, path=None, threads=1, concurre
                               '. A module that ships with the installation needs its folder in paths (sdk_path)'))
         connection = {'kind': 'python', 'python': inspected['python'], 'versions': inspected['versions'], **({'paths': paths} if paths else {})}
     connection.update(chosen)
-    if item.get('origin') == 'local':
+    if item.get('origin') in ('local', 'integration'):
         connection['definition'] = item
     before = read(path)['tools'].get(tool) or {}
     if before.get('managed') and before.get('python') == connection.get('python'):

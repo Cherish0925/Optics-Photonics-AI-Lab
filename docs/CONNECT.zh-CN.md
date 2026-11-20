@@ -7,7 +7,7 @@ Optics & Photonics 独立提供光学软件连接、原生研究程序、后台�
 连接程序使用 Python 3.10+，支持 Windows、macOS、Linux。科学软件使用各自支持的 Python、系统与许可；可以为每个软件连接不同的环境。
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/optics_photonics-0.10.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.0/optics_photonics-0.11.0-py3-none-any.whl"
 optics-photonics search "thin film" --license-group open
 optics-photonics info tmm
 optics-photonics prepare tmm
@@ -99,7 +99,7 @@ optics-photonics submit tmm spectrum --run-id RUN_ID --inputs '{"n":[1,1.30,1.52
 optics-photonics run tmm spectrum --inputs "@coating.json" --optimize '{"variables":{"thickness_nm.0":[0,300],"thickness_nm.1":[0,300]},"minimize":"mean.R"}'
 ```
 
-扫描的参数点并行计算，程序很快时一个进程依次计算多个点；`thickness_nm.0` 这样带点的名称只设置列表输入中的一个元素。`sweep` 列出每个点的扫描输入和选定的结果值，给出最优点；加 `--save` 写出按扫描输入排成网格的 `sweep.npz`。`--run-id` 把更细的扫描追加到同一次运行。`--optimize` 在一个进程内于给定范围搜索变量，方法为差分进化加 Nelder–Mead 精修，或单独使用 Nelder–Mead；最优一次计算的文件保存在 `best/`（[参数研究](../skills/optical-computation/references/studies.md)）。
+扫描的参数点并行计算，程序很快时一个进程依次计算多个点；`thickness_nm.0` 这样带点的名称只设置列表输入中的一个元素。`sweep` 列出每个点的扫描输入和选定的结果值，给出最优点；加 `--save` 写出按扫描输入排成网格的 `sweep.npz`。`--run-id` 把更细的扫描追加到同一次运行。`--optimize` 在一个进程内于给定范围搜索变量，方法为差分进化加 Nelder–Mead 精修，或单独使用 Nelder–Mead。完成后，最优一次计算的文件写入 `best/`；运行或中断期间，进度记录指向当前最优文件（[参数研究](../skills/optical-computation/references/studies.md)）。
 
 ## 从插件市场安装
 
