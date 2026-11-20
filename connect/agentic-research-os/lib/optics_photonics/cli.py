@@ -22,12 +22,12 @@ def main(argv=None):
     register = commands.add_parser('register-software'); register.add_argument('definition', type=object_argument)
     commands.add_parser('registered-software')
     env = commands.add_parser('environments')
-    discovery = commands.add_parser('discover'); discovery.add_argument('--root', dest='roots', action='append')
-    native_bind = commands.add_parser('bind-native'); native_bind.add_argument('tool'); native_bind.add_argument('--python'); native_bind.add_argument('--sdk-path'); native_bind.add_argument('--options', type=object_argument, default={}); native_bind.add_argument('--threads', type=int, default=1); native_bind.add_argument('--concurrency', type=int, default=1); native_bind.add_argument('--requirements', type=object_argument); native_bind.add_argument('--env', type=object_argument)
+    discovery = commands.add_parser('discover', help='find installed software and how to bind it'); discovery.add_argument('--root', dest='roots', action='append'); discovery.add_argument('--tool')
+    native_bind = commands.add_parser('bind-native', help='connect installed software by a route'); native_bind.add_argument('tool'); native_bind.add_argument('--route', choices=('session','executable','automation','python')); native_bind.add_argument('--executable'); native_bind.add_argument('--progid'); native_bind.add_argument('--project'); native_bind.add_argument('--language'); native_bind.add_argument('--python'); native_bind.add_argument('--sdk-path'); native_bind.add_argument('--options', type=object_argument, default={}); native_bind.add_argument('--threads', type=int, default=1); native_bind.add_argument('--concurrency', type=int, default=1); native_bind.add_argument('--requirements', type=object_argument); native_bind.add_argument('--env', type=object_argument)
     bind = commands.add_parser('bind'); bind.add_argument('tool', nargs='?', help='omit to bind every tool the interpreter provides'); choice=bind.add_mutually_exclusive_group(required=True); choice.add_argument('--python'); choice.add_argument('--command-json',type=object_argument); bind.add_argument('--threads',type=int,default=1); bind.add_argument('--concurrency',type=int,default=1); bind.add_argument('--cwd'); bind.add_argument('--requirements',type=object_argument); bind.add_argument('--env',type=object_argument)
     prep = commands.add_parser('prepare'); prep.add_argument('tool'); prep.add_argument('--python'); prep.add_argument('--package', dest='packages', action='append', help='an extra requirement; repeat for more')
     for name in ('run','submit'):
-        run = commands.add_parser(name); run.add_argument('tool'); run.add_argument('action',nargs='?',default='',help='a packaged program listed by info'); run.add_argument('--inputs',type=object_argument,default={}); run.add_argument('--program',type=Path)
+        run = commands.add_parser(name); run.add_argument('tool'); run.add_argument('action',nargs='?',default='',help='a packaged program listed by info'); run.add_argument('--inputs',type=object_argument,default={}); run.add_argument('--program',type=Path,help='a Python program'); run.add_argument('--script',type=Path,help='a program in the language of software bound to its executable')
         if name == 'run': run.add_argument('--output'); run.add_argument('--timeout',type=float)
         else:
             run.add_argument('--name',default='Optical research'); run.add_argument('--request-id'); run.add_argument('--timeout',type=float)
@@ -68,7 +68,7 @@ def main(argv=None):
             if a['wavelength'] and len(a['wavelength']) == 1: a['wavelength'] = a['wavelength'][0]
             result=materials.lookup(**a)
         elif command == 'info':
-            result=environments.details(**a)
+            result=environments.details(**a, source=bool(a['program']))
             if a['program']: print(result['source'], end=''); return
         elif command == 'register-software': result=environments.register(**a['definition'])
         elif command == 'registered-software': result={'software':environments.registered()}
@@ -80,7 +80,9 @@ def main(argv=None):
         elif command == 'prepare': result=environments.prepare(**a)
         elif command in ('run','submit'):
             source=a.pop('program'); source=source.read_text(encoding='utf-8') if source else ''
+            text=a.pop('script'); text=text.read_text(encoding='utf-8') if text else ''
             request={k:a.pop(k) for k in ('inputs','action')}; request['source']=source
+            if text: request['script']=text
             tool=a.pop('tool')
             if command=='run':
                 optimize=a.pop('optimize')
@@ -105,6 +107,11 @@ def main(argv=None):
             for step in steps if isinstance(steps,list) else []:
                 # A step may name its program file beside the workflow file instead of carrying the source text.
                 if isinstance(step,dict) and 'program' in step: step['source']=(file.parent/step.pop('program')).read_text(encoding='utf-8')
+                if isinstance(step,dict) and isinstance(step.get('script'),str) and '\n' not in step['script']:
+                    script_file=file.parent/step['script']
+                    try: is_file=script_file.is_file()
+                    except (OSError, ValueError): is_file=False  # inline scripts need not be valid filesystem paths
+                    if is_file: step['script']=script_file.read_text(encoding='utf-8')
             result=jobs.submit(steps,**a)
         elif command == 'array':
             target, kind = a.pop('image'), a.pop('kind')
@@ -117,9 +124,9 @@ def main(argv=None):
             from .packages import package
             result=package(a.pop('output'),**a)
         elif command in ('mcp','tools','call'):
-            from .mcp import serve, invoke, TOOLS
+            from .mcp import serve, invoke, listed
             if command=='mcp': serve(); return
-            if command=='tools': result={'tools':[{'name':n,'description':d,'inputSchema':s} for n,d,s in TOOLS]}
+            if command=='tools': result={'tools':listed()}
             else: result=invoke(a['tool'],a['arguments'])
         print(json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False))
     except (ValueError, KeyError, OSError, RuntimeError, subprocess.SubprocessError) as error:

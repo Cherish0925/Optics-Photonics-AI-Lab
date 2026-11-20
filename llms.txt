@@ -2,7 +2,7 @@
 
 > Independent optical and photonic research software: native programs, background calculations, simulation sessions, MCP, Skills and Agent plugins.
 
-Reviewed: 2026-10-20. Schema version: 1.0. 97 tools / product families in 14 task domains.
+Reviewed: 2026-10-20. Schema version: 1.0. 99 tools / product families in 14 task domains.
 
 ## Foundations
 

@@ -9,7 +9,7 @@ import sys
 import unittest
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from optics_photonics import environments, jobs  # noqa: E402
+from optics_photonics import environments, jobs, languages, routes  # noqa: E402
 from support import workspace  # noqa: E402
 
 
@@ -37,6 +37,12 @@ class RecipeCase(unittest.TestCase):
             if item is None:
                 continue
             with self.subTest(tool=tool):
+                if item['julia'] or item['executable']:
+                    # An executable from conda-forge, or Julia packages: the tool runs programs in that language.
+                    route = next(r for r in routes.routes(tool) if r['route'] == 'executable')
+                    self.assertIn(route['language'], languages.LANGUAGES)
+                    self.assertTrue(item['julia'] or item['executable']['path'])
+                    continue
                 self.assertEqual(record['kind'], 'python')
                 self.assertTrue(record['modules'])
                 if item['platforms']:

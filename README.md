@@ -4,7 +4,7 @@
 
 # Optics-Photonics AI Lab
 
-A research environment for optics and photonics that agents and researchers install as a Python package, MCP server, plugin or Skills. It selects software from a catalogue of 97 tools, runs complete native research programs in their own environments, keeps long calculations running after the agent disconnects, and returns scientific files that can be read in parts. Its physical framework is **Field + Matter + Interaction**.
+A research environment for optics and photonics, built on **Field + Matter + Interaction**. Researchers and agents can discover software in a 99-tool catalogue, connect local solvers, run programs in the software's own environment, and retrieve scientific data without keeping a client connected. It is available as a Python package, MCP server, plugin or Skills.
 
 | Read | Explore the data | Build on it |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ The [English](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-
 
 | Host | Install |
 | --- | --- |
-| Agentic Research OS | Download the [Research OS package](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.8.0/Optics-Photonics-0.8.0-ResearchOS.zip), extract it and install the directory containing `plugin.json`; it carries native executors for six system/architecture combinations, MCP, the catalogue and both Skills, and uses the host's Python. Or **Extensions → Plugins → Add from link** with `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`. |
+| Agentic Research OS | Download the [Research OS package](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/Optics-Photonics-0.9.0-ResearchOS.zip), extract it and install the directory containing `plugin.json`; it carries native executors for six system/architecture combinations, MCP, the catalogue and both Skills, and uses the host's Python. Or **Extensions → Plugins → Add from link** with `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`. |
 | Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`, then `codex plugin add optics-photonics@optics-photonics` |
 | Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`, then `claude plugin install optics-photonics@optics-photonics` |
 | Qiushi | Editions built on Research OS use the package above; other editions use `optics-photonics connect qiushi` for MCP or command access. |
@@ -26,7 +26,7 @@ The [English](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-
 | Any MCP host, Python, shell | Install the wheel below and register `optics-photonics mcp` as a stdio server. |
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.8.0/optics_photonics-0.8.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/optics_photonics-0.9.0-py3-none-any.whl"
 optics-photonics prepare tmm
 optics-photonics connect agentic-research-os --output optics-plugin
 ```
@@ -46,13 +46,13 @@ The search names the tool `tmm` and its packaged program `spectrum`. The submiss
 ## How a calculation runs
 
 1. **Choose software.** `software_search` finds software and packaged programs by physical problem, in English or Chinese, with synonyms and abbreviations of optical concepts ([vocabulary](data/vocabulary.json)); `software_details` returns the physical method, interfaces, installation source and packaged programs of each catalogue entry. `register_software` adds a tool outside the catalogue.
-2. **Connect its environment.** 50 open tools install from recipes: pip through uv, or conda-forge for Meep, MPB, FEniCSx, Gmsh and HoloPy. A submission for a tool without an environment installs it first, and `prepare_environment` does so ahead of time; `bind_environment` reuses an existing interpreter (without a tool, every tool it provides) or executable; `discover_native_software` and `bind_native_software` connect installed COMSOL, Lumerical, OpticStudio and CST SDKs ([native sessions](docs/NATIVE.md)).
+2. **Connect its environment.** 59 tools have installation recipes for pip, conda-forge or Julia. `prepare_environment` installs them; submissions prepare missing environments automatically. `bind_environment` reuses an interpreter or command. `discover_native_software` and `bind_native_software` connect installed SDKs, executables and Windows automation servers. Service clients and software that requires its own interface are described separately in the [connection routes](docs/NATIVE.md).
 3. **Use measured material data.** `materials` returns n and k of 3576 refractiveindex.info pages (CC0) with references, and with `dispersion` the group index, group velocity dispersion and D; common names such as SiO2, Si, Au, N-BK7 and BBO work offline, other pages download once.
-4. **Run a packaged program or write one.** 45 packaged programs cover thin films, gratings, metasurface phase libraries and metalenses, FDTD stacks and ring resonators, photonic bands, waveguide and fiber modes with fiber dispersion, Mie scattering and sphere clusters, point spread functions and MTF, Gaussian beams and aperture diffraction, directional couplers from their supermodes and photonic circuits, Fabry-Perot cavities and resonator modes, fiber pulses and supercontinuum, second-harmonic generation and phase matching, laser dynamics, optical communication, solar cells, quantum optics, squeezed light and multi-photon interference, Fresnel derivations, ray tracing, lens analysis with Seidel aberrations, inverse design of a waveguide bend and layouts; each declares its inputs and reports checks against a conservation law or an analytic limit, and its source can be adapted ([programs](skills/optical-computation/references/programs.md)). A Python program of one's own receives `INPUTS` and `OUTPUT_DIR`, uses the solver's full native API and sets `RESULT`; an executable uses the same files through environment variables. `submit_calculation` returns a run ID at once, and with `wait` the result of a calculation that finishes within it; with `sweep` it computes every combination of input values in parallel, which `sweep_results` tabulates with the best point, and with `optimize` it searches inputs within bounds for the best result inside one process ([parameter studies](skills/optical-computation/references/studies.md)); `submit_workflow` adds dependent or parallel steps; a later step receives values, or the locations of files, from earlier ones. `data.save` writes arrays with their units, axes and conventions, so the next program and `read_array` know what the numbers mean ([data](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)).
+4. **Run a program.** Choose from [48 programs across 32 software libraries](skills/optical-computation/references/programs.md), inspect its declared inputs and physics, or write a program using the full native API. Python `source` and native-language `script` programs receive inputs and an output folder and return `RESULT`. `submit_calculation` supports parallel sweeps and bounded optimization; `submit_workflow` connects dependent or parallel steps. [Parameter studies](skills/optical-computation/references/studies.md) and [described arrays](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs) explain how inputs, units, coordinates and files pass between programs.
 5. **Continue and read results.** `run_status` waits up to 25 s per call; other requests on the same connection are answered meanwhile. Runs survive disconnection and are found again with `list_runs`. `result_files`, `read_result` and `read_array` return file listings, byte ranges and parts of NPY/NPZ arrays; `read_array` with `image` returns the selection drawn as a PNG, lines or a map with its coordinates, units and color bar. `resume_run` reruns unfinished steps and keeps completed ones.
 6. **Collect episodes.** `sample_episodes` runs Gymnasium-style environments in parallel solver workers and stores seeds, actions, observations and rewards for learning; an interrupted or extended collection continues without repeating completed episodes ([episodes](docs/LEARNING.md)).
 
-The same operations are available as `optics-photonics` commands, a Python API and a TypeScript client. Every packaged program has been run against its analytic or second-solver reference, those of Meep and MPB in their conda-forge environment; the four commercial session adapters have run against SDK doubles, not yet against licensed solvers.
+The same operations are available through the command line, Python and TypeScript. A catalogue route describes an interface; local bindings determine what can run on a particular host. Software licenses, platform support and service access remain those of the selected software. [Release notes](docs/RELEASE.md) record the validation performed for each release.
 
 ## Execution
 
@@ -66,7 +66,7 @@ A Rust executor owns solver processes, cancellation and deadlines. Python connec
 
 ## Catalogue
 
-- **29 commercial**, **65 open-source** and **3 free-with-restrictions** tools. Free clients, paid solvers, academic licenses and external PDKs are distinguished.
+- **29 commercial**, **67 open-source** and **3 free / restricted** entries. Free clients, paid solvers, academic licenses and external PDKs are distinguished.
 - Each entry records physical methods, use cases, programming interfaces, compute environment, license, application basis, limitations and primary sources. Reviewed **2026-10-20**.
 - API, CLI and macros are listed separately from **official / community / unverified** MCP servers and agent Skills. A documentation MCP is not treated as a solver interface.
 - Stable `id` values are shared by both languages. Agents start at [`llms.txt`](llms.txt) and read [`llms-full.txt`](llms-full.txt) or the JSON.

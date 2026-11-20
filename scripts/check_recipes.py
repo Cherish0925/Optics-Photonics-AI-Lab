@@ -5,7 +5,8 @@
 Without tools, every catalogue tool whose recipe installs on this platform is
 prepared. With --programs each packaged program of a prepared tool then runs
 with its default inputs in that environment, through the worker, and its
-checks are reported. Each line of output is JSON: tool, state, seconds,
+checks are reported; an executable installed from a recipe runs a short
+program in its own language. Each line of output is JSON: tool, state, seconds,
 installer and versions, or the error, and the programs. The exit code is the
 number of tools that failed to install or to run a program.
 """
@@ -22,26 +23,53 @@ from optics_photonics import catalogue, environments, execution, programs  # noq
 
 
 def candidates():
+    here = environments.here()
+    julia = environments.julia() or here in (environments.recipe('julia')['platforms'] or [here])
     for tool in sorted(catalogue.connections()):
         item = environments.recipe(tool)
-        if item and (not item['platforms'] or environments.here() in item['platforms']):
+        # Julia packages install where a Julia exists or conda-forge has one.
+        if item and (not item['platforms'] or here in item['platforms']) and (julia or not item['julia']):
             yield tool
+
+
+# A short program in the language of each executable a recipe installs without a packaged program, run through the worker.
+SCRIPTS = {
+    'octave': "x = [1 2; 3 4] \\ [5; 6]; RESULT = struct('version', OCTAVE_VERSION, 'solution', x');",
+    'julia': 'using LinearAlgebra\nRESULT = Dict("version" => string(VERSION), "solution" => [1.0 2.0; 3.0 4.0] \\ [5.0, 6.0])',
+    'luna': 'using Luna\nRESULT = Dict("version" => string(pkgversion(Luna)))',
+}
 
 
 def check(tool, home, run_programs=False):
     started = time.time()
     try:
         record = environments.prepare(tool, path=home)
-        result = {'tool': tool, 'state': 'installed', 'seconds': round(time.time() - started),
-                  'installer': record['installer'], 'python': environments.probe(tool, record['python'], home)['python_version'],
-                  'versions': record['versions']}
+        result = {'tool': tool, 'state': 'installed', 'seconds': round(time.time() - started), 'installer': record['installer']}
+        if record['kind'] == 'executable':
+            result.update(executable=record['executable'], language=record['language'], packages=record['packages'])
+        else:
+            result.update(python=environments.probe(tool, record['python'], home)['python_version'], versions=record['versions'])
     except Exception as error:  # report every failure and continue with the other tools
         return {'tool': tool, 'state': 'failed', 'seconds': round(time.time() - started), 'error': str(error)[-800:]}
+    if run_programs and tool in SCRIPTS:
+        result['programs'] = [script(tool, home)]
+        if result['programs'][0]['state'] == 'failed':
+            result['state'] = 'failed'
     if run_programs and programs.catalog().get(tool):
         result['programs'] = [program(tool, name, home) for name in programs.catalog()[tool]]
         if any(item['state'] == 'failed' for item in result['programs']):
             result['state'] = 'failed'
     return result
+
+
+def script(tool, home):
+    """Run the short program of an installed executable in its own language."""
+    started = time.time()
+    try:
+        record = execution.run(tool, {'script': SCRIPTS[tool], 'inputs': {}}, path=home, timeout=1800)['record']
+        return {'program': 'script', 'state': 'succeeded', 'seconds': round(time.time() - started, 1), 'result': record['result']}
+    except Exception as error:
+        return {'program': 'script', 'state': 'failed', 'seconds': round(time.time() - started, 1), 'error': str(error)[-800:]}
 
 
 def program(tool, name, home):

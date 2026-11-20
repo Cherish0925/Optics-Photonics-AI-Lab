@@ -39,7 +39,8 @@ class DeclarationCase(unittest.TestCase):
     def test_every_program_declares_its_physics_inputs_and_results(self):
         connections = catalogue.connections()
         for tool, items in programs.catalog().items():
-            self.assertEqual(connections[tool]['kind'], 'python', tool)
+            # A program runs in its tool's Python environment, or drives the installed executable it is bound to.
+            self.assertTrue(connections[tool]['kind'] == 'python' or any(route['route'] == 'executable' for route in connections[tool]['routes']), tool)
             for name, spec in items.items():
                 with self.subTest(program=tool + '/' + name):
                     self.assertTrue(spec['title'].endswith('.'))
@@ -49,9 +50,14 @@ class DeclarationCase(unittest.TestCase):
                         self.assertTrue(about.strip(), key)
                         json.dumps(default, allow_nan=False)
                     source = programs.source(tool, name)
+                    self.assertIn('RESULT = ', source)
+                    if spec.get('language'):
+                        # A program in the software's own language: that software has an executable route in the language.
+                        route = next(r for r in connections[tool]['routes'] if r['route'] == 'executable')
+                        self.assertEqual(route['language'], spec['language'])
+                        continue
                     ast.parse(source)
                     self.assertIn('parameters(PROGRAM, INPUTS)', source)
-                    self.assertIn('RESULT = ', source)
 
     def test_the_programs_reference_lists_every_program(self):
         import re
@@ -73,8 +79,14 @@ class DeclarationCase(unittest.TestCase):
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
-        one = environments.details('scipy', program='nlse')
-        self.assertTrue(one['source'].startswith('"""Pulse propagation'))
+        from optics_photonics import mcp
+        one = mcp.invoke('software_details', {'tool': 'scipy', 'program': 'nlse'})
+        self.assertNotIn('source', one)   # the text comes on request
+        self.assertIn('source=true', one['run'])
+        source = environments.details('scipy', program='nlse')['source']  # retain the Python interface
+        self.assertTrue(source.startswith('"""Pulse propagation'))
+        self.assertEqual(mcp.invoke('software_details', {'tool': 'scipy', 'program': 'nlse', 'source': True})['source'], source)
+        self.assertNotIn('source', environments.details('scipy', program='nlse', source=False))
         self.assertEqual((one['about'], one['inputs']['length_km']['default']),
                          (programs.catalog()['scipy']['nlse']['about'], nlse['inputs']['length_km']['default']))
         with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: coupler, fiber_modes, fit_gaussian'):
@@ -107,8 +119,9 @@ class ProgramPhysicsCase(unittest.TestCase):
 
     def test_every_program_runs_with_its_defaults(self):
         for tool, items in programs.catalog().items():
-            if not all(map(installed, catalogue.connections()[tool]['modules'])):
-                continue  # Meep and MPB come from conda-forge, outside this environment
+            record = catalogue.connections()[tool]
+            if record['kind'] != 'python' or not all(map(installed, record['modules'])):
+                continue  # Meep and MPB come from conda-forge, outside this environment; ADDA's program drives its executable
             for name in items:
                 with self.subTest(program=tool + '/' + name):
                     result = self.run_program(tool, name)

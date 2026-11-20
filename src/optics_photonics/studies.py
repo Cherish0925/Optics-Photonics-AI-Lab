@@ -143,7 +143,7 @@ def grouped(points, size):
 
 
 def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product', optimize=None, chunk=None, name='Optical research',
-           request_id=None, run_id=None, timeout=None, requirements=None, wait=0, path=None, cancel=None):
+           request_id=None, run_id=None, timeout=None, requirements=None, wait=0, path=None, cancel=None, *, script=''):
     """One calculation, or a sweep of it, as steps of a new run or appended to run_id.
 
     wait (up to 25 seconds) returns the run's state after that time or on completion,
@@ -153,7 +153,7 @@ def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product
     if not isinstance(wait, (int, float)) or isinstance(wait, bool) or not 0 <= wait <= 25:
         raise ValueError('wait must be between 0 and 25 seconds')
     step = {'tool': tool, 'inputs': {} if inputs is None else inputs}
-    for key, value in (('action', action), ('source', source), ('optimize', optimize), ('timeout', timeout),
+    for key, value in (('action', action), ('source', source), ('script', script), ('optimize', optimize), ('timeout', timeout),
                        ('requirements', requirements)):
         if value:
             step[key] = value
@@ -164,7 +164,7 @@ def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product
             number += 1
         steps = [{'id': 'calculate' if number == 1 else f'calculate-{number}', **step}]
     else:
-        spec = programs.catalog().get(tool, {}).get(action) if action and not source else None
+        spec = programs.catalog().get(tool, {}).get(action) if action and not source and not script else None
         # A group step point-0001-0094 holds points 1 to 94.
         used = [int(found[2] or found[1]) for found in map(re.compile(r'point-(\d+)(?:-(\d+))?$').match, existing) if found]
         points = expand(step, sweep, pairing, max(used, default=0) + 1, programs.inputs(spec) if spec else None)
@@ -175,7 +175,7 @@ def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product
         size = 1 if configuration.get('kind') == 'command' else chunk or max(1, math.ceil(len(points) / (4 * jobs.resources(path=path)['cpu'])))
         steps = grouped(points, size)
     # The call, not its numbered steps, identifies a retried request.
-    call = {'tool': tool, 'inputs': step['inputs'], 'action': action, 'source': source, 'sweep': sweep, 'pairing': pairing,
+    call = {'tool': tool, 'inputs': step['inputs'], 'action': action, 'source': source, **({'script': script} if script else {}), 'sweep': sweep, 'pairing': pairing,
             'optimize': optimize, 'chunk': chunk, 'timeout': timeout, 'requirements': requirements, 'name': name, 'run_id': run_id}
     submitted = jobs.submit(steps, name=name, request_id=request_id, run_id=run_id, path=path, _payload={'calculation': call})
     if not wait:

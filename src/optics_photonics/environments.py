@@ -137,24 +137,32 @@ def software(tool, language='en', path=None):
     return catalogue_software(tool, language)
 
 
-REPEATED = ('interface', 'sources', 'upstream', 'native_program')
+REPEATED = ('interface', 'sources', 'upstream', 'native_program', 'routes')
 
 
-def details(tool, language='en', path=None, program=None):
+def details(tool, language='en', path=None, program=None, source=True):
     """One software entry with its connection and what it can run; each fact appears once.
 
-    With program, that packaged program's physics, inputs, results, checks and source, to read or adapt.
+    With program, that packaged program's physics, inputs, results and checks. source=False omits its text;
+    Python callers retain the earlier source-including default, while MCP requests source only when needed.
     """
     from . import operations, programs
     item = software(tool, language, path)
     if program is not None:
-        return {'tool': tool, 'program': program, **{k: v for k, v in programs.details(tool, program).items() if k != 'name'},
-                'source': programs.source(tool, program),
-                'adapt': 'Submit an edited copy as source; parameters(PROGRAM, INPUTS) checks the inputs it declares.'}
+        spec = programs.details(tool, program)
+        how = 'script' if spec.get('language') else 'source'
+        reply = {'tool': tool, 'program': program, **{k: v for k, v in spec.items() if k != 'name'}}
+        if source:
+            return {**reply, 'source': programs.source(tool, program),
+                    'adapt': f'Submit an edited copy as {how}.' + (' Supply the declared inputs; scripts do not receive packaged defaults.' if spec.get('language') else
+                                                                  ' parameters(PROGRAM, INPUTS) checks the inputs it declares.')}
+        return {**reply, 'run': f'submit_calculation(tool, action="{program}", inputs={{...}}) replaces defaults; '
+                                f'source=true here returns the program text, to adapt and submit as {how}.'}
     if item.get('origin') != 'local':
         # connections.json repeats these catalogue fields so that the file can be read on its own.
         item = {**item, 'connection': {key: value for key, value in item['connection'].items() if key not in REPEATED}}
-    return {**item, 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
+    from . import routes
+    return {**item, 'routes': routes.routes(tool, path), 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
 
 
 def registered(path=None):
@@ -178,14 +186,22 @@ print('\\nOPTICS-INSPECT '+json.dumps({'python':sys.executable,'python_version':
 """
 
 
-def inspect(python, modules, distributions, timeout=60):
+def search_path(paths, env=None):
+    """Process variables that put module folders shipped with an installation first on the Python path."""
+    env = dict(os.environ if env is None else env)
+    if paths:
+        env['PYTHONPATH'] = os.pathsep.join([*paths, *filter(None, [env.get('PYTHONPATH')])])
+    return env
+
+
+def inspect(python, modules, distributions, timeout=60, paths=None):
     """Which modules an interpreter finds and which distribution versions it has, in one subprocess."""
     # Resolving a venv's symlink would select the base interpreter and lose its packages.
     interpreter = os.path.abspath(os.path.expanduser(str(python or sys.executable)))
     # No child reads the server's stdin: on Windows a child that inherits the MCP pipe waits
     # at start-up for the server's pending read of it, which ends only with the next request.
     result = subprocess.run([interpreter, '-c', INSPECT, json.dumps(modules), json.dumps(distributions)],
-                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout)
+                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout, env=search_path(paths))
     if result.returncode:
         raise RuntimeError(result.stderr.strip()[-2000:] or 'Could not inspect this interpreter')
     # Packages may print while they load or exit (Meep reports its run time); the reply carries a marker.
@@ -193,9 +209,16 @@ def inspect(python, modules, distributions, timeout=60):
     return json.loads(line[len('OPTICS-INSPECT '):])
 
 
-def probe(tool, python=None, path=None):
+def modules(tool, path=None):
+    """Modules that show a tool is importable: its recipe's, or those of its Python or service route."""
     record = software(tool, path=path)['connection']
-    status = inspect(python, record.get('modules', []), record.get('distributions', []))
+    return record.get('modules') or next((route['modules'] for route in record.get('routes', [])
+                                          if route['route'] in ('python', 'service') and route.get('modules')), [])
+
+
+def probe(tool, python=None, path=None, paths=None):
+    record = software(tool, path=path)['connection']
+    status = inspect(python, modules(tool, path), record.get('distributions', []), paths=paths)
     status.update(tool=tool, available=all(status['modules'].values()))
     return status
 
@@ -217,13 +240,22 @@ def settings(threads=1, concurrency=1, cwd=None, requirements=None, env=None):
 
 
 def bind(tool=None, *, python=None, command=None, path=None, threads=1, concurrency=1, cwd=None,
-         requirements=None, env=None):
-    """Connect a tool to an interpreter or executable; without a tool, every tool the interpreter provides."""
+         requirements=None, env=None, paths=None):
+    """Connect a tool to an interpreter or executable; without a tool, every tool the interpreter provides.
+
+    paths lists folders, such as a module folder inside an installation, put first on the Python path.
+    """
     chosen = settings(threads, concurrency, cwd, requirements, env)
     if tool is None:
-        if command or not python:
+        if command or not python or paths:
             raise ValueError('Name the tool, or give python alone to bind every tool that interpreter provides')
         return bind_every(python, chosen, path)
+    if paths is not None:
+        if not isinstance(paths, list) or any(not isinstance(p, str) or not p for p in paths):
+            raise ValueError('paths is an array of folders')
+        paths = [str(Path(p).expanduser().resolve()) for p in paths]
+        if any(not Path(p).is_dir() for p in paths):
+            raise ValueError('A folder in paths does not exist')
     item = software(tool, path=path)
     if command:
         if not isinstance(command, list) or not all(isinstance(v, str) and v for v in command):
@@ -233,14 +265,16 @@ def bind(tool=None, *, python=None, command=None, path=None, threads=1, concurre
             raise ValueError('Executable was not found: ' + command[0])
         connection = {'kind': 'command', 'command': [executable, *command[1:]]}
     else:
-        if item['connection']['kind'] != 'python':
-            raise ValueError('Provide the native executable and arguments from this software’s documentation')
-        inspected = probe(tool, python, path)
+        if item['connection']['kind'] != 'python' and not modules(tool, path):
+            raise ValueError('This software has no Python module; bind_native_software connects its executable '
+                             'or automation server, and bind_environment(command=...) an executable of your own')
+        inspected = probe(tool, python, path, paths)
         if not inspected['available']:
             missing = [k for k, v in inspected['modules'].items() if not v]
             raise ValueError('Missing modules in the selected interpreter: ' + ', '.join(missing) +
-                             ('. prepare_environment installs this tool' if recipe(tool, path) else ''))
-        connection = {'kind': 'python', 'python': inspected['python'], 'versions': inspected['versions']}
+                             ('. prepare_environment installs this tool' if recipe(tool, path) else
+                              '. A module that ships with the installation needs its folder in paths (sdk_path)'))
+        connection = {'kind': 'python', 'python': inspected['python'], 'versions': inspected['versions'], **({'paths': paths} if paths else {})}
     connection.update(chosen)
     if item.get('origin') == 'local':
         connection['definition'] = item
@@ -324,10 +358,11 @@ def recipe(tool, path=None):
     environment it shares (MPB comes with Meep).
     """
     record = software(tool, path=path)['connection']
-    if not record.get('pip') and not record.get('conda'):
+    if not record.get('pip') and not record.get('conda') and not record.get('julia'):
         return None
     return {'pip': list(record.get('pip', [])), 'conda': list(record.get('conda', [])), 'python': record.get('python'),
-            'platforms': record.get('platforms'), 'environment': record.get('environment_of') or tool}
+            'platforms': record.get('platforms'), 'environment': record.get('environment_of') or tool,
+            'julia': list(record.get('julia', [])), 'executable': record.get('executable')}
 
 
 def installable(tool, path=None):
@@ -335,12 +370,28 @@ def installable(tool, path=None):
     item = recipe(tool, path)
     if item is None:
         note = software(tool, path=path)['connection'].get('installation_note')
-        raise ValueError(tool + ' uses its own installer' + (' (' + note.rstrip('.') + ')' if note else '') +
-                         '. Install it, then bind_environment with its interpreter')
+        from . import routes
+        kinds = {route['route'] for route in routes.routes(tool, path)}
+        then = ('bind_environment with its interpreter' if 'python' in kinds and not kinds & {'executable', 'automation', 'session'} else
+                'discover_native_software and bind_native_software' if kinds & {'executable', 'automation', 'session', 'python', 'service'} else
+                'run its own scripts in it; programs here prepare their input files and read the files it exports')
+        raise ValueError(tool + ' uses its own installer' + (' (' + note.rstrip('.') + ')' if note else '') + '. Install it, then ' + then)
     if item['platforms'] and here() not in item['platforms']:
-        raise ValueError(f"{tool} installs on {', '.join(item['platforms'])}, not on {here()}. "
-                         'Use a computer with one of those platforms, for example through WSL or SSH')
+        note = software(tool, path=path)['connection'].get('installation_note')
+        raise ValueError(f"{tool} installs on {', '.join(item['platforms'])}, not on {here()}. " + (note + ' ' if note else '') +
+                         'Or use a computer with one of those platforms, for example through WSL or SSH')
+    if item['julia'] and not julia(path):
+        installable('julia', path)   # says how to install Julia here when conda-forge has none for this platform
     return item
+
+
+def julia(path=None):
+    """A Julia executable: the one bound to the julia tool, on PATH, or installed by juliaup."""
+    bound = read(path)['tools'].get('julia')
+    if bound and bound.get('kind') == 'executable' and Path(bound['executable']).is_file():
+        return bound['executable']
+    found = shutil.which('julia') or shutil.which('julia', path=str(Path.home() / '.juliaup' / 'bin'))
+    return found
 
 
 def interpreter(prefix, conda=False):
@@ -380,7 +431,19 @@ def conda(path=None):
 
 
 def install(command, conda_root=None):
-    """Run an installer; its output goes to stderr so that stdout stays a JSON reply."""
+    """Run an installer; its output goes to stderr so that stdout stays a JSON reply.
+
+    conda installers share one package cache, which two processes extracting into it at once can
+    leave failing on Windows, so they run one at a time.
+    """
+    if conda_root is not None:
+        Path(conda_root).parent.mkdir(parents=True, exist_ok=True)
+        with locked(Path(conda_root).parent / 'conda-installer.lock'):
+            return _install(command, conda_root)
+    return _install(command, conda_root)
+
+
+def _install(command, conda_root=None):
     env = dict(os.environ)
     if conda_root and 'MAMBA_ROOT_PREFIX' not in env:
         env['MAMBA_ROOT_PREFIX'] = str(conda_root)
@@ -399,8 +462,9 @@ def create(prefix, item, python, path):
         # Without a stated range, a Python with broad conda-forge coverage rather than the newest release.
         # A conda match spec reads ==3.9 as exactly 3.9; =3.9 accepts every 3.9 release.
         version = re.sub(r'^==', '=', item['python'] or '=3.12')
+        interpreter = [] if item.get('executable') else ['python' + version]
         install([installer, 'create', '-y', '-q', '-p', str(prefix), '-c', 'conda-forge', '--override-channels',
-                 'python' + version, *item['conda']], home(path) / 'conda')
+                 *interpreter, *item['conda']], home(path) / 'conda')
         return 'conda'
     current = platform.python_version()
     base = str(Path(python).expanduser()) if python else None
@@ -442,9 +506,11 @@ def prepare(tool, *, path=None, python=None, packages=None):
         raise ValueError('packages must be an array of requirement strings, such as scipy or h5py>=3')
     configured = read(path)['tools'].get(tool)
     if recipe(tool, path) is None and packages and configured and configured.get('managed'):
-        item = {'pip': [], 'conda': [], 'python': None, 'platforms': None, 'environment': configured['managed']}
+        item = {'pip': [], 'conda': [], 'python': None, 'platforms': None, 'environment': configured['managed'], 'julia': [], 'executable': None}
     else:
         item = installable(tool, path)
+    if item['julia'] or item['executable']:
+        return prepare_executable(tool, item, configured, packages, path=path)
     name = item['environment']
     folder = home(path) / 'environments'
     folder.mkdir(parents=True, exist_ok=True)
@@ -487,18 +553,74 @@ def prepare(tool, *, path=None, python=None, packages=None):
     return {'tool': tool, **managed}
 
 
+def prepare_executable(tool, item, configured, packages=(), path=None):
+    """An executable from conda-forge, or a Julia project environment with the recipe's packages; bound by its route.
+
+    packages adds Julia packages to a Julia project, or conda-forge packages to an executable's environment.
+    """
+    from . import routes
+    from .jobs import cores
+    folder = home(path) / 'environments'
+    folder.mkdir(parents=True, exist_ok=True)
+    prefix = folder / item['environment']
+    kept = {key: configured[key] for key in ('threads', 'concurrency', 'cwd', 'requirements', 'env')
+            if configured and configured.get(key) is not None} if configured else {'concurrency': cores()}
+    with locked(folder / (item['environment'] + '.lock')):
+        if item['julia']:
+            executable = julia(path)
+            if not executable:
+                executable = prepare('julia', path=path)['executable']
+            prefix.mkdir(exist_ok=True)
+            names = ', '.join(json.dumps(name) for name in [*item['julia'], *packages])
+            # Pkg resolves and precompiles once; a prepared project only gains missing packages. Projects share
+            # the Julia depot, so one installation runs at a time.
+            with locked(folder / 'julia-packages.lock'):
+                install([executable, '--startup-file=no', '--project=' + str(prefix), '-e',
+                         f'import Pkg; Pkg.add([{names}]); Pkg.precompile()'])
+            connection = routes.bind(tool, route='executable', executable=executable, project=str(prefix), path=path, **kept)
+            installer = 'julia'
+        else:
+            spec = item['executable']
+            executable = prefix / spec['path']
+            if not executable.exists():
+                if prefix.exists():
+                    shutil.rmtree(prefix)
+                create(prefix, item, None, path)
+            if packages:
+                install([conda(path), 'install', '-y', '-q', '-p', str(prefix), '-c', 'conda-forge', '--override-channels', *packages],
+                        home(path) / 'conda')
+            variables = {key: value.replace('{prefix}', str(prefix)) for key, value in spec.get('variables', {}).items()}
+            kept['env'] = {**variables, **kept.get('env', {})}
+            connection = routes.bind(tool, route='executable', executable=str(executable), path=path, **kept)
+            installer = 'conda'
+        earlier = (configured or {}).get('packages', [])
+        managed = {**{k: v for k, v in connection.items() if k != 'tool'}, 'managed': item['environment'], 'installer': installer,
+                   'packages': sorted(set(earlier) | set(item['julia'] or item['conda']) | set(packages))}
+        update('tools', tool, managed, path)
+    return {'tool': tool, **managed}
+
+
+def state(tool, value, path=None):
+    """Whether a connection's interpreter, executable or automation server is there now."""
+    if value['kind'] == 'python':
+        return probe(tool, value['python'], path, value.get('paths'))
+    if value['kind'] == 'native':
+        from . import native
+        return native.probe(value)
+    if value['kind'] == 'executable':
+        return {'available': Path(value['executable']).is_file(), 'executable': value['executable']}
+    if value['kind'] == 'automation':
+        from . import routes
+        return {'available': os.name == 'nt' and routes.registered(value['progid']), 'progid': value['progid']}
+    return {'available': bool(shutil.which(value['command'][0]))}
+
+
 def available(path=None):
     entries = []
     for tool, value in read(path)['tools'].items():
         item = {'id': tool, **value}
         try:
-            if value['kind'] == 'python':
-                item['environment'] = probe(tool, value['python'], path)
-            elif value['kind'] == 'native':
-                from . import native
-                item['environment'] = native.probe(value)
-            else:
-                item['environment'] = {'available': bool(shutil.which(value['command'][0]))}
+            item['environment'] = state(tool, value, path)
         except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
             item['environment'] = {'available': False, 'error': str(error)}
         entries.append(item)
@@ -513,15 +635,11 @@ def page(tool=None, offset=0, limit=20, refresh=False, path=None):
     items = []
     for key in keys[offset:offset+limit]:
         connection = configured[key]
-        row = {'id':key, **{k:v for k,v in connection.items() if k in ('kind','threads','concurrency','requirements','versions','managed','packages')}}
+        row = {'id':key, **{k:v for k,v in connection.items() if k in ('kind','threads','concurrency','requirements','versions','managed','packages','executable','language','progid')}}
         row['state'] = 'configured'
         if refresh:
             try:
-                if connection['kind'] == 'python': row['environment'] = probe(key, connection['python'], path)
-                elif connection['kind'] == 'native':
-                    from . import native
-                    row['environment'] = native.probe(connection)
-                else: row['environment'] = {'available':bool(shutil.which(connection['command'][0]))}
+                row['environment'] = state(key, connection, path)
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
                 row['environment'] = {'available':False, 'error':str(error)}
         items.append(row)

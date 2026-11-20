@@ -2,7 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { open, rm } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 
-export type Step = { id:string; tool:string; source?:string; action?:string; inputs?:Record<string,unknown>;
+export type Step = { id:string; tool:string; source?:string; script?:string; action?:string; inputs?:Record<string,unknown>;
   after?:string[]; bindings?:Record<string,{step:string;path?:(string|number)[];file?:string}>; timeout?:number; requirements?:Record<string,number>;
   optimize?:Record<string,unknown>; point?:Record<string,unknown>; points?:{id:string;point:Record<string,unknown>;inputs:Record<string,unknown>}[] };
 export type Submission = {run_id:string;request_id:string;state?:string;counts?:Record<string,number>;result?:unknown;files?:string[];output?:string;error?:string};
@@ -45,7 +45,7 @@ export class OpticsLab {
   static async connect(options:Options={}) {
     const client=new OpticsLab(options);
     try {
-      await client.request('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'optics-typescript',version:'0.8.0'}});
+      await client.request('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'optics-typescript',version:'0.9.0'}});
       client.notify('notifications/initialized');
       return client;
     } catch(error) { client.close(); throw error; }
@@ -94,8 +94,12 @@ export class OpticsLab {
   environments(options:Record<string,unknown>={}) {return this.call('environments',options);}
   resources(cpu?:number,pools?:Record<string,number>) {return this.call('compute_resources',{...(cpu===undefined?{}:{cpu}),...(pools===undefined?{}:{pools})});}
   submit(steps:Step[],options:{name?:string;request_id?:string;run_id?:string}={}) {return this.call<Submission>('submit_workflow',{steps,...options});}
-  /** One calculation: a packaged program (action) or source; sweep runs every combination of inputs as parallel steps, optimize searches inputs inside one process. */
-  calculate(tool:string,options:{action?:string;source?:string;inputs?:Record<string,unknown>;sweep?:Record<string,unknown>;pairing?:'product'|'zip';chunk?:number;optimize?:Record<string,unknown>;run_id?:string;name?:string;request_id?:string;timeout?:number;wait?:number}={}) {return this.call<Submission>('submit_calculation',{tool,...options});}
+  /** Installed software of every route (executables, session SDKs, modules inside installations, Windows automation servers, service credentials), each with its binding arguments. */
+  discover(options:{tool?:string;roots?:string[]}={}) {return this.call('discover_native_software',options);}
+  /** Connect installed software by a route: session, executable (then script runs its language), automation or python. */
+  bindNative(tool:string,options:{route?:'session'|'executable'|'automation'|'python';executable?:string;python?:string;sdk_path?:string;progid?:string;project?:string;language?:string;options?:Record<string,unknown>;threads?:number;concurrency?:number;requirements?:Record<string,number>;env?:Record<string,string>}={}) {return this.call('bind_native_software',{tool,...options});}
+  /** One calculation: a packaged program (action), a Python program (source) or a program in the bound software's own language (script); sweep runs every combination of inputs as parallel steps, optimize searches inputs inside one process. */
+  calculate(tool:string,options:{action?:string;source?:string;script?:string;inputs?:Record<string,unknown>;sweep?:Record<string,unknown>;pairing?:'product'|'zip';chunk?:number;optimize?:Record<string,unknown>;run_id?:string;name?:string;request_id?:string;timeout?:number;wait?:number}={}) {return this.call<Submission>('submit_calculation',{tool,...options});}
   /** Swept inputs, state and chosen RESULT values (dotted paths) of every point of a sweep, with the best point. */
   sweep(run_id:string,options:{values?:string[];minimize?:string;maximize?:string;save?:boolean;offset?:number;limit?:number}={}) {return this.call<SweepTable>('sweep_results',{run_id,...options});}
   status(run_id:string,options:{wait?:number;offset?:number;limit?:number;include_results?:boolean;signal?:AbortSignal}={}) {

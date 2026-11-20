@@ -49,7 +49,24 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "automation",
+        "progid_pattern": "(?i)^codev",
+        "about": "The CODE V API is used from MATLAB, Python and Excel VBA; its automation names are read from the Windows registry.",
+        "sources": [
+          "https://synopsys.com/optical-solutions/support/training/code-v-macros-and-com.html"
+        ]
+      },
+      {
+        "route": "inside",
+        "language": "Macro-PLUS",
+        "sources": [
+          "https://synopsys.com/optical-solutions/support/training/code-v-macros-and-com.html"
+        ]
+      }
+    ]
   },
   "lighttools": {
     "kind": "native",
@@ -75,7 +92,17 @@
     },
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
-    "installation_note": "Bind a program that uses the vendor API on its supported operating system; installation and licensing are provided by the vendor."
+    "installation_note": "Bind a program that uses the vendor API on its supported operating system; installation and licensing are provided by the vendor.",
+    "routes": [
+      {
+        "route": "automation",
+        "progid_pattern": "(?i)^(lighttools|ltcom)",
+        "about": "LightTools exposes the LTAPI automation interface (type library \"LightTools 4.0 Type Library\"); its automation names are read from the Windows registry.",
+        "sources": [
+          "https://fellobos.github.io/ltapy/usage/enhanced.html"
+        ]
+      }
+    ]
   },
   "fred": {
     "kind": "native",
@@ -101,7 +128,27 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "automation",
+        "progids": [
+          "FRED.Application",
+          "FRED.Document"
+        ],
+        "about": "FRED is an automation server: FRED.Application opens documents and runs their scripts; a running FRED is reused.",
+        "sources": [
+          "https://help.photonengr.com/Topics/AutomationFundamentals.htm"
+        ]
+      },
+      {
+        "route": "inside",
+        "language": "FRED Basic scripts (.frs)",
+        "sources": [
+          "https://help.photonengr.com/Topics/Tutorial_Scripting.htm"
+        ]
+      }
+    ]
   },
   "tracepro": {
     "kind": "native",
@@ -126,7 +173,17 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "Scheme macros (.scm)",
+        "sources": [
+          "https://lambdares.com/kb/tracepro-macros-getting-started",
+          "https://lambdares.com/hubfs/TracePro_Users_Manual_2026.pdf"
+        ]
+      }
+    ]
   },
   "oslo": {
     "kind": "native",
@@ -152,7 +209,16 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "CCL",
+        "sources": [
+          "https://lambdares.com/hubfs/Support/support/oslo/oslo_releases/OSLOProgramReference.pdf"
+        ]
+      }
+    ]
   },
   "asap": {
     "kind": "native",
@@ -176,7 +242,16 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "ASAP scripts, with integrated Python and VBScript",
+        "sources": [
+          "https://breault.com/asap/"
+        ]
+      }
+    ]
   },
   "virtuallab": {
     "kind": "native",
@@ -201,19 +276,35 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "programmable components and scripts of its Programming API",
+        "sources": [
+          "https://programmingreference.lighttrans.com/2026.2/api/VirtualLab.Programming.html"
+        ]
+      }
+    ]
   },
   "speos": {
-    "kind": "native",
-    "modules": [],
-    "pip": [],
-    "distributions": [],
+    "kind": "python",
+    "modules": [
+      "ansys.speos.core"
+    ],
+    "pip": [
+      "ansys-speos-core==0.10.0"
+    ],
+    "distributions": [
+      "ansys-speos-core"
+    ],
     "native_program": true,
     "installation": "https://optics.ansys.com/hc/en-us/articles/24752772596371-Optical-Automation-library-introduction",
     "interface": "Speos scripts; Ansys optical-automation supplies public Python automation and interoperability code.",
     "sources": [
       "https://optics.ansys.com/hc/en-us/articles/24752772596371-Optical-Automation-library-introduction",
-      "https://github.com/ansys/optical-automation"
+      "https://github.com/ansys/optical-automation",
+      "https://pypi.org/project/ansys-speos-core/"
     ],
     "upstream": {
       "mcp": {
@@ -226,7 +317,26 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "service",
+        "modules": [
+          "ansys.speos.core"
+        ],
+        "pip": [
+          "ansys-speos-core"
+        ],
+        "server": "SpeosRPC server of the Speos installation (SpeosRPC_Server.exe on Windows, SpeosRPC_Server.x on Linux), with a license.",
+        "about": "PySpeos is a gRPC client of the Speos RPC server.",
+        "sources": [
+          "https://pypi.org/project/ansys-speos-core/",
+          "https://github.com/ansys/pyspeos"
+        ]
+      }
+    ],
+    "python": ">=3.10,<3.15",
+    "installation_note": "The client installs from its recipe; calculations need the SpeosRPC server of a licensed Speos installation."
   },
   "lumerical": {
     "kind": "python",
@@ -257,7 +367,43 @@
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
     "installation_note": "Use discover and bind-native for the installed SDK. Each task owns a session and saves its working project under its output directory. Adapter lifecycle checks use SDK doubles; licensed solver execution remains workstation-dependent.",
-    "session_adapter": "lumerical"
+    "session_adapter": "lumerical",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "lsf",
+        "executables": {
+          "windows": [
+            "fdtd-solutions.exe"
+          ],
+          "linux": [
+            "fdtd-solutions"
+          ]
+        },
+        "siblings": {
+          "windows": [
+            "fdtd-engine-msmpi.exe"
+          ],
+          "linux": [
+            "fdtd-engine"
+          ]
+        },
+        "locations": {
+          "windows": [
+            "{ProgramFiles}/Lumerical/*/bin"
+          ],
+          "linux": [
+            "/opt/lumerical/*/bin"
+          ]
+        },
+        "about": "fdtd-solutions -nw -trust-script -exit -run script.lsf runs a script without the window; fdtd-engine (fdtd-engine-msmpi on Windows) solves a saved .fsp file.",
+        "sources": [
+          "https://optics.ansys.com/hc/en-us/articles/52492316567187-CommandLine-Win-Lin-DesignEnvironmentOptions",
+          "https://optics.ansys.com/hc/en-us/articles/360024974033-Running-simulations-using-terminal-on-Linux",
+          "https://optics.ansys.com/hc/en-us/articles/360024812334-Running-simulations-using-the-Windows-command-prompt"
+        ]
+      }
+    ]
   },
   "comsol": {
     "kind": "native",
@@ -286,7 +432,40 @@
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
     "session_adapter": "comsol",
-    "installation_note": "Use discover and bind-native for the installed SDK. Each task owns a session and saves its working project under its output directory. Adapter lifecycle checks use SDK doubles; licensed solver execution remains workstation-dependent."
+    "installation_note": "Use discover and bind-native for the installed SDK. Each task owns a session and saves its working project under its output directory. Adapter lifecycle checks use SDK doubles; licensed solver execution remains workstation-dependent.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": null,
+        "executables": {
+          "windows": [
+            "comsolbatch.exe"
+          ],
+          "linux": [
+            "comsol"
+          ],
+          "macos": [
+            "comsol"
+          ]
+        },
+        "locations": {
+          "windows": [
+            "{ProgramFiles}/COMSOL/*/Multiphysics/bin/win64"
+          ],
+          "linux": [
+            "/usr/local/comsol*/multiphysics/bin"
+          ],
+          "macos": [
+            "/Applications/COMSOL*/Multiphysics/bin"
+          ]
+        },
+        "about": "comsol batch -inputfile in.mph -outputfile out.mph [-study std1] [-pname p -plist v1,v2] solves a model without the desktop; on Windows comsolbatch takes the same options.",
+        "sources": [
+          "https://www.comsol.com/blogs/how-to-run-simulations-in-batch-mode-from-the-command-line",
+          "https://doc.comsol.com/6.4/doc/com.comsol.help.comsol/comsol_installation.02.074.html"
+        ]
+      }
+    ]
   },
   "cst": {
     "kind": "native",
@@ -313,7 +492,26 @@
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
     "session_adapter": "cst",
-    "installation_note": "Use discover and bind-native for the installed SDK. Each task owns a session and saves its working project under its output directory. Adapter lifecycle checks use SDK doubles; licensed solver execution remains workstation-dependent."
+    "installation_note": "Use discover and bind-native for the installed SDK. Each task owns a session and saves its working project under its output directory. Adapter lifecycle checks use SDK doubles; licensed solver execution remains workstation-dependent.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": null,
+        "executables": {
+          "windows": [
+            "CST DESIGN ENVIRONMENT.exe"
+          ],
+          "linux": [
+            "cst_design_environment"
+          ]
+        },
+        "about": "cst_design_environment -m -r model.cst solves a project in batch mode; thread and accelerator options differ between versions.",
+        "sources": [
+          "https://deepthoughtdocs.flinders.edu.au/en/latest/software/cststudio.html",
+          "https://support.eecs.qmul.ac.uk/?p=163"
+        ]
+      }
+    ]
   },
   "rsoft": {
     "kind": "native",
@@ -337,7 +535,16 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "parametric CAD, MOST scans and optimization",
+        "sources": [
+          "https://www.keysight.com/zz/en/products/software/optical-solutions-software/photonic-design-solutions.html"
+        ]
+      }
+    ]
   },
   "jcm": {
     "kind": "python",
@@ -364,7 +571,23 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "python",
+        "modules": [
+          "jcmwave"
+        ],
+        "marker": "jcmwave",
+        "variables": {
+          "JCMROOT": "ThirdPartySupport/Python"
+        },
+        "about": "The jcmwave package lies in JCMROOT/ThirdPartySupport/Python of the installation; it wraps the JCMsolve command-line tool.",
+        "sources": [
+          "https://www.docs.jcmwave.com/JCMsuite/html/PythonInterface/bf647454e36069fd16f1a7a35cf6a865.html"
+        ]
+      }
+    ]
   },
   "photond": {
     "kind": "native",
@@ -389,7 +612,22 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "service",
+        "modules": [
+          "pdPythonLib"
+        ],
+        "marker": "pdPythonLib.py",
+        "server": "FIMMWAVE started with -pt 5101 listens for pdPythonLib.pdApp().ConnectToApp(); StartApp() launches it and connects.",
+        "about": "pdPythonLib.py, shipped with Photon Design software, sends commands to a running FIMMWAVE over TCP (port 5101 by default).",
+        "sources": [
+          "https://web.ece.ucsb.edu/oewiki/images/4/4c/Fimmwave_Scripting_Manual.pdf",
+          "https://photond.com/fimmwave/features/scripting-optimisation"
+        ]
+      }
+    ]
   },
   "tidy3d": {
     "kind": "python",
@@ -425,7 +663,31 @@
     },
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
-    "installation_note": "Simulations run on the Flexcompute cloud and need an account and API key; model building and local plugins run without one."
+    "installation_note": "Simulations run on the Flexcompute cloud and need an account and API key; model building and local plugins run without one.",
+    "routes": [
+      {
+        "route": "service",
+        "modules": [
+          "tidy3d"
+        ],
+        "credentials": {
+          "variables": [
+            "SIMCLOUD_APIKEY"
+          ],
+          "files": [
+            "{TIDY3D_BASE_DIR}/config/config.toml",
+            "{XDG_CONFIG_HOME}/tidy3d/config.toml",
+            "{HOME}/.config/tidy3d/config.toml",
+            "{HOME}/.tidy3d/config"
+          ]
+        },
+        "server": "Flexcompute cloud: tidy3d configure stores the API key; SIMCLOUD_APIKEY overrides it.",
+        "about": "Models are built locally; web.run sends a simulation to the cloud and needs the API key.",
+        "sources": [
+          "https://github.com/flexcompute/tidy3d"
+        ]
+      }
+    ]
   },
   "ipkiss": {
     "kind": "python",
@@ -477,7 +739,16 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "Python, MATLAB, C++ and COM co-simulation modules in its schematics",
+        "sources": [
+          "https://www.vpiphotonics.com/Tools/DesignSuite/Features/"
+        ]
+      }
+    ]
   },
   "optisystem": {
     "kind": "native",
@@ -502,7 +773,17 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "VBScript on the project Document object; Python and MATLAB co-simulation components",
+        "sources": [
+          "https://optiwave.com/wp-content/uploads/2015/01/optisystem_vbscripting_ref_guide.pdf",
+          "https://optiwave.com/forums/topic/co-simulation-using-python/"
+        ]
+      }
+    ]
   },
   "macleod": {
     "kind": "native",
@@ -527,7 +808,16 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "BASIC-like scripts of the Function extension",
+        "sources": [
+          "https://www.thinfilmcenter.com/essential.php"
+        ]
+      }
+    ]
   },
   "optilayer": {
     "kind": "native",
@@ -554,7 +844,17 @@
     },
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
-    "installation_note": "Bind a program that uses the vendor API on its supported operating system; installation and licensing are provided by the vendor."
+    "installation_note": "Bind a program that uses the vendor API on its supported operating system; installation and licensing are provided by the vendor.",
+    "routes": [
+      {
+        "route": "automation",
+        "progid_pattern": "(?i)optilayer|optire|optichar",
+        "about": "OptiLayer COM Automation, with Python examples from the vendor; its automation names are read from the Windows registry.",
+        "sources": [
+          "https://optilayer.com/com-automation/"
+        ]
+      }
+    ]
   },
   "rpfiber": {
     "kind": "native",
@@ -579,7 +879,16 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "RP script language; inputs and results as text or binary files",
+        "sources": [
+          "https://www.rp-photonics.com/software_script_language.html"
+        ]
+      }
+    ]
   },
   "rpresonator": {
     "kind": "native",
@@ -604,7 +913,16 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "RP script language; inputs and results as text or binary files",
+        "sources": [
+          "https://www.rp-photonics.com/software_script_language.html"
+        ]
+      }
+    ]
   },
   "crosslight": {
     "kind": "manual",
@@ -628,7 +946,16 @@
       }
     },
     "execution": "consult-interface",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "input files of the Crosslight simulation environment",
+        "sources": [
+          "https://crosslight.com/"
+        ]
+      }
+    ]
   },
   "synopsys-osd": {
     "kind": "manual",
@@ -653,7 +980,16 @@
       }
     },
     "execution": "consult-interface",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "SYNOPSYS commands and macros",
+        "sources": [
+          "https://osdoptics.com/accessinstallation/"
+        ]
+      }
+    ]
   },
   "tfcalc": {
     "kind": "manual",
@@ -678,7 +1014,16 @@
       }
     },
     "execution": "consult-interface",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "desktop application; no scripting interface was verified",
+        "sources": [
+          "https://www.sspectra.com/"
+        ]
+      }
+    ]
   },
   "matlab": {
     "kind": "native",
@@ -704,7 +1049,50 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "matlab",
+        "executables": {
+          "windows": [
+            "matlab.exe"
+          ],
+          "linux": [
+            "matlab"
+          ],
+          "macos": [
+            "matlab"
+          ]
+        },
+        "locations": {
+          "windows": [
+            "{ProgramFiles}/MATLAB/*/bin"
+          ],
+          "linux": [
+            "/usr/local/MATLAB/*/bin"
+          ],
+          "macos": [
+            "/Applications/MATLAB_*.app/bin"
+          ]
+        },
+        "about": "matlab -batch runs a program without the desktop, logs to standard output and exits with a nonzero code on an error (R2019a and later).",
+        "sources": [
+          "https://www.mathworks.com/help/matlab/ref/matlablinux.html",
+          "https://www.mathworks.com/help/matlab/ref/matlabwindows.html"
+        ]
+      },
+      {
+        "route": "python",
+        "modules": [
+          "matlab.engine"
+        ],
+        "about": "MATLAB Engine API for Python: pip install matlabengine of the version that matches the installed release, or pip install from matlabroot/extern/engines/python.",
+        "sources": [
+          "https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html"
+        ]
+      }
+    ]
   },
   "mathematica": {
     "kind": "native",
@@ -732,7 +1120,47 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "wolfram",
+        "executables": {
+          "windows": [
+            "wolframscript.exe"
+          ],
+          "linux": [
+            "wolframscript"
+          ],
+          "macos": [
+            "wolframscript"
+          ]
+        },
+        "locations": {
+          "macos": [
+            "/usr/local/bin"
+          ]
+        },
+        "about": "wolframscript -file runs a program on a local Wolfram Engine, Mathematica or Wolfram Desktop kernel.",
+        "sources": [
+          "https://reference.wolfram.com/language/ref/program/wolframscript.html",
+          "https://reference.wolfram.com/language/workflow/InstallWolframScript.html"
+        ]
+      },
+      {
+        "route": "python",
+        "modules": [
+          "wolframclient"
+        ],
+        "pip": [
+          "wolframclient"
+        ],
+        "about": "Wolfram Client Library for Python: WolframLanguageSession evaluates on a local kernel (Wolfram Language 11.3 or later).",
+        "sources": [
+          "https://reference.wolfram.com/language/WolframClientForPython/docpages/install.html"
+        ]
+      }
+    ]
   },
   "maple": {
     "kind": "native",
@@ -757,7 +1185,28 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "maple",
+        "executables": {
+          "windows": [
+            "cmaple.exe"
+          ],
+          "linux": [
+            "maple"
+          ],
+          "macos": [
+            "maple"
+          ]
+        },
+        "about": "The command-line Maple (maple, cmaple on Windows) reads a file of Maple commands and exits at its end.",
+        "sources": [
+          "https://www.maplesoft.com/support/help/maple/view.aspx?path=maple"
+        ]
+      }
+    ]
   },
   "photonforge": {
     "kind": "python",
@@ -810,7 +1259,16 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "CCL and commands within the EDU limits",
+        "sources": [
+          "https://lambdares.com/edu"
+        ]
+      }
+    ]
   },
   "ptypy": {
     "kind": "python",
@@ -1009,7 +1467,29 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "lua",
+        "executables": {
+          "windows": [
+            "S4.exe"
+          ],
+          "linux": [
+            "S4"
+          ],
+          "macos": [
+            "S4"
+          ]
+        },
+        "about": "S4 runs a Lua program given as its argument and exits; it is built from source.",
+        "sources": [
+          "https://web.stanford.edu/group/fan/S4/tutorial.html",
+          "https://github.com/victorliu/S4"
+        ]
+      }
+    ]
   },
   "torcwa": {
     "kind": "python",
@@ -1694,16 +2174,25 @@
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
   },
   "siepic": {
-    "kind": "native",
-    "modules": [],
-    "pip": [],
-    "distributions": [],
+    "kind": "python",
+    "modules": [
+      "SiEPIC",
+      "klayout"
+    ],
+    "pip": [
+      "SiEPIC==0.5.31"
+    ],
+    "distributions": [
+      "SiEPIC",
+      "klayout"
+    ],
     "native_program": true,
     "installation": "https://github.com/SiEPIC/SiEPIC-Tools",
     "interface": "Python macros and KLayout extensions; integrates with PDKs and simulation tools.",
     "sources": [
       "https://github.com/SiEPIC/SiEPIC-Tools",
-      "https://raw.githubusercontent.com/SiEPIC/SiEPIC-Tools/HEAD/LICENSE.md"
+      "https://raw.githubusercontent.com/SiEPIC/SiEPIC-Tools/HEAD/LICENSE.md",
+      "https://pypi.org/project/SiEPIC/0.5.31/"
     ],
     "upstream": {
       "mcp": {
@@ -1716,7 +2205,8 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "python": "<3.15"
   },
   "nazca": {
     "kind": "native",
@@ -1741,7 +2231,20 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "python",
+        "modules": [
+          "nazca"
+        ],
+        "about": "Installed from the nazca-design.org download; the PyPI package named nazca is a different library.",
+        "sources": [
+          "https://nazca-design.org/manual/introduction.html",
+          "https://pypi.org/project/nazca/"
+        ]
+      }
+    ]
   },
   "adda": {
     "kind": "native",
@@ -1766,7 +2269,43 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": null,
+        "executables": {
+          "windows": [
+            "adda.exe"
+          ],
+          "linux": [
+            "adda"
+          ],
+          "macos": [
+            "adda"
+          ]
+        },
+        "siblings": {
+          "windows": [
+            "adda_mpi.exe",
+            "adda_ocl.exe"
+          ],
+          "linux": [
+            "adda_mpi",
+            "adda_ocl"
+          ],
+          "macos": [
+            "adda_mpi",
+            "adda_ocl"
+          ]
+        },
+        "about": "adda -shape ... -size ... -lambda ... -m n k -dir FOLDER computes one particle; FOLDER receives CrossSec-Y (and -X), mueller and log.",
+        "sources": [
+          "https://github.com/adda-team/adda",
+          "https://github.com/adda-team/adda/wiki/Tutorial"
+        ]
+      }
+    ]
   },
   "miepython": {
     "kind": "python",
@@ -1954,7 +2493,21 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "julia",
+        "uses": "julia",
+        "about": "A Julia environment of its own with QuantumOptics.jl; programs start with using QuantumOptics.",
+        "sources": [
+          "https://docs.qojulia.org/installation/"
+        ]
+      }
+    ],
+    "julia": [
+      "QuantumOptics"
+    ]
   },
   "perceval": {
     "kind": "python",
@@ -2048,7 +2601,21 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "julia",
+        "uses": "julia",
+        "about": "A Julia environment of its own with Luna.jl (Julia 1.9 or later); programs start with using Luna.",
+        "sources": [
+          "https://github.com/LupoLab/Luna.jl"
+        ]
+      }
+    ],
+    "julia": [
+      "Luna"
+    ]
   },
   "pyfmas": {
     "kind": "python",
@@ -2210,19 +2777,36 @@
       }
     },
     "execution": "consult-interface",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "inside",
+        "language": "desktop application and its project files",
+        "sources": [
+          "https://github.com/orion-project/rezonator2"
+        ]
+      }
+    ]
   },
   "mcx": {
-    "kind": "native",
-    "modules": [],
-    "pip": [],
-    "distributions": [],
+    "kind": "python",
+    "modules": [
+      "pmcx"
+    ],
+    "pip": [
+      "pmcx==0.8.1",
+      "numpy"
+    ],
+    "distributions": [
+      "pmcx"
+    ],
     "native_program": true,
     "installation": "https://github.com/fangq/mcx",
     "interface": "Command-line / JSON configurations and language bindings; programmable batch simulations.",
     "sources": [
       "https://github.com/fangq/mcx",
-      "https://raw.githubusercontent.com/fangq/mcx/HEAD/LICENSE.txt"
+      "https://raw.githubusercontent.com/fangq/mcx/HEAD/LICENSE.txt",
+      "https://pypi.org/project/pmcx/0.8.1/"
     ],
     "upstream": {
       "mcp": {
@@ -2235,19 +2819,53 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": null,
+        "executables": {
+          "windows": [
+            "mcx.exe"
+          ],
+          "linux": [
+            "mcx"
+          ],
+          "macos": [
+            "mcx"
+          ]
+        },
+        "about": "mcx -f input.json runs a simulation described by a JSON input file on an NVIDIA GPU.",
+        "sources": [
+          "https://github.com/fangq/mcx"
+        ]
+      }
+    ],
+    "platforms": [
+      "linux-64",
+      "win-64"
+    ],
+    "installation_note": "pmcx installs from its recipe; its simulations need an NVIDIA GPU with a CUDA driver."
   },
   "mmc": {
-    "kind": "native",
-    "modules": [],
-    "pip": [],
-    "distributions": [],
+    "kind": "python",
+    "modules": [
+      "pmmc"
+    ],
+    "pip": [
+      "pmmc==0.6.0",
+      "numpy"
+    ],
+    "distributions": [
+      "pmmc"
+    ],
     "native_program": true,
     "installation": "https://github.com/fangq/mmc",
     "interface": "Command-line / configuration files and language bindings.",
     "sources": [
       "https://github.com/fangq/mmc",
-      "https://raw.githubusercontent.com/fangq/mmc/HEAD/LICENSE.txt"
+      "https://raw.githubusercontent.com/fangq/mmc/HEAD/LICENSE.txt",
+      "https://pypi.org/project/pmmc/0.6.0/"
     ],
     "upstream": {
       "mcp": {
@@ -2260,7 +2878,34 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": null,
+        "executables": {
+          "windows": [
+            "mmc.exe"
+          ],
+          "linux": [
+            "mmc"
+          ],
+          "macos": [
+            "mmc"
+          ]
+        },
+        "about": "mmc runs a mesh-based simulation on CPU (SSE/OpenMP) or GPU backends.",
+        "sources": [
+          "https://github.com/fangq/mmc"
+        ]
+      }
+    ],
+    "platforms": [
+      "linux-64",
+      "osx-64",
+      "osx-arm64",
+      "win-64"
+    ]
   },
   "holopy": {
     "kind": "python",
@@ -2420,19 +3065,47 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": null,
+        "executables": {
+          "windows": [
+            "pbrt.exe"
+          ],
+          "linux": [
+            "pbrt"
+          ],
+          "macos": [
+            "pbrt"
+          ]
+        },
+        "about": "pbrt scene.pbrt renders a scene description; --gpu selects the GPU build and --spp the samples per pixel. It is built from source.",
+        "sources": [
+          "https://github.com/mmp/pbrt-v4"
+        ]
+      }
+    ]
   },
   "srw": {
-    "kind": "native",
-    "modules": [],
-    "pip": [],
-    "distributions": [],
+    "kind": "python",
+    "modules": [
+      "srwpy"
+    ],
+    "pip": [
+      "srwpy==4.2.1"
+    ],
+    "distributions": [
+      "srwpy"
+    ],
     "native_program": true,
     "installation": "https://github.com/ochubar/SRW",
     "interface": "Python interface and scripted radiation / propagation models.",
     "sources": [
       "https://github.com/ochubar/SRW",
-      "https://pypi.org/project/oasys-srwpy/1.0.3/"
+      "https://pypi.org/project/oasys-srwpy/1.0.3/",
+      "https://pypi.org/project/srwpy/4.2.1/"
     ],
     "upstream": {
       "mcp": {
@@ -2445,7 +3118,13 @@
       }
     },
     "execution": "local-or-background",
-    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "python": ">=3.10,<3.15",
+    "platforms": [
+      "linux-64",
+      "osx-arm64",
+      "win-64"
+    ]
   },
   "shadow": {
     "kind": "python",
@@ -2567,6 +3246,145 @@
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
     "installation_note": "Install SageMath from its installer or conda-forge (Linux and macOS), then bind its Python; it takes several gigabytes."
+  },
+  "octave": {
+    "kind": "native",
+    "modules": [],
+    "pip": [],
+    "distributions": [],
+    "native_program": true,
+    "installation": "https://octave.org/download",
+    "interface": "MATLAB-compatible language; octave-cli runs program files; Python, C++ and Fortran interfaces.",
+    "sources": [
+      "https://octave.org/",
+      "https://octave.org/NEWS-7.html"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "octave",
+        "executables": {
+          "windows": [
+            "octave-cli.exe"
+          ],
+          "linux": [
+            "octave-cli",
+            "octave"
+          ],
+          "macos": [
+            "octave-cli",
+            "octave"
+          ]
+        },
+        "locations": {
+          "windows": [
+            "{ProgramFiles}/GNU Octave/Octave-*/mingw64/bin"
+          ]
+        },
+        "about": "octave-cli runs a program file without a window and exits; jsondecode and jsonencode exist from Octave 7.",
+        "sources": [
+          "https://octave.org/NEWS-7.html",
+          "https://octave.org/download"
+        ]
+      }
+    ],
+    "conda": [
+      "octave"
+    ],
+    "platforms": [
+      "linux-64",
+      "osx-arm64"
+    ],
+    "executable": {
+      "path": "bin/octave-cli",
+      "language": "octave",
+      "variables": {
+        "OCTAVE_HOME": "{prefix}"
+      }
+    },
+    "installation_note": "On Windows install GNU Octave from octave.org, then bind its octave-cli.exe."
+  },
+  "julia": {
+    "kind": "native",
+    "modules": [],
+    "pip": [],
+    "distributions": [],
+    "native_program": true,
+    "installation": "https://github.com/JuliaLang/juliaup",
+    "interface": "Julia language; julia runs program files with a project environment; packages through Pkg.",
+    "sources": [
+      "https://julialang.org/",
+      "https://docs.julialang.org/en/v1/manual/command-line-interface/"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "executable",
+        "language": "julia",
+        "executables": {
+          "windows": [
+            "julia.exe"
+          ],
+          "linux": [
+            "julia"
+          ],
+          "macos": [
+            "julia"
+          ]
+        },
+        "locations": {
+          "windows": [
+            "{HOME}/.juliaup/bin",
+            "{LOCALAPPDATA}/Microsoft/WindowsApps"
+          ],
+          "linux": [
+            "{HOME}/.juliaup/bin"
+          ],
+          "macos": [
+            "{HOME}/.juliaup/bin"
+          ]
+        },
+        "about": "julia runs a program file; --project selects the package environment and --threads the number of threads.",
+        "sources": [
+          "https://docs.julialang.org/en/v1/manual/command-line-interface/",
+          "https://github.com/JuliaLang/juliaup"
+        ]
+      }
+    ],
+    "conda": [
+      "julia"
+    ],
+    "platforms": [
+      "linux-64"
+    ],
+    "executable": {
+      "path": "bin/julia",
+      "language": "julia"
+    },
+    "installation_note": "On Windows and macOS install Julia with juliaup (winget install --name Julia --id 9NJNWW8PVKMN -e -s msstore, or curl -fsSL https://install.julialang.org | sh)."
   },
   "freecad": {
     "kind": "python",

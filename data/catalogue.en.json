@@ -3119,6 +3119,79 @@
     "stage": "Published implementation"
   },
   {
+    "id": "octave",
+    "name": "GNU Octave",
+    "group": "open",
+    "cats": [
+      "foundation",
+      "imaging"
+    ],
+    "method": "Numerical computing in a MATLAB-compatible language",
+    "summary": "Runs MATLAB-language optical scripts, signal processing and linear algebra without a MATLAB license.",
+    "api": "octave-cli runs program files; Python, C++ and Fortran interfaces; jsondecode / jsonencode from version 7.",
+    "license": "GPL-3.0-or-later",
+    "compute": "CPU.",
+    "usage": "The GNU project's open numerical-computing environment.",
+    "limit": "Compatible with most MATLAB language code but not with MATLAB toolboxes or Simulink.",
+    "sources": [
+      {
+        "label": "Official documentation / website",
+        "url": "https://octave.org/"
+      },
+      {
+        "label": "Release notes",
+        "url": "https://octave.org/NEWS-7.html"
+      }
+    ],
+    "route": "script",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "julia",
+    "name": "Julia",
+    "group": "open",
+    "cats": [
+      "foundation",
+      "quantum",
+      "fiber"
+    ],
+    "method": "High-performance numerical computing language",
+    "summary": "Runs Julia optics programs and packages such as QuantumOptics.jl and Luna.jl in project environments of their own.",
+    "api": "julia runs program files; --project selects a package environment; packages through Pkg.",
+    "license": "MIT",
+    "compute": "CPU; threads and GPU packages according to configuration.",
+    "usage": "Open scientific-computing language with a package ecosystem used in optics.",
+    "limit": "First calls compile code, so short programs spend much of their time compiling.",
+    "sources": [
+      {
+        "label": "Official documentation / website",
+        "url": "https://julialang.org/"
+      },
+      {
+        "label": "Command line",
+        "url": "https://docs.julialang.org/en/v1/manual/command-line-interface/"
+      }
+    ],
+    "route": "script",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
     "id": "freecad",
     "name": "FreeCAD",
     "group": "open",
