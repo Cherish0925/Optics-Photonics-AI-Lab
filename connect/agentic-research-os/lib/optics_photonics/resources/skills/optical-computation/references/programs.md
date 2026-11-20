@@ -2,7 +2,7 @@
 
 ## Packaged programs
 
-Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. `software_details(tool)` lists a tool's programs with every input's default and meaning; `submit_calculation(tool, action=NAME, inputs={...})` runs one with the given inputs replacing the defaults, and an unknown input name is rejected at submission. `software_details(tool, program=NAME)` returns one program with its physics and conventions and its source to adapt. Indices may be numbers, `[n, k]` or material names where the inputs say so. Arrays are saved with units and axes; `checks` in the result compare with a conservation law or an analytic limit.
+Each is an ordinary native program in `optics_photonics/programs/TOOL/`: Python, or the language of software bound to its executable (Julia for QuantumOptics.jl, Lua for S4), declared in its leading comment. `software_details(tool)` lists a tool's programs with every input's default and meaning; `submit_calculation(tool, action=NAME, inputs={...})` runs one with the given inputs replacing the defaults, and an unknown input name is rejected at submission. `software_details(tool, program=NAME)` returns one program with its physics and conventions and its source to adapt. Indices may be numbers, `[n, k]` or material names where the inputs say so. Arrays are saved with units and axes; `checks` in the result compare with a conservation law or an analytic limit.
 
 | Program | Computes | Compared with |
 | --- | --- | --- |
@@ -15,6 +15,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `mpb/bands` | Bands and complete gaps of 2-D lattices of rods or holes, TE and TM | rod-lattice TM gap 0.3225–0.4425 |
 | `mpb/waveguide` | Guided modes of a strip or rib waveguide: effective and group index, polarization, mode intensity | analytic slab mode, second-order convergence |
 | `legume/bands` | Bands of 2-D crystals (plane waves) and slabs (guided modes) | MPB |
+| `s4/crystal_slab` | Transmission and reflection of a photonic-crystal slab over frequency, with its Fano lines (Lua on an installed S4) | energy balance; Airy formula for the slab without holes |
 | `treams/cluster` | Scattering, extinction and absorption of sphere clusters with multiple scattering; orientation averages | Mie series; energy balance |
 | `miepython/sphere` | Mie efficiencies, cross sections, asymmetry, angular pattern | Rayleigh limit; angular integral |
 | `adda/particle` | Extinction, scattering and absorption efficiencies and S11 over angle of a sphere or an ellipsoid by the discrete dipole approximation; runs an installed ADDA | exact series for a sphere, converging as dipoles get finer |
@@ -41,6 +42,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/NAME.py`. 
 | `qutip/rabi` | Rabi oscillation of a two-level system | sin²(Ωt/2) |
 | `qutip/jaynes_cummings` | Emitter–cavity dynamics with losses; dressed states | one-excitation solution |
 | `qutip/resonance_fluorescence` | Mollow spectrum, g²(τ), steady state | analytic population; g²(0) = 0 |
+| `quantumoptics/jaynes_cummings` | Rabi oscillations and damped atom–cavity dynamics from the Schrödinger or master equation (Julia, QuantumOptics.jl) | exact population without losses; excitation number |
 | `perceval/interference` | Output probabilities of photons in a beam splitter, Fourier or random interferometer, with partial distinguishability and loss | permanents; Hong-Ou-Mandel formula |
 | `strawberry/gaussian_state` | Squeezed, displaced and lossy Gaussian states: quadrature variances, photon statistics, g2(0) | analytic squeezed vacuum |
 | `sympy/fresnel` | Fresnel coefficients derived from the boundary conditions | Brewster identity; energy balance |
@@ -86,7 +88,7 @@ A device becomes a circuit: the coupling of a directional coupler and the indice
 
 **Python.** The submitted `source` runs once in the interpreter bound to the tool. It receives `INPUTS` (the step inputs with bound values) and `OUTPUT_DIR` (a `pathlib.Path` owned by this attempt), and must set `RESULT` to compact JSON. Everything else is the software's own API. Write arrays as NPY or NPZ, and models, meshes and plots in their native formats, under OUTPUT_DIR; `read_array` and `result_files` then show them without loading whole files. Record units, coordinate frames, sign and normalization conventions with the data. Each attempt of a step has its own directory `STEP/attempt-N/`, so parallel steps never share files.
 
-**Another language.** `script` runs a program in the language of software bound to its executable: MATLAB, Octave, Julia, Wolfram Language, Maple, Lua (S4) or Lumerical script. It receives INPUTS and the output folder and sets RESULT ([native-software](native-software.md)). A Python `source` of such a tool drives its executable with `RUN(arguments)`.
+**Another language.** `script` runs a program in the language of software bound to its executable: MATLAB, Octave, Julia, Wolfram Language, Maple, Lua (S4) or Lumerical script. It receives INPUTS and the output folder and sets RESULT ([native-software](native-software.md)). Arrays returned as `RESULT.save = {file, arrays: {name: {values, quantity, unit, axes}}}` are written as described NPZ, so `read_array` and later steps read them like those of Python programs. A Python `source` of such a tool drives its executable with `RUN(arguments)`.
 
 **Executable of your own.** A program in any language reads JSON from the file named by `OPTICS_REQUEST_FILE` (or standard input), writes files under `OPTICS_OUTPUT_DIR` and writes its JSON result to `OPTICS_RESULT_FILE`. Bind it with `bind_environment(tool, command=[executable, argument, ...])`; the optional placeholders `{request}`, `{output}` and `{result}` are replaced in the arguments. Compiled C, C++, C#, Java and Fortran programs use this interface unchanged.
 

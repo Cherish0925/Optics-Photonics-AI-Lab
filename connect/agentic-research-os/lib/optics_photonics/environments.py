@@ -148,9 +148,11 @@ def details(tool, language='en', path=None, program=None):
     from . import operations, programs
     item = software(tool, language, path)
     if program is not None:
+        spec = programs.details(tool, program)
         return {'tool': tool, 'program': program, **{k: v for k, v in programs.details(tool, program).items() if k != 'name'},
                 'source': programs.source(tool, program),
-                'adapt': 'Submit an edited copy as source; parameters(PROGRAM, INPUTS) checks the inputs it declares.'}
+                'adapt': ('Submit an edited copy as script; it receives INPUTS without the declared defaults.' if spec.get('language') else
+                          'Submit an edited copy as source; parameters(PROGRAM, INPUTS) checks the inputs it declares.')}
     if item.get('origin') != 'local':
         # connections.json repeats these catalogue fields so that the file can be read on its own.
         item = {**item, 'connection': {key: value for key, value in item['connection'].items() if key not in REPEATED}}

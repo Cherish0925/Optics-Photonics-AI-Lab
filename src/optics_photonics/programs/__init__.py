@@ -6,6 +6,11 @@ be run as it is or adapted. Its PROGRAM dictionary maps every input to a
 default value and a description, and states what the program returns and
 which checks it reports. submit_calculation(tool, action=NAME) runs one;
 software_details lists a tool's programs and returns the source of one.
+
+A program is written in Python, or in the language of software bound to its
+executable (Julia, MATLAB/Octave, Lua, Wolfram Language, Maple, Lumerical
+script): then its leading comment holds the title, the physics and the same
+declaration as JSON after a line PROGRAM (languages.declaration).
 """
 import ast
 from functools import lru_cache
@@ -16,6 +21,9 @@ FOLDER = Path(__file__).parent
 
 def describe(file):
     """Title, physics and PROGRAM dictionary of a program file, read without running it."""
+    if file.suffix != '.py':
+        from .. import languages
+        return {**languages.declaration(file.read_text(encoding='utf-8'), file.suffix), 'suffix': file.suffix}
     tree = ast.parse(file.read_text(encoding='utf-8'))
     doc = ast.get_docstring(tree) or ''
     spec = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
@@ -27,9 +35,11 @@ def describe(file):
 @lru_cache(maxsize=1)
 def catalog():
     """Programs by tool and name."""
+    from .. import languages
     found = {}
-    for file in sorted(FOLDER.glob('*/*.py')):
-        found.setdefault(file.parent.name, {})[file.stem] = describe(file)
+    for file in sorted(FOLDER.glob('*/*.*')):
+        if file.suffix == '.py' or file.suffix in languages.COMMENTS:
+            found.setdefault(file.parent.name, {})[file.stem] = describe(file)
     return found
 
 
@@ -46,7 +56,8 @@ def inputs(spec):
 def details(tool, name=None):
     """What a software_details reply shows of each program of a tool; with name, of that one including its physics."""
     def described(name, spec):
-        return {'name': name, 'title': spec['title'], **({'about': spec['about']} if name == chosen else {}),
+        return {'name': name, 'title': spec['title'], **({'language': spec['language']} if spec.get('language') else {}),
+                **({'about': spec['about']} if name == chosen else {}),
                 'inputs': {key: {'default': value, 'about': about} for key, (value, about) in spec['inputs'].items()},
                 'results': spec['results'], 'checks': spec.get('checks', '')}
     chosen = name
@@ -61,7 +72,7 @@ def source(tool, name):
     if name not in catalog().get(tool, {}):
         known = ', '.join(catalog().get(tool, {})) or 'none'
         raise ValueError(f'Unknown program {tool}/{name}; programs of {tool}: {known}. software_details lists them')
-    return (FOLDER / tool / (name + '.py')).read_text(encoding='utf-8')
+    return (FOLDER / tool / (name + catalog()[tool][name].get('suffix', '.py'))).read_text(encoding='utf-8')
 
 
 def parameters(spec, given):
@@ -77,6 +88,8 @@ def parameters(spec, given):
 def run(tool, name, given, output):
     """Run a program in this process, as the worker does; returns its RESULT."""
     from pathlib import Path as _Path
+    if catalog().get(tool, {}).get(name, {}).get('language'):
+        raise ValueError(f'{tool}/{name} runs in its software; submit it as a calculation')
     folder = _Path(output)
     folder.mkdir(parents=True, exist_ok=True)
     namespace = {'__name__': '__main__', '__file__': str(folder / 'program.py'), 'INPUTS': given,

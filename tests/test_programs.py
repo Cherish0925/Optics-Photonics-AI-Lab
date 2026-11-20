@@ -50,9 +50,14 @@ class DeclarationCase(unittest.TestCase):
                         self.assertTrue(about.strip(), key)
                         json.dumps(default, allow_nan=False)
                     source = programs.source(tool, name)
+                    self.assertIn('RESULT = ', source)
+                    if spec.get('language'):
+                        # A program in the software's own language: that software has an executable route in the language.
+                        route = next(r for r in connections[tool]['routes'] if r['route'] == 'executable')
+                        self.assertEqual(route['language'], spec['language'])
+                        continue
                     ast.parse(source)
                     self.assertIn('parameters(PROGRAM, INPUTS)', source)
-                    self.assertIn('RESULT = ', source)
 
     def test_the_programs_reference_lists_every_program(self):
         import re

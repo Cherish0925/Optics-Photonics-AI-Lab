@@ -32,11 +32,10 @@ def candidates():
             yield tool
 
 
-# A short program in the language of each executable a recipe installs, run through the worker.
+# A short program in the language of each executable a recipe installs without a packaged program, run through the worker.
 SCRIPTS = {
     'octave': "x = [1 2; 3 4] \\ [5; 6]; RESULT = struct('version', OCTAVE_VERSION, 'solution', x');",
     'julia': 'using LinearAlgebra\nRESULT = Dict("version" => string(VERSION), "solution" => [1.0 2.0; 3.0 4.0] \\ [5.0, 6.0])',
-    'quantumoptics': 'using QuantumOptics\nb = FockBasis(10)\nRESULT = Dict("photons" => real(expect(number(b), coherentstate(b, 1.0))))',
     'luna': 'using Luna\nRESULT = Dict("version" => string(pkgversion(Luna)))',
 }
 

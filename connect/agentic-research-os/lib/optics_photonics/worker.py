@@ -103,7 +103,7 @@ def script(tool, connection, text, given, folder):
     if code:
         tail = (Path(folder) / languages.LOG_FILE).read_text(encoding='utf-8', errors='replace')[-3000:]
         raise RuntimeError(f'{Path(command[0]).name} exited with code {code}; {languages.LOG_FILE} ends with:\n{tail}')
-    return languages.result(folder)
+    return languages.described(languages.result(folder), folder)
 
 
 @contextmanager
@@ -138,7 +138,17 @@ def execute(tool, request, output):
                          'source runs Python')
     if text and source:
         raise ValueError('Give a script in the software\'s language or a Python source, not both')
-    if not source and not text and native_connection is None:
+    packaged = programs.catalog().get(tool, {}).get(action) if action and not source and not text else None
+    defaults = {}
+    if packaged and packaged.get('language'):
+        # A packaged program in the software's own language runs like a submitted script, with its declared defaults.
+        from optics_photonics import languages
+        bound = (executable or {}).get('language')
+        if bound is None or languages.family(bound) != languages.family(packaged['language']):
+            raise ValueError(f"{tool}/{action} is a {packaged['language']} program; connect {tool} by its executable "
+                             '(prepare_environment for a recipe, or bind_native_software)')
+        text, defaults = programs.source(tool, action), programs.inputs(packaged)
+    elif not source and not text and native_connection is None:
         source = programs.source(tool, action)  # a packaged program runs like a submitted one
     if native_connection is not None:
         from optics_photonics import native
@@ -157,7 +167,7 @@ def execute(tool, request, output):
 
             def program(values, target):
                 if text:
-                    return script(tool, executable, text, values, target)
+                    return script(tool, executable, text, {**defaults, **values}, target)
                 namespace = {'__name__': '__main__', '__file__': str(output/'program.py'), 'INPUTS': values, 'OUTPUT_DIR': target, 'RESULT': None, **session}
                 if native_connection is not None:
                     namespace['EXPORT'] = lambda value, name='data': native.export(value, name, target)
@@ -172,8 +182,7 @@ def execute(tool, request, output):
             if not request.get('optimize'):
                 return program(given, folder)
             from optics_photonics import optimization
-            spec = None if request.get('source') or text else programs.catalog().get(tool, {}).get(action)
-            return optimization.run(program, given, request['optimize'], folder, programs.inputs(spec) if spec else None)
+            return optimization.run(program, given, request['optimize'], folder, programs.inputs(packaged) if packaged else None)
 
     # An automation server is opened once for every point this process computes.
     with (automation(server) if server is not None else nullcontext(None)) as held:

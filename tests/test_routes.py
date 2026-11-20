@@ -144,6 +144,33 @@ class Bridges(unittest.TestCase):
         with self.assertRaises(ValueError):
             languages.julia(float('nan'))
 
+    def test_a_program_in_another_language_declares_itself_in_its_leading_comment(self):
+        text = '-- Title of the program.\n--\n-- Physics in\n-- two lines.\n--\n-- PROGRAM\n-- {"inputs": {"x": [1.5, "a length"]},\n' \
+               '--  "results": "what it returns", "checks": "what it compares"}\nRESULT = {}\n'
+        spec = languages.declaration(text, '.lua')
+        self.assertEqual((spec['title'], spec['about'], spec['language']), ('Title of the program.', 'Physics in two lines.', 'lua'))
+        self.assertEqual((spec['inputs'], spec['results']), ({'x': (1.5, 'a length')}, 'what it returns'))
+        with self.assertRaisesRegex(ValueError, 'PROGRAM'):
+            languages.declaration('# no declaration\nx = 1\n', '.jl')
+        # Every packaged program of another language parses, and Octave runs MATLAB-language programs.
+        from optics_photonics import programs
+        self.assertEqual(programs.catalog()['quantumoptics']['jaynes_cummings']['language'], 'julia')
+        self.assertEqual(programs.details('s4', 'crystal_slab')['language'], 'lua')
+        self.assertEqual(languages.family('octave'), 'matlab')
+        with self.assertRaisesRegex(ValueError, 'runs in its software'):
+            programs.run('s4', 'crystal_slab', {}, Path('unused'))
+
+    def test_arrays_returned_by_a_script_are_saved_with_their_description(self):
+        with workspace() as folder:
+            result = languages.described({'peak': 2, 'save': {'file': 'field', 'arrays': {
+                'x_um': {'values': [0, 0.5, 1.0], 'quantity': 'position', 'unit': 'um'},
+                'E': {'values': [[1, 2, 3], [4, None, 6]], 'quantity': 'field', 'unit': 'V/m', 'axes': [{'name': 'row', 'labels': ['a', 'b']}, 'x_um']}}}}, folder)
+            self.assertEqual(result, {'peak': 2, 'data': 'field.npz'})
+            from optics_photonics import arrays
+            read = arrays.read(Path(folder) / 'field.npz', member='E')
+            self.assertEqual((read['shape'], read['description']['unit'], read['values'][1][1]), ([2, 3], 'V/m', 'nan'))
+            self.assertEqual(languages.described({'x': 1}, folder), {'x': 1})
+
     def test_main_files_and_commands(self):
         with workspace() as folder:
             target = Path(folder) / "it's"
@@ -314,6 +341,23 @@ RESULT = {T = S:GetPoyntingFlux("Below", 0) / incident, R = -reflected / inciden
                 airy = 1 / (1 + 4 * reflectance / (1 - reflectance) ** 2 * math.sin(phase) ** 2)
                 self.assertAlmostEqual(row['values']['T'], airy, places=12)
                 self.assertAlmostEqual(row['values']['R'] + row['values']['T'], 1, places=12)
+
+    def test_s4_crystal_slab_conserves_energy_and_reaches_the_uniform_slab(self):
+        executable = found('OPTICS_TEST_S4', 'S4')
+        if not executable:
+            self.skipTest('S4 is not installed')
+        with workspace() as folder:
+            home = Path(folder) / 'home'
+            native.bind('s4', executable=executable, path=home)
+            reply = studies.submit('s4', action='crystal_slab', inputs={'harmonics': 30, 'frequency': {'start': 0.3, 'stop': 0.5, 'points': 21}},
+                                   wait=25, path=home)
+            self.assertEqual(reply['state'], 'succeeded', reply)
+            self.assertLess(reply['result']['checks']['energy_error'], 1e-9)
+            self.assertLess(reply['result']['checks']['airy_difference'], 1e-12)
+            described = jobs.read_array(reply['run_id'], 'calculate/attempt-1/spectrum.npz', member='T', path=home)
+            self.assertEqual((described['description']['quantity'], described['axes'][0]['unit'], len(described['values'])), ('transmittance', 'c/a', 21))
+            with self.assertRaisesRegex(ValueError, 's4/crystal_slab has no input radius_um'):
+                jobs.submit([{'id': 'a', 'tool': 's4', 'action': 'crystal_slab', 'inputs': {'radius_um': 1}}], path=home)
 
     def test_adda_particle_converges_to_the_exact_series(self):
         executable = found('OPTICS_TEST_ADDA', 'adda')

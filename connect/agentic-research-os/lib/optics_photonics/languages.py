@@ -52,6 +52,61 @@ LANGUAGES = {
 }
 
 NAME = re.compile(r'[A-Za-z][A-Za-z0-9_]*\Z')
+# A packaged program in one of these languages is recognized by its suffix; its leading comment declares it.
+COMMENTS = {'.jl': ('julia', '#'), '.m': ('matlab', '%'), '.lua': ('lua', '--'), '.mpl': ('maple', '#'), '.lsf': ('lsf', '#'),
+            '.wl': ('wolfram', '(*')}
+FAMILIES = {'octave': 'matlab'}   # Octave runs programs written for the MATLAB language
+
+
+def declaration(text, suffix):
+    """Title, physics and PROGRAM declaration from the leading comment of a program in another language.
+
+    The comment holds the title line, the physics, then a line PROGRAM followed by JSON:
+    {"inputs": {name: [default, meaning]}, "results": "...", "checks": "..."}.
+    """
+    name, prefix = COMMENTS[suffix]
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith(prefix):
+            break
+        body = line[len(prefix):]
+        lines.append((body[:-2] if name == 'wolfram' and body.endswith('*)') else body).strip())
+    if 'PROGRAM' not in lines:
+        raise ValueError('The leading comment of a program ends with a line PROGRAM and its JSON declaration')
+    at = lines.index('PROGRAM')
+    spec = json.loads('\n'.join(lines[at + 1:]))
+    spec['inputs'] = {key: (default, about) for key, (default, about) in spec['inputs'].items()}
+    return {'title': lines[0], 'about': ' '.join(' '.join(lines[1:at]).split()), 'language': name, **spec}
+
+
+def family(name):
+    return FAMILIES.get(name, name)
+
+
+def described(result, folder):
+    """Arrays a program returned under RESULT.save become FILE.npz and FILE.json, as data.save writes them.
+
+    save is {"file": NAME, "arrays": {name: {"values": nested lists, "quantity", "unit", "axes", ...}}}; the reply
+    keeps the file name under data. Programs in languages without an NPZ writer describe their arrays this way.
+    """
+    if not isinstance(result, dict) or not isinstance(result.get('save'), dict):
+        return result
+    from . import arrays
+    spec = result.pop('save')
+    numbers, descriptions = {}, {}
+    for key, item in spec.get('arrays', {}).items():
+        shape, level = [], item['values']
+        while isinstance(level, list):
+            shape.append(len(level))
+            level = level[0] if level else None
+        flat = item['values'] if shape else [item['values']]
+        for _ in shape[1:]:
+            flat = [value for row in flat for value in row]
+        numbers[key] = (flat, shape)
+        descriptions[key] = {k: v for k, v in item.items() if k != 'values'}
+    written = arrays.write(Path(folder) / str(spec.get('file', 'data')), numbers, descriptions)
+    return {**result, 'data': written['data']}
 
 
 def language(name):

@@ -27,4 +27,4 @@ where = ["src"]
 include = ["optics_photonics*"]
 
 [tool.setuptools.package-data]
-"optics_photonics.programs" = ["*/*.py"]
+"optics_photonics.programs" = ["*/*.py", "*/*.jl", "*/*.m", "*/*.lua", "*/*.wl", "*/*.mpl", "*/*.lsf"]
