@@ -4,6 +4,12 @@
 
 Reviewed: 2026-10-20. Schema version: 1.0. 110 tools / product families in 15 task domains.
 
+## Start a task
+
+- [Computation guide](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/blob/main/skills/optical-computation/SKILL.md): choose an environment, run a calculation, inspect results and continue saved work; detailed topics load on demand.
+- [Research guide](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/blob/main/skills/optical-research/SKILL.md): frame the physical question, choose a method and interpret the calculation.
+- [Independent integrations](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/blob/main/skills/optical-computation/references/integrations.md): add software, programs and guides in separately maintained packages.
+
 ## Foundations
 
 - [Field · Matter · Interaction](https://cherish0925.github.io/Optics-Photonics-AI-Lab/foundations.html): unified physical framework across classical and quantum optics.

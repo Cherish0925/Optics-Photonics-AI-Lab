@@ -7,7 +7,7 @@ An independent package for optical software, native research programs, backgroun
 The connector supports Python 3.10+ on Windows, macOS and Linux. Each solver uses its own supported Python version, operating system and license. Different tools may use different environments.
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/optics_photonics-0.10.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.0/optics_photonics-0.11.0-py3-none-any.whl"
 optics-photonics info tmm
 optics-photonics prepare tmm
 optics-photonics run tmm spectrum --inputs "@inputs.json"
@@ -82,7 +82,7 @@ optics-photonics submit tmm spectrum --run-id RUN_ID --inputs '{"n":[1,1.30,1.52
 optics-photonics run tmm spectrum --inputs "@coating.json" --optimize '{"variables":{"thickness_nm.0":[0,300],"thickness_nm.1":[0,300]},"minimize":"mean.R"}'
 ```
 
-A sweep computes its points in parallel, several per process for short programs; a dotted name such as `thickness_nm.0` sets one element of a list input. `sweep` tabulates the swept inputs and chosen result values of every point, finds the best one and with `--save` writes `sweep.npz` gridded over the swept inputs. `--run-id` appends a finer sweep to the same run. `--optimize` searches the variables within their bounds inside one process, by differential evolution with a Nelder–Mead polish or by Nelder–Mead alone, and keeps the files of the best evaluation in `best/` ([parameter studies](../skills/optical-computation/references/studies.md)).
+A sweep computes its points in parallel, several per process for short programs; a dotted name such as `thickness_nm.0` sets one element of a list input. `sweep` tabulates the swept inputs and chosen result values of every point, finds the best one and with `--save` writes `sweep.npz` gridded over the swept inputs. `--run-id` appends a finer sweep to the same run. `--optimize` searches the variables within their bounds inside one process, by differential evolution with a Nelder–Mead polish or by Nelder–Mead alone. On completion, the best evaluation's files are written to `best/`; while running or stopped, its checkpoint identifies the current best files ([parameter studies](../skills/optical-computation/references/studies.md)).
 
 ## Install from a marketplace
 

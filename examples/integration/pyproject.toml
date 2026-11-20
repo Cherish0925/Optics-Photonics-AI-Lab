@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optics-gaussian-example"
+version = "0.1.0"
+description = "An independently installed Gaussian-beam integration for Optics-Photonics"
+requires-python = ">=3.10"
+
+[project.entry-points."optics_photonics.integrations"]
+gaussian = "gaussian_example"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+gaussian_example = ["optics.json", "programs/*.py", "guides/*.md"]

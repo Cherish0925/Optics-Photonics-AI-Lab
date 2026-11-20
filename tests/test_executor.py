@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -10,6 +11,28 @@ from optics_photonics.signals import Cancellation
 
 
 class ExecutorCase(unittest.TestCase):
+    def test_invalid_deadlines_do_not_start_or_truncate_output(self):
+        binary = processes.native_binary()
+        if binary is None:
+            self.skipTest('Native executor is built by the native distribution job')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output, errors, started = root/'stdout', root/'stderr', root/'started'
+            output.write_text('previous output')
+            for timeout in (-1, True, '3', 1e300):
+                with self.subTest(timeout=timeout):
+                    request = {'id': 'invalid-timeout', 'params': {
+                        'command': [sys.executable, '-c', 'from pathlib import Path;Path("started").touch()'],
+                        'cwd': str(root), 'stdout': str(output), 'stderr': str(errors), 'timeout': timeout}}
+                    result = subprocess.run([str(binary)], input=json.dumps(request)+'\n',
+                        capture_output=True, text=True, timeout=5, check=True)
+                    reply = json.loads(result.stdout)
+                    self.assertEqual(reply['id'], request['id'])
+                    self.assertIn('timeout', reply['error'])
+                    self.assertFalse(started.exists())
+                    self.assertEqual(output.read_text(), 'previous output')
+                    self.assertFalse(errors.exists())
+
     def test_executor_owns_descendants_after_parent_exits(self):
         binary=processes.native_binary()
         if binary is None:

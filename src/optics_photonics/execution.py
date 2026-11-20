@@ -5,7 +5,7 @@ from pathlib import Path
 import signal
 import subprocess
 import uuid
-from . import environments, processes
+from . import environments, processes, programs
 from .processes import Cancelled
 
 
@@ -33,9 +33,10 @@ def stop_process(process):
     process.wait()
 
 
-def run(tool, request, *, output=None, path=None, timeout=None, cancel=None, configuration=None):
+def run(tool, request, *, output=None, path=None, timeout=None, cancel=None, configuration=None, previous=()):
     if cancel and cancel(): raise Cancelled('Calculation cancelled')
     selected = configuration or binding(tool, path)
+    request = programs.snapshot(request, tool=tool)
     directory = Path(output or environments.home(path)/'runs'/str(uuid.uuid4())).expanduser().resolve()
     directory.mkdir(parents=True, exist_ok=True)
     if any(directory.iterdir()):
@@ -51,6 +52,9 @@ def run(tool, request, *, output=None, path=None, timeout=None, cancel=None, con
         command = [replacements.get(arg, arg) for arg in selected['command']]
     env = {**os.environ, **selected.get('env', {}), **{name: str(selected['threads']) for name in ('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS')},
            'OPTICS_REQUEST_FILE': str(request_file), 'OPTICS_OUTPUT_DIR': str(directory), 'OPTICS_RESULT_FILE': str(directory/'result.json')}
+    from .progress import identity
+    env['OPTICS_PREVIOUS_OUTPUTS'] = json.dumps([str(Path(folder).resolve()) for folder in previous])
+    env['OPTICS_PROGRAM_ENVIRONMENT'] = identity(selected)
     for variable in owned.values():
         env.pop(variable, None)
     if selected['kind'] in owned:

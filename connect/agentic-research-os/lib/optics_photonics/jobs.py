@@ -66,6 +66,14 @@ def database(path=None):
         PRAGMA user_version=3;
         ''')
         db.commit()
+    if db.execute('PRAGMA user_version').fetchone()[0] < 4:
+        db.executescript('''
+        CREATE INDEX IF NOT EXISTS runs_created_id ON runs(created DESC, id DESC);
+        CREATE INDEX IF NOT EXISTS requests_run ON requests(run_id);
+        CREATE INDEX IF NOT EXISTS steps_tool_run ON steps(json_extract(specification, '$.tool'), run_id);
+        PRAGMA user_version=4;
+        ''')
+        db.commit()
     try:
         yield db
         db.commit()
@@ -128,12 +136,13 @@ def packaged(step):
     if not isinstance(action, str):
         raise ValueError('action names a packaged program')
     adapter = native.details(tool)
-    if adapter:
-        if action not in adapter['actions']:
-            raise ValueError(f"{tool} session actions: {', '.join(adapter['actions'])}")
+    if adapter and action in adapter['actions']:
         return
     spec = programs.catalog().get(tool, {}).get(action)
     if spec is None:
+        if adapter:
+            available = ', '.join(programs.catalog().get(tool, {})) or 'none'
+            raise ValueError(f"{tool} session actions: {', '.join(adapter['actions'])}; programs: {available}")
         programs.source(tool, action)  # names the programs of the tool
     varied = {str(key).split('.')[0] for key in (step.get('optimize') or {}).get('variables', {})}
     given = set(step.get('inputs', {})).union(*(item['inputs'] for item in step.get('points', [])))
@@ -296,6 +305,25 @@ def submitted_steps(request_id, path=None):
         return json.loads(row[0]) if row else []
 
 
+def reuse(request_id, payload, path=None):
+    """Return an accepted request before discovery or expansion of its inputs.
+
+    submit still checks inside its transaction when two new requests race.
+    This path lets a retry use the saved definition after an integration changes.
+    """
+    if not request_id:
+        return None
+    with database(path) as db:
+        row = db.execute('SELECT payload,run_id FROM requests WHERE id=?', (request_id,)).fetchone()
+    if row is None:
+        return None
+    if row['payload'] != encoded(payload):
+        raise ValueError('This request_id already belongs to different inputs')
+    notify(path)
+    start_worker(row['run_id'], path)
+    return {'run_id': row['run_id'], 'request_id': request_id}
+
+
 def submit(steps, name='Optical research', request_id=None, run_id=None, path=None, _environments=None, _payload=None):
     key = request_id or str(uuid.uuid4())
     # A retried request is recognized by its payload: the steps, or the call that produced them.
@@ -312,7 +340,8 @@ def submit(steps, name='Optical research', request_id=None, run_id=None, path=No
             if run_id and not existing: raise ValueError('Unknown run: '+run_id)
             if existing and existing['cancel']: raise ValueError('Resume the cancelled run before appending steps')
             known = {r[0] for r in db.execute('SELECT id FROM steps WHERE run_id=?', (result_id,))}
-            checked = validate(steps, known)
+            from . import programs
+            checked = [programs.snapshot(step) for step in validate(steps, known)]
             if _environments is None:
                 checked, _environments = provisioned(checked, known, path)
             capacity = db.execute("SELECT value FROM settings WHERE key='cpu'").fetchone()[0]
@@ -387,6 +416,12 @@ def status(run_id, path=None, offset=0, limit=50, include_results=True, wait=0, 
                 item.pop('result', None)
                 item['output'] = item['id']+'/attempt-'+str(item['attempt'])+'/'
         result['next_offset'] = offset+limit if len(items)>limit else None
+    from .progress import summary
+    for item in result['steps']:
+        prefix = item['id'] + '/attempt-' + str(item['attempt']) + '/'
+        saved = summary(environments.home(path) / 'runs' / run_id / prefix)
+        if saved:
+            item['progress'] = [{**entry, 'path': prefix + entry['path']} for entry in saved]
     if result['state']=='queued': start_worker(run_id, path)
     return result
 
@@ -405,12 +440,59 @@ def outcome(run_id, step_id=None, wait=0, path=None, cancel=None):
     return reply
 
 
-def list_runs(state=None, offset=0, limit=20, path=None):
-    if offset<0 or not 1<=limit<=200: raise ValueError('Use offset >= 0 and limit between 1 and 200')
+def list_runs(state=None, offset=0, limit=20, path=None, search=None, tool=None, before=None):
+    """Find saved work without loading program sources or calculation results.
+
+    ``before`` is the last run ID of the previous page. Unlike an offset, it
+    keeps the page stable when another client submits new work between reads.
+    The existing offset interface remains available.
+    """
+    if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 200:
+        raise ValueError('Use integer offset >= 0 and limit between 1 and 200')
+    if state is not None and (not isinstance(state, str) or state not in TERMINAL | {'queued', 'running'}):
+        raise ValueError('state is queued, running, succeeded, failed, cancelled, blocked or interrupted')
+    for key, value in (('search', search), ('tool', tool), ('before', before)):
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError(key + ' must be nonempty text')
+    if before is not None and offset:
+        raise ValueError('Use before or offset to continue a page, not both')
     reconcile(path)
     with database(path) as db:
-        rows=db.execute('SELECT id,name,state,created,finished FROM runs WHERE (? IS NULL OR state=?) ORDER BY created DESC LIMIT ? OFFSET ?',(state,state,limit+1,offset)).fetchall()
-    return {'runs':[dict(r) for r in rows[:limit]],'next_offset':offset+limit if len(rows)>limit else None}
+        clauses, values = [], []
+        if state is not None:
+            clauses.append('r.state=?'); values.append(state)
+        if tool is not None:
+            clauses.append("EXISTS (SELECT 1 FROM steps s WHERE json_extract(s.specification, '$.tool')=? AND s.run_id=r.id)")
+            values.append(tool)
+        if search is not None:
+            # A percent or underscore in a research name is literal text.
+            pattern = '%' + search.strip().replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%'
+            clauses.append("""(r.name LIKE ? ESCAPE '\\' OR r.id LIKE ? ESCAPE '\\'
+                OR EXISTS (SELECT 1 FROM requests q WHERE q.run_id=r.id AND q.id LIKE ? ESCAPE '\\')
+                OR EXISTS (SELECT 1 FROM steps s WHERE s.run_id=r.id
+                    AND json_extract(s.specification, '$.tool') LIKE ? ESCAPE '\\'))""")
+            values.extend([pattern] * 4)
+        if before is not None:
+            anchor = db.execute('SELECT created,id FROM runs WHERE id=?', (before,)).fetchone()
+            if anchor is None:
+                raise ValueError('Unknown page cursor run: ' + before)
+            clauses.append('(r.created,r.id) < (?,?)'); values.extend(anchor)
+        where = ' WHERE ' + ' AND '.join(clauses) if clauses else ''
+        rows = db.execute('SELECT r.id,r.name,r.state,r.created,r.finished FROM runs r' + where +
+                          ' ORDER BY r.created DESC,r.id DESC LIMIT ? OFFSET ?', [*values, limit + 1, offset]).fetchall()
+        more = len(rows) > limit
+        result = [dict(row) for row in rows[:limit]]
+        by_id = {row['id']: row for row in result}
+        for row in result:
+            row.update(tools=[], counts={})
+        if result:
+            placeholders = ','.join('?' for _ in result)
+            for row in db.execute("SELECT DISTINCT run_id,json_extract(specification, '$.tool') AS tool FROM steps WHERE run_id IN (" + placeholders + ') ORDER BY tool', list(by_id)):
+                by_id[row['run_id']]['tools'].append(row['tool'])
+            for row in db.execute('SELECT run_id,state,count(*) AS n FROM steps WHERE run_id IN (' + placeholders + ') GROUP BY run_id,state', list(by_id)):
+                by_id[row['run_id']]['counts'][row['state']] = row['n']
+    return {'runs': result, 'next_offset': offset + limit if more and before is None else None,
+            'next_before': result[-1]['id'] if more else None}
 
 
 def cancel(run_id, path=None):
@@ -607,8 +689,10 @@ def perform(run_id, row, path, cancellation):
                     row_result = db.execute("SELECT result FROM steps WHERE run_id=? AND id=? AND state='succeeded'",(run_id,key)).fetchone()
                     results[key] = json.loads(row_result[0])
         request = {'action':spec.get('action',''),'source':spec.get('source',''),'inputs':resolved_inputs(spec,results,folders),
-                   **{key:spec[key] for key in ('script','optimize','points') if spec.get(key)}}
-        result = execution.run(spec['tool'],request,output=output,configuration=config,timeout=spec.get('timeout'),cancel=cancellation)
+                   **{key:spec[key] for key in ('script','optimize','points','_program') if spec.get(key)}}
+        previous = [output.parent / ('attempt-' + str(number)) for number in range(row['attempt'] - 1, 0, -1)]
+        result = execution.run(spec['tool'],request,output=output,configuration=config,timeout=spec.get('timeout'),
+                               cancel=cancellation, previous=previous)
         record = result['record']
         result = {'output':result['output'], **record} if isinstance(record,dict) and 'result' in record else {'output':result['output'],'result':record}
         state, error = 'succeeded', None

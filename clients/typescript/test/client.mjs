@@ -32,6 +32,15 @@ test('submit arbitrary software, reconnect and retrieve its saved output',async(
   assert.equal(result.state,'succeeded');assert.equal('result' in result.steps[0],false);
   const full=await client.status(submission.run_id,{include_results:true});
   assert.equal(full.steps[0].result.result.value,42);
+  const recovered=await client.runs({search:'research-42',tool:'my-solver',state:'succeeded'});
+  assert.equal(recovered.runs[0].id,submission.run_id);
+  assert.deepEqual(recovered.runs[0].tools,['my-solver']);
+  assert.equal(recovered.runs[0].counts.succeeded,1);
+  assert.equal(recovered.next_before,null);
+  assert.match(await client.guide('optical-computation'),/Optical computation/);
+  const integrations=await client.integrations();
+  assert.ok(Array.isArray(integrations.packages));
+  assert.ok(Array.isArray(integrations.errors));
   const repeated=await client.submit([{id:'solve',tool:'my-solver'}],{request_id:'research-42'});
   assert.equal(repeated.run_id,submission.run_id);
  }finally{client.close();await rm(home,{recursive:true,force:true,maxRetries:20,retryDelay:50});}

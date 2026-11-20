@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "software": [
+    {
+      "id": "gaussian-example",
+      "name": "Gaussian beam example",
+      "summary": "Paraxial free-space propagation of an ideal Gaussian beam",
+      "license": "MIT",
+      "group": "open",
+      "domains": ["wave", "laser"],
+      "limit": "Homogeneous medium, paraxial propagation and M-squared equal to one",
+      "translations": {
+        "zh": {
+          "name": "高斯光束示例",
+          "summary": "理想高斯光束在自由空间中的近轴传播",
+          "limit": "均匀介质、近轴传播，M 平方等于一"
+        }
+      },
+      "connection": {"kind": "python", "modules": ["math", "cmath"]}
+    }
+  ],
+  "programs": [
+    {"tool": "gaussian-example", "name": "propagate", "path": "programs/propagate.py"}
+  ],
+  "guides": [
+    {"name": "beam", "title": "Propagate an ideal Gaussian beam", "path": "guides/beam.md"},
+    {"name": "beam", "title": "传播理想高斯光束", "language": "zh", "path": "guides/beam.zh.md"}
+  ]
+}
