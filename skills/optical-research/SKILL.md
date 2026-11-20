@@ -27,4 +27,13 @@ Read only the relevant domain reference below. Each gives the variables to trans
 - Laboratory instruments and measurements: [lab](references/lab.md).
 - Shared numerical and material tools: [foundation](references/foundation.md).
 
+A study, step by step:
+
+1. State the observable, the model and what the model leaves out.
+2. Reproduce something known first: the `checks` of a packaged program, an analytic limit or a published value.
+3. Change the numerical resolution once (grid, harmonics, packets, time step) and see how far the result moves; that movement is its numerical uncertainty.
+4. Vary the physical parameters with `sweep` or `optimize`, and refine where the result changes.
+5. Where a conclusion rests on one method, compute it by a second one, another solver or formulation, and compare.
+6. Report the model and its assumptions, the inputs with units, the results with their uncertainty, what was computed and what was assumed, and the run IDs.
+
 Use the native software API when the research requires functions beyond the packaged examples. Keep equations, assumptions, material sources and units with the calculation. For installation and execution, use the optical-computation Skill. Ask a person for physical geometry, license access or experimental conditions only when they cannot be obtained from the supplied project.
