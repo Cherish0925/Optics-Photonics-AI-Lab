@@ -144,11 +144,11 @@ OMITTED = ('interface', 'sources', 'upstream', 'native_program', 'routes', 'exec
 
 
 def details(tool, language='en', path=None, program=None, source=False):
-    """One software entry with its connection, its routes and the programs it runs; each fact appears once.
+    """One software entry with its connection, its routes and what it runs: programs by name with their input names.
 
     With program, that packaged program's physics, inputs, results and checks; with source also its text, to adapt.
     """
-    from . import native, programs, routes
+    from . import operations, programs, routes
     item = software(tool, language, path)
     if program is not None:
         spec = programs.details(tool, program)
@@ -171,12 +171,10 @@ def details(tool, language='en', path=None, program=None, source=False):
         reply['connection'] = {key: value for key, value in item['connection'].items() if key not in OMITTED}
     reply['routes'] = routes.routes(tool, path)
     listed = programs.listing(tool)
-    reply['programs'] = listed
-    if listed:
-        reply['program_details'] = 'software_details(tool, program=NAME) gives the physics, input defaults and meanings, results and checks'
-    session = native.details(tool)
-    if session:
-        reply['session'] = session
+    # execution keeps its 0.7 fields (operations, native_program, session_adapter) beside the programs.
+    reply['execution'] = {'programs': listed, **({'program_details': 'software_details(tool, program=NAME) gives the physics, input defaults '
+                                                                     'and meanings, results and checks'} if listed else {}),
+                          **operations.details(tool)}
     return reply
 
 

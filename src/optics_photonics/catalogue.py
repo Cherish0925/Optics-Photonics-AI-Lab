@@ -296,6 +296,7 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         program = {'name': program, 'title': programs.catalog()[item['id']][program]['title']} if program else None
         matches.append({k: item[k] for k in ('id', 'name', 'group', 'cats', 'summary')} |
                        {'routes': route_kinds(item['id']), 'programs': list(programs.catalog().get(item['id'], {})),
+                        'operations': list(programs.catalog().get(item['id'], {})),   # the name of programs in 0.7
                         'install': 'conda' if connection.get('conda') else 'pip' if connection.get('pip') else 'julia' if connection.get('julia') else 'manual'} |
                        ({'upstream_mcp': item['mcp']['kind']} if item['mcp']['kind'] != 'unverified' else {}) |
                        ({'program': program} if program else {}) | ({'missing': missing} if missing else {}))

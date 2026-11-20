@@ -26,12 +26,18 @@ DOMAINS = {row[0] for row in json.loads((Path(__file__).resolve().parents[1] / '
 
 
 class DeclarationCase(unittest.TestCase):
-    def test_programs_written_for_0_7_still_import_their_helpers(self):
+    def test_legacy_operation_discovery_delegates_to_the_same_programs(self):
         from optics_photonics import operations
         name, example = operations.EXAMPLES['scipy']
         self.assertEqual(name, 'fit_gaussian')
         self.assertEqual(example, programs.inputs(programs.catalog()['scipy'][name]))
-        self.assertEqual(operations.complex_number([1, 2]), 1 + 2j)
+        details = environments.details('scipy')['execution']
+        self.assertEqual(details['operations'][0]['name'], name)
+        self.assertTrue(details['operations'][0]['description'])
+        self.assertEqual(details['operations'][0]['inputs_example'], example)
+        found = catalogue.search('scipy')['items']
+        for item in found:
+            self.assertEqual(item['operations'], item['programs'])
 
     def test_every_program_declares_its_physics_inputs_and_results(self):
         connections = catalogue.connections()
@@ -97,17 +103,18 @@ class DeclarationCase(unittest.TestCase):
             programs.parameters(spec, {'thickness': [80]})
 
     def test_details_list_programs_and_return_one_with_its_physics_or_source(self):
-        listed = environments.details('scipy')
+        whole = environments.details('scipy')
+        listed = whole['execution']
         self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes', 'tissue_layers'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         # The listing stays short: titles and input names; one program brings defaults, physics and source.
         self.assertEqual(nlse['inputs'], list(programs.catalog()['scipy']['nlse']['inputs']))
         self.assertEqual(set(nlse), {'name', 'title', 'inputs'})
         self.assertIn('program=NAME', listed['program_details'])
-        self.assertLess(len(json.dumps(listed)), 5000)
-        for absent in ('mcp', 'skill', 'stage', 'route', 'execution'):
-            self.assertNotIn(absent, listed)   # facts that are the same for every software, or say that nothing was found
-        self.assertNotIn('environment', listed['connection'])
+        self.assertLess(len(json.dumps(whole)), 5000)
+        for absent in ('mcp', 'skill', 'stage', 'route'):
+            self.assertNotIn(absent, whole)   # facts that are the same for every software, or say that nothing was found
+        self.assertNotIn('environment', whole['connection'])
         self.assertEqual(environments.details('lumerical')['upstream']['mcp']['kind'], 'official')
         one = environments.details('scipy', program='nlse')
         self.assertNotIn('source', one)   # the text comes on request
@@ -117,10 +124,10 @@ class DeclarationCase(unittest.TestCase):
                          (programs.catalog()['scipy']['nlse']['about'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0]))
         with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: coupler, fiber_modes, fit_gaussian'):
             environments.details('scipy', program='fft')
-        native = environments.details('lumerical')
+        native = environments.details('lumerical')['execution']
         self.assertEqual(native['programs'], [])
         self.assertNotIn('program_details', native)
-        self.assertIn('solve_project', native['session']['actions'])
+        self.assertIn('solve_project', native['session_adapter']['actions'])
         found = catalogue.search('tmm')['items'][0]
         self.assertEqual((found['programs'], found['routes'], found['install']), (['spectrum'], ['python'], 'pip'))
         self.assertNotIn('upstream_mcp', found)
