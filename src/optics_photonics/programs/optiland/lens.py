@@ -79,7 +79,7 @@ for f in fields:
 for w in wavelengths:
     system.wavelengths.add(value=w, is_primary=w == primary)
 if p['image_solve']:
-    system.image_solve()
+    system.updater.image_solve()
 
 
 def scalar(value):

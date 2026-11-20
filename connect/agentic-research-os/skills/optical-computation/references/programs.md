@@ -2,7 +2,7 @@
 
 ## Packaged programs
 
-Each is an ordinary native program in `optics_photonics/programs/TOOL/`: Python, or the language of software bound to its executable (Julia for QuantumOptics.jl, Lua for S4), declared in its leading comment. `software_details(tool)` lists a tool's programs with every input's default and meaning; `submit_calculation(tool, action=NAME, inputs={...})` runs one with the given inputs replacing the defaults, and an unknown input name is rejected at submission. `software_details(tool, program=NAME)` returns one program with its physics and conventions, and with `source=true` its text to adapt. Indices may be numbers, `[n, k]` or material names where the inputs say so. Arrays are saved with units and axes; `checks` in the result compare with a conservation law or an analytic limit.
+Each is an ordinary native program in `optics_photonics/programs/TOOL/`: Python, or the language of software bound to its executable (Julia for QuantumOptics.jl, Lua for S4, the MATLAB language for GNU Octave and MATLAB), declared in its leading comment. `software_details(tool)` lists a tool's programs with every input's default and meaning; `submit_calculation(tool, action=NAME, inputs={...})` runs one with the given inputs replacing the defaults, and an unknown input name is rejected at submission. `software_details(tool, program=NAME)` returns one program with its physics and conventions, and with `source=true` its text to adapt. Indices may be numbers, `[n, k]` or material names where the inputs say so. Arrays are saved with units and axes; `checks` in the result compare with a conservation law or an analytic limit.
 
 | Program | Computes | Compared with |
 | --- | --- | --- |
@@ -14,11 +14,13 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/`: Python,
 | `meep/ring` | Ring-resonator modes: frequency, Q by Harminv; final field | Meep tutorial values |
 | `mpb/bands` | Bands and complete gaps of 2-D lattices of rods or holes, TE and TM | rod-lattice TM gap 0.3225–0.4425 |
 | `mpb/waveguide` | Guided modes of a strip or rib waveguide: effective and group index, polarization, mode intensity | analytic slab mode, second-order convergence |
+| `tidy3d/modes` | Full-vector modes of a strip or rib waveguide by Tidy3D's mode solver on this computer, without an account: effective and group index, TE fraction, effective area, power in the core, mode intensity | slab dispersion relation for TE0 |
 | `legume/bands` | Bands of 2-D crystals (plane waves) and slabs (guided modes) | MPB |
 | `s4/crystal_slab` | Transmission and reflection of a photonic-crystal slab over frequency, with its Fano lines (Lua on an installed S4) | energy balance; Airy formula for the slab without holes |
 | `treams/cluster` | Scattering, extinction and absorption of sphere clusters with multiple scattering; orientation averages | Mie series; energy balance |
 | `miepython/sphere` | Mie efficiencies, cross sections, asymmetry, angular pattern | Rayleigh limit; angular integral |
 | `adda/particle` | Extinction, scattering and absorption efficiencies and S11 over angle of a sphere or an ellipsoid by the discrete dipole approximation; runs an installed ADDA | exact series for a sphere, converging as dipoles get finer |
+| `ngsolve/scattering` | Plane wave on a dielectric or metal cylinder in 2-D by finite elements with a perfectly matched layer, TM or TE: Q_sca, Q_abs, field map; a template for other cross-sections | exact Bessel–Hankel series: field on a circle and Q_sca |
 | `hcipy/psf` | PSF with obstruction and Zernike aberrations; Strehl, encircled energy | Airy encircled energy; Maréchal |
 | `poppy/psf` | PSF on a detector with Zernike aberrations; Strehl | HCIPy |
 | `lightpipes/gaussian` | Gaussian beam propagation (Forvard or Fresnel); complex field | w(z) |
@@ -29,6 +31,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/`: Python,
 | `scipy/second_harmonic` | Second-harmonic generation in a uniaxial crystal: type I, type II or quasi-phase-matching angle or period, walk-off, angle and wavelength acceptance; conversion with pump depletion | literature BBO angle and walk-off; tanh² and sinc² limits |
 | `scipy/nlse` | Fiber pulse propagation: dispersion, self-phase modulation, third-order dispersion, loss | soliton; dispersive broadening; energy |
 | `laserfun/supercontinuum` | Generalized NLSE with Raman scattering and self-steepening: solitons and supercontinuum | photon-number conservation; Dudley benchmark |
+| `octave/bragg_grating` | Fiber Bragg grating, uniform, apodized or chirped: reflectance, transmittance and reflected group delay over wavelength by coupled-mode theory (MATLAB language; runs in GNU Octave and in MATLAB) | closed form of the uniform grating: spectrum, tanh² peak and delay; energy balance |
 | `scipy/metalens` | Metalens from a unit-cell library: pillar of each cell by the hyperbolic phase, focal spot by angular-spectrum propagation; FWHM, Strehl ratio, focusing efficiency | Airy width of the ideal lens; energy of the propagation |
 | `scipy/resonator` | Gaussian eigenmode of a two-mirror or any ABCD resonator: stability, waists, mirror spots, Gouy phase, FSR, transverse mode spacing, TEM_mn offsets | closed-form two-mirror expressions |
 | `scipy/laser_rates` | Semiconductor laser L–I curve and step response | threshold, slope, relaxation frequency |
@@ -51,7 +54,11 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/`: Python,
 | `optiland/lens` | Lens analysis: focal length, back focus, f-number, pupils; Seidel sums and transverse aberrations per surface; axial colour; real-ray spot radii over field and wavelength | independent paraxial trace; real rays at small aperture; lensmaker's equation |
 | `optiland/trace` | Real rays through a sequential lens prescription | rotational symmetry |
 | `py-pol/polarization` | Jones calculus through polarizers and wave plates; Stokes output | Malus's law |
+| `srw/undulator` | On-axis spectrum of a planar undulator and the flux density across the central cone at the fundamental (single-electron synchrotron radiation) | formulas of the harmonic energy and the peak flux density |
+| `scipy/tissue_layers` | Layered tissue by Monte Carlo photon transport: diffuse reflectance, transmittance, absorbed fraction per layer and over depth, fluence rate, reflectance over the distance from the beam, each with its standard error | matched slab of known reflectance and transmittance; energy balance |
 | `scikitimage/registration` | Subpixel translation between images | |
+| `pyvisa/sweep` | Step a setting of a laboratory instrument and read a value at each step, with the time of each reading; lists the instruments found; a simulated source when no instrument is given | readback of the simulated source |
+| `bluesky/scan` | Scan a motor through a peak, fit it and scan again around the fitted centre: a Bluesky plan with its documents, on simulated ophyd devices | centre and width of the simulated detector |
 | `gdsfactory/waveguide` | Waveguide layout with ports, GDSII | KLayout readback |
 | `klayout/layout` | Rectangles to GDSII | |
 

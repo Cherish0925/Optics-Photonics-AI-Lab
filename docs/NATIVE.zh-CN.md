@@ -84,7 +84,7 @@ optics-photonics submit comsol --program research.py --inputs "@inputs.json"
 
 ## 自动化服务与在线服务
 
-Windows 上，查找读取 FRED（`FRED.Application`、`FRED.Document`）、CODE V、LightTools、OptiLayer 已注册的自动化名称。按 `progid` 绑定的软件，其程序在本进程计算的所有点上以 `APP` 持有该服务，结束时释放；对象与方法以厂商自动化文档为准，例如 FRED 的 `APP.Documents.Open(path)` 返回文档对象。解释器需要安装 pywin32。
+Windows 上，查找读取 FRED（`FRED.Application`、`FRED.Document`）、CODE V、LightTools、OptiLayer、LabVIEW（`LabVIEW.Application`）已注册的自动化名称。按 `progid` 绑定的软件，其程序在本进程计算的所有点上以 `APP` 持有该服务，结束时释放；对象与方法以厂商自动化文档为准，例如 FRED 的 `APP.Documents.Open(path)` 返回文档对象。解释器需要安装 pywin32。
 
 Tidy3D 从 `SIMCLOUD_APIKEY` 或 `tidy3d configure` 写出的配置读取 API key；查找只报告二者是否存在。PySpeos（`ansys-speos-core`，按配方安装）连接有许可的 Speos 安装中的 SpeosRPC 服务。以 `-pt 5101` 启动的 FIMMWAVE 响应 `pdPythonLib.pdApp().ConnectToApp()`；把 `pdPythonLib.py` 所在目录绑定为 SDK 路径。
 
@@ -126,6 +126,7 @@ MCP 服务可以运行在装有软件的工作站上，Agent 所在计算机通�
 | MATLAB / Simulink (`matlab`) | executable (matlab); python | — |
 | Wolfram Mathematica (`mathematica`) | executable (wolfram); python | — |
 | Maple (`maple`) | executable (maple) | — |
+| NI LabVIEW (`labview`) | automation (LabVIEW.Application) | — |
 | PhotonForge Community (`photonforge`) | python | — |
 | OSLO EDU (`osloedu`) | inside (CCL and commands within the EDU limits) | — |
 | PtyPy (`ptypy`) | python | pip |
@@ -181,6 +182,16 @@ MCP 服务可以运行在装有软件的工作站上，Agent 所在计算机通�
 | SRW (`srw`) | python | pip (linux-64, osx-arm64, win-64) |
 | SHADOW4 / OASYS (`shadow`) | python | pip |
 | xrt (`xrt`) | python | pip |
+| PyVISA (`pyvisa`) | python | pip |
+| PyMeasure (`pymeasure`) | python | pip |
+| pylablib (`pylablib`) | python | pip |
+| QCoDeS (`qcodes`) | python | pip |
+| Bluesky / ophyd (`bluesky`) | python | pip |
+| Micro-Manager (pymmcore-plus) (`micromanager`) | python | pip |
+| Harvester (GenICam) (`harvesters`) | python | pip |
+| NI-DAQmx Python (`nidaqmx`) | python | pip |
+| python-seabreeze (`seabreeze`) | python | pip |
+| slmsuite (`slmsuite`) | python | pip |
 | SymPy (`sympy`) | python | pip |
 | SageMath (`sage`) | python | — |
 | GNU Octave (`octave`) | executable (octave) | conda (linux-64, osx-arm64) |

@@ -1,6 +1,6 @@
 ---
 name: optical-research
-description: "Select optical and photonic software and mathematical representations for research: ray, wave, Maxwell, thin films, PICs, fibers, lasers, scattering, quantum optics, tissue optics, X-rays, imaging and materials."
+description: "Select optical and photonic software and mathematical representations for research: ray, wave, Maxwell, thin films, PICs, fibers, lasers, scattering, quantum optics, tissue optics, X-rays, imaging, laboratory instruments and materials."
 ---
 
 # Optical research
@@ -24,6 +24,7 @@ Read only the relevant domain reference below. Each gives the variables to trans
 - Tissue optics: [bio](references/bio.md).
 - X-ray sources and beamlines: [xray](references/xray.md).
 - Imaging and inverse problems: [imaging](references/imaging.md).
+- Laboratory instruments and measurements: [lab](references/lab.md).
 - Shared numerical and material tools: [foundation](references/foundation.md).
 
 Use the native software API when the research requires functions beyond the packaged examples. Keep equations, assumptions, material sources and units with the calculation. For installation and execution, use the optical-computation Skill. Ask a person for physical geometry, license access or experimental conditions only when they cannot be obtained from the supplied project.

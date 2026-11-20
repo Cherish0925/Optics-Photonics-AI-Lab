@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from optics_photonics import catalogue, environments, jobs, programs  # noqa: E402
+from optics_photonics import catalogue, environments, jobs, languages, programs  # noqa: E402
 from support import workspace  # noqa: E402
 
 SCIENCE = os.environ.get('OPTICS_SCIENCE_TESTS') == '1'
@@ -54,7 +54,7 @@ class DeclarationCase(unittest.TestCase):
                     if spec.get('language'):
                         # A program in the software's own language: that software has an executable route in the language.
                         route = next(r for r in connections[tool]['routes'] if r['route'] == 'executable')
-                        self.assertEqual(route['language'], spec['language'])
+                        self.assertEqual(languages.family(route['language']), spec['language'])
                         continue
                     ast.parse(source)
                     self.assertIn('parameters(PROGRAM, INPUTS)', source)
@@ -63,7 +63,8 @@ class DeclarationCase(unittest.TestCase):
         import re
         text = (Path(__file__).resolve().parents[1] / 'skills/optical-computation/references/programs.md').read_text(encoding='utf-8')
         listed = set(re.findall(r'^\| `([\w-]+/\w+)`', text, re.M))
-        self.assertEqual(listed, {tool + '/' + name for tool, items in programs.catalog().items() for name in items})
+        # A program shared within a language family is listed once, under the tool that holds its file.
+        self.assertEqual(listed, {spec['file'].parent.name + '/' + name for items in programs.catalog().values() for name, spec in items.items()})
 
     def test_inputs_replace_defaults_and_unknown_names_list_the_accepted_ones(self):
         spec = programs.catalog()['tmm']['spectrum']
@@ -75,7 +76,7 @@ class DeclarationCase(unittest.TestCase):
 
     def test_details_list_programs_and_return_one_source(self):
         listed = environments.details('scipy')['execution']
-        self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes'])
+        self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes', 'tissue_layers'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
@@ -381,6 +382,27 @@ class ProgramPhysicsCase(unittest.TestCase):
         spectrum = data.load(offset/'pulse.npz')
         self.assertAlmostEqual(spectrum['frequency_THz'].values[np.argmax(spectrum['spectrum'].values[0])], 0.5)
 
+    def test_tissue_transport_reaches_the_known_slab_and_half_space(self):
+        # van de Hulst's matched slab, and Giovanelli's half space of index 1.5 with isotropic scattering (total reflectance 0.2600).
+        slab = self.run_program('scipy', 'tissue_layers', {'packets': 200000, 'layers': [
+            {'mu_a_per_mm': 1.0, 'mu_s_per_mm': 9.0, 'g': 0.75, 'n': 1.0, 'thickness_mm': 0.2}]})
+        self.assertLess(abs(slab['diffuse_reflectance'] - 0.09739), 4 * slab['diffuse_reflectance_error'])
+        self.assertLess(abs(slab['transmittance'] - 0.66096), 4 * slab['transmittance_error'])
+        self.assertLess(abs(slab['checks']['balance']), 1e-6)
+        self.assertLess(abs(slab['checks']['reference_reflectance']), 4 * slab['checks']['reference_error'][0])
+        thick = self.run_program('scipy', 'tissue_layers', {'packets': 100000, 'layers': [
+            {'mu_a_per_mm': 1.0, 'mu_s_per_mm': 9.0, 'g': 0.0, 'n': 1.5, 'thickness_mm': 30}]})
+        self.assertAlmostEqual(thick['specular_reflectance'], 0.04, places=12)
+        self.assertLess(abs(thick['specular_reflectance'] + thick['diffuse_reflectance'] - 0.2600), 4 * thick['diffuse_reflectance_error'])
+        self.assertEqual(thick['transmittance'], 0)
+        # A clear layer between two scattering ones only refracts and reflects.
+        stack = self.run_program('scipy', 'tissue_layers', {'packets': 20000, 'layers': [
+            {'mu_a_per_mm': 0.5, 'mu_s_per_mm': 5.0, 'g': 0.8, 'n': 1.4, 'thickness_mm': 0.5},
+            {'mu_a_per_mm': 0.0, 'mu_s_per_mm': 0.0, 'g': 0.0, 'n': 1.33, 'thickness_mm': 0.3},
+            {'mu_a_per_mm': 0.5, 'mu_s_per_mm': 5.0, 'g': 0.8, 'n': 1.4, 'thickness_mm': 0.5}]})
+        self.assertEqual(stack['absorbed'][1], 0)
+        self.assertLess(abs(stack['checks']['balance']), 1e-6)
+
     def test_ray_optics_and_polarization(self):
         abcd = self.run_program('raytracing', 'abcd', {'elements': [{'space_m': 0.1}, {'focal_length_m': 0.05}, {'space_m': 0.1}], 'ray': [0.001, 0]})
         self.assertAlmostEqual(abcd['ray_out'][0], -0.001, places=12)
@@ -591,6 +613,62 @@ class InverseDesignCase(unittest.TestCase):
         self.assertGreater(transmission['end'], 0.9)
         self.assertGreater(transmission['binary'], 0.9)
         self.assertLess(transmission['binary'], 1 + 1e-6)   # normalized by a straight waveguide: nothing gains power
+
+
+@environment('ngsolve')
+class FiniteElementCase(unittest.TestCase):
+    def test_a_cylinder_scatters_as_its_exact_series_in_both_polarizations(self):
+        for inputs in ({}, {'polarization': 'te'}, {'polarization': 'te', 'index': [0.14, 3.0], 'radius_um': 0.05, 'wavelength_um': 0.4,
+                                                     'air_um': 0.4, 'layer_um': 0.4, 'elements_per_wavelength': 10, 'grid': 0}):
+            result = calculate('ngsolve', 'scattering', inputs)
+            self.assertLess(result['checks']['field_difference'], 1e-3, inputs)
+            self.assertLess(abs(result['checks']['efficiency_difference']), 1e-3, inputs)
+            # Scattering and absorption add up to the extinction of the optical theorem.
+            self.assertAlmostEqual(result['Q_ext'], result['series']['Q_ext'], places=3)
+
+
+@environment('srwpy')
+class UndulatorCase(unittest.TestCase):
+    def test_harmonics_lie_at_the_undulator_equation(self):
+        result = calculate('srw', 'undulator', {'cone_points': 21})
+        self.assertLess(abs(result['checks']['fundamental_difference']), 1e-3)
+        self.assertTrue(1.0 < result['checks']['flux_ratio'] < 1.06, result['checks'])
+        third = result['harmonics'][1]
+        self.assertEqual(third['harmonic'], 3)
+        self.assertAlmostEqual(third['energy_ev'] / third['formula_ev'], 1, places=3)
+        twice = calculate('srw', 'undulator', {'periods': 200, 'distance_m': 100, 'points': 6001, 'cone_points': 0})
+        self.assertLess(twice['checks']['flux_ratio'], result['checks']['flux_ratio'])   # the end poles weigh less in a longer device
+
+
+@environment('tidy3d')
+class ModeSolverCase(unittest.TestCase):
+    def test_a_silicon_wire_guides_a_quasi_te_mode_and_the_slab_matches_its_dispersion_relation(self):
+        result = calculate('tidy3d', 'modes', {'modes': 2, 'steps_per_wavelength': 20})
+        first, second = result['modes']
+        self.assertTrue(2.3 < first['n_eff'] < 2.6 and first['te_fraction'] > 0.9 and first['guided'], first)
+        self.assertLess(second['te_fraction'], 0.2)
+        self.assertGreater(first['group_index'], first['n_eff'])
+        self.assertLess(abs(result['checks']['slab_difference']), 5e-3)
+
+
+@environment('pyvisa_sim')
+class InstrumentCase(unittest.TestCase):
+    def test_the_simulated_source_returns_what_it_was_given_and_reports_a_refused_value(self):
+        result = calculate('pyvisa', 'sweep', {'values': [1500, 1550.125, 1600]})
+        self.assertEqual((result['steps'], result['last'], result['checks']['readback_difference']), (3, [1600.0, 1600.0], 0.0))
+        self.assertIn('Tunable source', result['identification'])
+        with self.assertRaisesRegex(ValueError, 'holds no number'):
+            calculate('pyvisa', 'sweep', {'values': [1800]})   # beyond the range of the simulated source
+
+
+@environment('bluesky')
+class ScanCase(unittest.TestCase):
+    def test_a_scan_finds_the_peak_and_the_second_scan_is_centred_on_it(self):
+        result = calculate('bluesky', 'scan', {'centre': -0.7, 'width': 0.5, 'points': 41})
+        first, second = result['scans']
+        self.assertLess(abs(result['checks']['centre_difference']), 5 * second['centre_error'] + 1e-3)
+        self.assertAlmostEqual(sum(second['range']) / 2, first['centre'], places=9)
+        self.assertEqual(first['documents'], 41 + 3)   # start, descriptor, one event per position, stop
 
 
 @unittest.skipUnless(SCIENCE and installed('meep'), 'Meep and MPB come from conda-forge')

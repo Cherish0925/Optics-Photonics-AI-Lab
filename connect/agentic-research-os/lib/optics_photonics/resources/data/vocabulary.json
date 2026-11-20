@@ -171,6 +171,19 @@
     ["lithium niobate", "LiNbO3", "PPLN", "铌酸锂"],
     ["KTP", "potassium titanyl phosphate", "KTiOPO4", "PPKTP", "磷酸氧钛钾"],
     ["LBO", "lithium triborate", "LiB3O5", "三硼酸锂"],
-    ["walk-off", "spatial walk-off", "离散角", "走离"]
+    ["walk-off", "spatial walk-off", "离散角", "走离"],
+    ["instrument control", "instrument", "instrumentation", "laboratory instrument", "仪器控制", "实验仪器", "仪器"],
+    ["data acquisition", "DAQ", "acquisition", "数据采集", "采集"],
+    ["camera", "image sensor", "相机", "摄像机"],
+    ["power meter", "功率计"],
+    ["oscilloscope", "示波器"],
+    ["optical spectrum analyzer", "spectrum analyzer", "OSA", "光谱分析仪"],
+    ["translation stage", "motorized stage", "stage", "位移台", "平移台"],
+    ["spatial light modulator", "SLM", "空间光调制器"],
+    ["GPIB", "VISA", "SCPI"],
+    ["tissue", "turbid medium", "turbid media", "生物组织", "组织", "浑浊介质"],
+    ["undulator", "insertion device", "波荡器", "插入件"],
+    ["fiber Bragg grating", "FBG", "光纤布拉格光栅", "光纤光栅"],
+    ["nanowire", "cylinder", "纳米线", "圆柱"]
   ]
 }

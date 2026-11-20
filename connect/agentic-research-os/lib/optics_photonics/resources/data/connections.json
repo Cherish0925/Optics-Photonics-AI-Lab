@@ -1208,6 +1208,44 @@
       }
     ]
   },
+  "labview": {
+    "kind": "native",
+    "modules": [],
+    "pip": [],
+    "distributions": [],
+    "native_program": true,
+    "installation": "https://www.ni.com/docs/en-US/bundle/labview/page/using-activex-with-labview.html",
+    "interface": "Automation server on Windows (LabVIEW.Application: GetVIReference, then Call with the names and values of front-panel controls); VI Server.",
+    "sources": [
+      "https://www.ni.com/docs/en-US/bundle/labview/page/using-activex-with-labview.html",
+      "https://www.ni.com/docs/en-IO/bundle/labview-api-ref/page/properties-and-methods/activex/application/getvireference.html"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "routes": [
+      {
+        "route": "automation",
+        "progids": [
+          "LabVIEW.Application"
+        ],
+        "about": "LabVIEW is an automation server on Windows: APP.GetVIReference(path) loads a VI and its Call(names, values) runs it with front-panel controls as parameters. Enable the VI Server in Tools > Options.",
+        "sources": [
+          "https://www.ni.com/docs/en-US/bundle/labview/page/using-activex-with-labview.html",
+          "https://www.ni.com/docs/en-IO/bundle/labview-api-ref/page/properties-and-methods/activex/application/getvireference.html"
+        ]
+      }
+    ]
+  },
   "photonforge": {
     "kind": "python",
     "modules": [
@@ -3189,6 +3227,340 @@
     "execution": "local-or-background",
     "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
   },
+  "pyvisa": {
+    "kind": "python",
+    "modules": [
+      "pyvisa"
+    ],
+    "pip": [
+      "pyvisa==1.16.2",
+      "pyvisa-py==0.8.1",
+      "pyvisa-sim==0.7.1",
+      "pyserial",
+      "pyusb",
+      "numpy"
+    ],
+    "python": ">=3.10",
+    "distributions": [
+      "pyvisa"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/pyvisa/pyvisa",
+    "interface": "Python API over a vendor VISA library or the pure-Python backend PyVISA-py; PyVISA-sim simulates instruments from a description.",
+    "sources": [
+      "https://github.com/pyvisa/pyvisa",
+      "https://raw.githubusercontent.com/pyvisa/pyvisa/HEAD/LICENSE"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "The Python backend reaches network, serial and USB instruments; GPIB and some USB devices need a vendor VISA library (NI-VISA, Keysight IO Libraries)."
+  },
+  "pymeasure": {
+    "kind": "python",
+    "modules": [
+      "pymeasure"
+    ],
+    "pip": [
+      "pymeasure==0.16.0"
+    ],
+    "python": ">=3.9",
+    "distributions": [
+      "pymeasure"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/pymeasure/pymeasure",
+    "interface": "Python instrument classes over PyVISA; Procedure, Worker and Results run and log a measurement.",
+    "sources": [
+      "https://github.com/pymeasure/pymeasure",
+      "https://raw.githubusercontent.com/pymeasure/pymeasure/HEAD/LICENSE.txt"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+  },
+  "pylablib": {
+    "kind": "python",
+    "modules": [
+      "pylablib"
+    ],
+    "pip": [
+      "pylablib-lightweight[devio]==1.4.3"
+    ],
+    "distributions": [
+      "pylablib-lightweight"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/AlexShkarin/pyLabLib",
+    "interface": "Python device classes over the manufacturers' libraries, serial ports and VISA.",
+    "sources": [
+      "https://github.com/AlexShkarin/pyLabLib",
+      "https://raw.githubusercontent.com/AlexShkarin/pyLabLib/HEAD/LICENSE"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "The recipe installs the package without its graphical parts (pylablib-lightweight); manufacturer libraries are installed separately."
+  },
+  "qcodes": {
+    "kind": "python",
+    "modules": [
+      "qcodes"
+    ],
+    "pip": [
+      "qcodes==0.63.0"
+    ],
+    "python": ">=3.12",
+    "distributions": [
+      "qcodes"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/microsoft/Qcodes",
+    "interface": "Python API; instrument drivers over PyVISA; measurement context with SQLite datasets and export to xarray.",
+    "sources": [
+      "https://github.com/microsoft/Qcodes",
+      "https://raw.githubusercontent.com/microsoft/Qcodes/HEAD/LICENSE"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+  },
+  "bluesky": {
+    "kind": "python",
+    "modules": [
+      "bluesky",
+      "ophyd"
+    ],
+    "pip": [
+      "bluesky==1.16.0",
+      "ophyd==1.11.2",
+      "scipy"
+    ],
+    "python": ">=3.10",
+    "distributions": [
+      "bluesky",
+      "ophyd"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/bluesky/bluesky",
+    "interface": "Python: RunEngine and plans (bluesky); devices over EPICS and other control systems, and simulated devices (ophyd).",
+    "sources": [
+      "https://github.com/bluesky/bluesky",
+      "https://raw.githubusercontent.com/bluesky/bluesky/HEAD/LICENSE",
+      "https://github.com/bluesky/ophyd"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+  },
+  "micromanager": {
+    "kind": "python",
+    "modules": [
+      "pymmcore_plus"
+    ],
+    "pip": [
+      "pymmcore-plus==0.18.1"
+    ],
+    "python": ">=3.10",
+    "distributions": [
+      "pymmcore-plus"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/pymmcore-plus/pymmcore-plus",
+    "interface": "pymmcore-plus: the Python API of MMCore with events and an acquisition engine; the device adapters come from a Micro-Manager installation (mmcore install).",
+    "sources": [
+      "https://github.com/pymmcore-plus/pymmcore-plus",
+      "https://raw.githubusercontent.com/pymmcore-plus/pymmcore-plus/HEAD/LICENSE",
+      "https://github.com/micro-manager/micro-manager"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "After the recipe, mmcore install downloads the device adapters of Micro-Manager; hardware also needs the manufacturers' drivers."
+  },
+  "harvesters": {
+    "kind": "python",
+    "modules": [
+      "harvesters"
+    ],
+    "pip": [
+      "harvesters==1.4.3"
+    ],
+    "distributions": [
+      "harvesters"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/genicam/harvesters",
+    "interface": "Python API over the GenICam reference implementation; the GenTL producer file (.cti) comes from the camera manufacturer.",
+    "sources": [
+      "https://github.com/genicam/harvesters",
+      "https://raw.githubusercontent.com/genicam/harvesters/HEAD/LICENSE.txt"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+  },
+  "nidaqmx": {
+    "kind": "python",
+    "modules": [
+      "nidaqmx"
+    ],
+    "pip": [
+      "nidaqmx==1.7.0"
+    ],
+    "python": ">=3.9",
+    "distributions": [
+      "nidaqmx"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/ni/nidaqmx-python",
+    "interface": "Python API of the NI-DAQmx driver: tasks, channels, timing and triggering.",
+    "sources": [
+      "https://github.com/ni/nidaqmx-python",
+      "https://raw.githubusercontent.com/ni/nidaqmx-python/HEAD/LICENSE"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support.",
+    "installation_note": "The recipe installs the Python package; the NI-DAQmx driver is installed from NI."
+  },
+  "seabreeze": {
+    "kind": "python",
+    "modules": [
+      "seabreeze"
+    ],
+    "pip": [
+      "seabreeze==2.11.0",
+      "numpy"
+    ],
+    "python": ">=3.9",
+    "distributions": [
+      "seabreeze"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/ap--/python-seabreeze",
+    "interface": "Python API with two backends: cseabreeze (the SeaBreeze C library) and pyseabreeze (pure Python over USB).",
+    "sources": [
+      "https://github.com/ap--/python-seabreeze",
+      "https://raw.githubusercontent.com/ap--/python-seabreeze/HEAD/LICENSE.md"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+  },
+  "slmsuite": {
+    "kind": "python",
+    "modules": [
+      "slmsuite"
+    ],
+    "pip": [
+      "slmsuite==0.5.0"
+    ],
+    "python": ">=3.10",
+    "distributions": [
+      "slmsuite"
+    ],
+    "native_program": true,
+    "installation": "https://github.com/holodyne/slmsuite",
+    "interface": "Python API; Gerchberg-Saxton and weighted variants on CPU or GPU (CuPy); hardware classes for modulators and cameras, with simulated ones.",
+    "sources": [
+      "https://github.com/holodyne/slmsuite",
+      "https://raw.githubusercontent.com/holodyne/slmsuite/HEAD/LICENSE"
+    ],
+    "upstream": {
+      "mcp": {
+        "kind": "unverified",
+        "text": "Dedicated MCP not verified in this review"
+      },
+      "skill": {
+        "kind": "unverified",
+        "text": "Dedicated agent Skill not verified in this review"
+      }
+    },
+    "execution": "local-or-background",
+    "environment": "Use the software’s supported OS, architecture, dependencies and license. The connector does not change solver platform support."
+  },
   "sympy": {
     "kind": "python",
     "modules": [
@@ -3572,7 +3944,8 @@
       "ngsolve"
     ],
     "pip": [
-      "ngsolve==6.2.2608"
+      "ngsolve==6.2.2608",
+      "scipy"
     ],
     "platforms": [
       "linux-64",

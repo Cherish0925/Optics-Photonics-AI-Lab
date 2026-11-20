@@ -686,6 +686,28 @@
     ]
   },
   {
+    "url": "https://www.ni.com/docs/en-US/bundle/labview/page/using-activex-with-labview.html",
+    "label": "Official documentation / website",
+    "kind": "docs",
+    "software_ids": [
+      "labview"
+    ],
+    "software_names": [
+      "NI LabVIEW"
+    ]
+  },
+  {
+    "url": "https://www.ni.com/docs/en-IO/bundle/labview-api-ref/page/properties-and-methods/activex/application/getvireference.html",
+    "label": "Scripting / programming reference",
+    "kind": "docs",
+    "software_ids": [
+      "labview"
+    ],
+    "software_names": [
+      "NI LabVIEW"
+    ]
+  },
+  {
     "url": "https://docs.flexcompute.com/projects/photonforge/en/latest/getting_started.html",
     "label": "Free / paid feature boundaries",
     "kind": "docs",
@@ -1937,6 +1959,248 @@
     ],
     "software_names": [
       "xrt"
+    ]
+  },
+  {
+    "url": "https://github.com/pyvisa/pyvisa",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "pyvisa"
+    ],
+    "software_names": [
+      "PyVISA"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/pyvisa/pyvisa/HEAD/LICENSE",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "pyvisa"
+    ],
+    "software_names": [
+      "PyVISA"
+    ]
+  },
+  {
+    "url": "https://github.com/pymeasure/pymeasure",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "pymeasure"
+    ],
+    "software_names": [
+      "PyMeasure"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/pymeasure/pymeasure/HEAD/LICENSE.txt",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "pymeasure"
+    ],
+    "software_names": [
+      "PyMeasure"
+    ]
+  },
+  {
+    "url": "https://github.com/AlexShkarin/pyLabLib",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "pylablib"
+    ],
+    "software_names": [
+      "pylablib"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/AlexShkarin/pyLabLib/HEAD/LICENSE",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "pylablib"
+    ],
+    "software_names": [
+      "pylablib"
+    ]
+  },
+  {
+    "url": "https://github.com/microsoft/Qcodes",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "qcodes"
+    ],
+    "software_names": [
+      "QCoDeS"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/microsoft/Qcodes/HEAD/LICENSE",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "qcodes"
+    ],
+    "software_names": [
+      "QCoDeS"
+    ]
+  },
+  {
+    "url": "https://github.com/bluesky/bluesky",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "bluesky"
+    ],
+    "software_names": [
+      "Bluesky / ophyd"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/bluesky/bluesky/HEAD/LICENSE",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "bluesky"
+    ],
+    "software_names": [
+      "Bluesky / ophyd"
+    ]
+  },
+  {
+    "url": "https://github.com/bluesky/ophyd",
+    "label": "Maintainer repository",
+    "kind": "code",
+    "software_ids": [
+      "bluesky"
+    ],
+    "software_names": [
+      "Bluesky / ophyd"
+    ]
+  },
+  {
+    "url": "https://github.com/pymmcore-plus/pymmcore-plus",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "micromanager"
+    ],
+    "software_names": [
+      "Micro-Manager (pymmcore-plus)"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/pymmcore-plus/pymmcore-plus/HEAD/LICENSE",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "micromanager"
+    ],
+    "software_names": [
+      "Micro-Manager (pymmcore-plus)"
+    ]
+  },
+  {
+    "url": "https://github.com/micro-manager/micro-manager",
+    "label": "Maintainer repository",
+    "kind": "code",
+    "software_ids": [
+      "micromanager"
+    ],
+    "software_names": [
+      "Micro-Manager (pymmcore-plus)"
+    ]
+  },
+  {
+    "url": "https://github.com/genicam/harvesters",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "harvesters"
+    ],
+    "software_names": [
+      "Harvester (GenICam)"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/genicam/harvesters/HEAD/LICENSE.txt",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "harvesters"
+    ],
+    "software_names": [
+      "Harvester (GenICam)"
+    ]
+  },
+  {
+    "url": "https://github.com/ni/nidaqmx-python",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "nidaqmx"
+    ],
+    "software_names": [
+      "NI-DAQmx Python"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/ni/nidaqmx-python/HEAD/LICENSE",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "nidaqmx"
+    ],
+    "software_names": [
+      "NI-DAQmx Python"
+    ]
+  },
+  {
+    "url": "https://github.com/ap--/python-seabreeze",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "seabreeze"
+    ],
+    "software_names": [
+      "python-seabreeze"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/ap--/python-seabreeze/HEAD/LICENSE.md",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "seabreeze"
+    ],
+    "software_names": [
+      "python-seabreeze"
+    ]
+  },
+  {
+    "url": "https://github.com/holodyne/slmsuite",
+    "label": "API / project documentation",
+    "kind": "code",
+    "software_ids": [
+      "slmsuite"
+    ],
+    "software_names": [
+      "slmsuite"
+    ]
+  },
+  {
+    "url": "https://raw.githubusercontent.com/holodyne/slmsuite/HEAD/LICENSE",
+    "label": "License / usage terms",
+    "kind": "license",
+    "software_ids": [
+      "slmsuite"
+    ],
+    "software_names": [
+      "slmsuite"
     ]
   },
   {

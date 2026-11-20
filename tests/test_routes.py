@@ -157,6 +157,11 @@ class Bridges(unittest.TestCase):
         self.assertEqual(programs.catalog()['quantumoptics']['jaynes_cummings']['language'], 'julia')
         self.assertEqual(programs.details('s4', 'crystal_slab')['language'], 'lua')
         self.assertEqual(languages.family('octave'), 'matlab')
+        self.assertIs(programs.catalog()['matlab']['bragg_grating'], programs.catalog()['octave']['bragg_grating'])
+        self.assertEqual(programs.source('matlab', 'bragg_grating'), programs.source('octave', 'bragg_grating'))
+        self.assertEqual(languages.functions_first('a = f(1);\nfunction y = f(x)\n  y = x;\nend\n'),
+                         '1;\nfunction y = f(x)\n  y = x;\nend\n\na = f(1);\n')
+        self.assertEqual(languages.functions_first('a = 1;\n'), 'a = 1;\n')
         with self.assertRaisesRegex(ValueError, 'runs in its software'):
             programs.run('s4', 'crystal_slab', {}, Path('unused'))
 
@@ -216,9 +221,27 @@ class Bridges(unittest.TestCase):
             self.skipTest('octave-cli is not installed')
         prefix = Path(executable).resolve().parents[1]
         env = {'OCTAVE_HOME': str(prefix)} if (prefix / 'conda-meta').is_dir() else {}
-        result = self.run_language('octave', executable, "RESULT = struct('s', sum(INPUTS.n), 'name', INPUTS.name, 'out', OUTPUT_DIR);\n"
-                                   'function y = unused(x)\n y = x;\nend\n', {'n': [1, 2, 3], 'name': "it's"}, env)
-        self.assertEqual((result['s'], result['name']), (6, "it's"))
+        # A MATLAB script ends with its local functions; they are placed first for Octave.
+        result = self.run_language('octave', executable, "RESULT = struct('s', twice(sum(INPUTS.n)), 'name', INPUTS.name, 'out', OUTPUT_DIR);\n"
+                                   'function y = twice(x)\n y = 2 * x;\nend\n', {'n': [1, 2, 3], 'name': "it's"}, env)
+        self.assertEqual((result['s'], result['name']), (12, "it's"))
+
+    def test_octave_bragg_grating_reaches_the_closed_form(self):
+        executable = found('OPTICS_TEST_OCTAVE', 'octave-cli')
+        if not executable:
+            self.skipTest('octave-cli is not installed')
+        with workspace() as folder:
+            home = Path(folder) / 'home'
+            native.bind('octave', executable=executable, path=home)
+            reply = studies.submit('octave', action='bragg_grating', inputs={'sections': 50}, wait=25, path=home)
+            self.assertEqual(reply['state'], 'succeeded', reply)
+            checks = reply['result']['checks']
+            self.assertLess(checks['energy_error'], 1e-10)
+            self.assertLess(checks['uniform_difference'], 1e-10)
+            self.assertLess(abs(checks['delay_difference']), 1e-3)
+            self.assertAlmostEqual(reply['result']['peak_reflectance'], math.tanh(reply['result']['coupling_times_length']) ** 2, places=4)
+            delay = jobs.read_array(reply['run_id'], 'calculate/attempt-1/spectrum.npz', member='delay_ps', path=home)
+            self.assertEqual((delay['description']['unit'], delay['axes'][0]['unit']), ('ps', 'nm'))
 
     def test_lua_program(self):
         executable = found('OPTICS_TEST_LUA', 'lua', 'lua5.4', 'lua5.3')

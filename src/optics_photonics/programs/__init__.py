@@ -23,7 +23,7 @@ def describe(file):
     """Title, physics and PROGRAM dictionary of a program file, read without running it."""
     if file.suffix != '.py':
         from .. import languages
-        return {**languages.declaration(file.read_text(encoding='utf-8'), file.suffix), 'suffix': file.suffix}
+        return languages.declaration(file.read_text(encoding='utf-8'), file.suffix)
     tree = ast.parse(file.read_text(encoding='utf-8'))
     doc = ast.get_docstring(tree) or ''
     spec = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
@@ -39,7 +39,12 @@ def catalog():
     found = {}
     for file in sorted(FOLDER.glob('*/*.*')):
         if file.suffix == '.py' or file.suffix in languages.COMMENTS:
-            found.setdefault(file.parent.name, {})[file.stem] = describe(file)
+            found.setdefault(file.parent.name, {})[file.stem] = {**describe(file), 'file': file}
+    # Software of one language family shares programs: MATLAB runs those written for Octave.
+    for tool, other in languages.FAMILIES.items():
+        shared = {name: spec for name, spec in found.get(tool, {}).items() if spec.get('language') == other}
+        if shared:
+            found[other] = {**shared, **found.get(other, {})}
     return found
 
 
@@ -72,7 +77,7 @@ def source(tool, name):
     if name not in catalog().get(tool, {}):
         known = ', '.join(catalog().get(tool, {})) or 'none'
         raise ValueError(f'Unknown program {tool}/{name}; programs of {tool}: {known}. software_details lists them')
-    return (FOLDER / tool / (name + catalog()[tool][name].get('suffix', '.py'))).read_text(encoding='utf-8')
+    return catalog()[tool][name]['file'].read_text(encoding='utf-8')
 
 
 def parameters(spec, given):
@@ -94,5 +99,5 @@ def run(tool, name, given, output):
     folder.mkdir(parents=True, exist_ok=True)
     namespace = {'__name__': '__main__', '__file__': str(folder / 'program.py'), 'INPUTS': given,
                  'OUTPUT_DIR': folder, 'RESULT': None}
-    exec(compile(source(tool, name), str(FOLDER / tool / (name + '.py')), 'exec'), namespace)
+    exec(compile(source(tool, name), str(catalog()[tool][name]['file']), 'exec'), namespace)
     return namespace['RESULT']

@@ -65,6 +65,11 @@
     "PSFs / holography / phase retrieval"
   ],
   [
+    "lab",
+    "Laboratory instruments & acquisition",
+    "VISA / cameras / stages"
+  ],
+  [
     "foundation",
     "Derivation & digital foundations",
     "Algebra / CAD / data / imaging"

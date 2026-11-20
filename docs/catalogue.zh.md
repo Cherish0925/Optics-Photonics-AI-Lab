@@ -1,6 +1,6 @@
 # Optics · Photonics — 软件目录
 
-核查日期: 2026-10-20 | 99 个工具与产品族
+核查日期: 2026-10-20 | 110 个工具与产品族
 
 原创目录说明与代码采用 MIT；被收录软件遵循各自许可。
 
@@ -531,6 +531,24 @@ ID: `maple` | 推导与数字基础
 原始资料：
 - [官方 Python API](https://jp.maplesoft.com/support/help/maple/view.aspx?path=OpenMaple%2FPython%2FAPI)
 - [官方编程手册](https://www.maplesoft.com/documentation_center/maple2024/ProgrammingGuide.pdf)
+
+### NI LabVIEW
+
+ID: `labview` | 实验仪器与采集
+
+- **物理方法:** 用于仪器控制与数据采集的图形化程序
+- **用途:** 控制仪器、采集并处理信号的实验室程序（VI）；大量现有实验装置用它编写。
+- **编程入口:** Windows 上的自动化服务器（LabVIEW.Application：GetVIReference，再以前面板控件的名称和值调用 Call）；VI Server。
+- **计算环境:** 自动化服务器在 Windows 上；另有 macOS 与 Linux 版本
+- **许可:** 商业 / 学术订阅授权
+- **应用依据:** NI 长期提供的仪器控制环境。
+- **适用边界:** 调用 VI 时以前面板控件作为参数；须在 LabVIEW 选项中启用 VI Server。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [官方文档](https://www.ni.com/docs/en-US/bundle/labview/page/using-activex-with-labview.html)
+- [官方接口](https://www.ni.com/docs/en-IO/bundle/labview-api-ref/page/properties-and-methods/activex/application/getvireference.html)
 
 ## 免费与开源
 
@@ -1474,6 +1492,188 @@ ID: `xrt` | X 射线与束线, 几何光学与照明, 波动光学与传播
 原始资料：
 - [项目与接口](https://github.com/kklmn/xrt)
 - [源码许可](https://raw.githubusercontent.com/kklmn/xrt/HEAD/LICENSE.txt)
+
+### PyVISA
+
+ID: `pyvisa` | 实验仪器与采集
+
+- **物理方法:** GPIB、USB、串口与网络仪器消息（VISA）
+- **用途:** 用文本指令控制光源、功率计、光谱分析仪、示波器和控制器，并读取测量值。
+- **编程入口:** Python API；使用厂商 VISA 库或纯 Python 后端 PyVISA-py；PyVISA-sim 按描述文件模拟仪器。
+- **计算环境:** 连接仪器的计算机
+- **许可:** MIT
+- **应用依据:** VISA 仪器通用的 Python 接口，也是仪器驱动库的基础。
+- **适用边界:** 指令与量程以各仪器手册为准；PyVISA 只传递消息，不了解指令含义。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/pyvisa/pyvisa)
+- [源码许可](https://raw.githubusercontent.com/pyvisa/pyvisa/HEAD/LICENSE)
+
+### PyMeasure
+
+ID: `pymeasure` | 实验仪器与采集
+
+- **物理方法:** 仪器驱动与测量流程
+- **用途:** 把多种实验仪器的设置封装为属性的驱动，以及执行测量并记录数据的流程。
+- **编程入口:** 基于 PyVISA 的 Python 仪器类；Procedure、Worker 与 Results 执行并记录测量。
+- **计算环境:** 连接仪器的计算机
+- **许可:** MIT
+- **应用依据:** 物理实验室广泛使用的社区仪器驱动库。
+- **适用边界:** 只覆盖已有驱动的仪器；其他仪器需自行编写驱动类或直接使用 PyVISA。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/pymeasure/pymeasure)
+- [源码许可](https://raw.githubusercontent.com/pymeasure/pymeasure/HEAD/LICENSE.txt)
+
+### pylablib
+
+ID: `pylablib` | 实验仪器与采集, 计算成像与重建
+
+- **物理方法:** 设备控制：相机、位移台、激光器与传感器
+- **用途:** 采集科学相机图像并驱动位移台，含 Andor、Hamamatsu、PCO、Thorlabs、Newport、Attocube 等厂商的设备类。
+- **编程入口:** 基于厂商库、串口和 VISA 的 Python 设备类。
+- **计算环境:** 连接设备的计算机；相机需要厂商驱动库
+- **许可:** GPL-3.0
+- **应用依据:** 光学与量子实验室使用的开源设备控制库。
+- **适用边界:** 多数相机和部分位移台需安装厂商运行库；各设备类列出其支持的型号。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/AlexShkarin/pyLabLib)
+- [源码许可](https://raw.githubusercontent.com/AlexShkarin/pyLabLib/HEAD/LICENSE)
+
+### QCoDeS
+
+ID: `qcodes` | 实验仪器与采集
+
+- **物理方法:** 数据采集框架：仪器、参数与数据集
+- **用途:** 把仪器描述为参数，运行测量循环，并把数据连同各仪器的设置一起保存。
+- **编程入口:** Python API；基于 PyVISA 的仪器驱动；测量上下文、SQLite 数据集并可导出 xarray。
+- **计算环境:** 连接仪器的计算机
+- **许可:** MIT
+- **应用依据:** 由量子器件实验室与 Microsoft 共同开发，用于自动化实验。
+- **适用边界:** 驱动以电子与低温仪器为主；光学设备常需自行编写驱动。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/microsoft/Qcodes)
+- [源码许可](https://raw.githubusercontent.com/microsoft/Qcodes/HEAD/LICENSE)
+
+### Bluesky / ophyd
+
+ID: `bluesky` | 实验仪器与采集, X 射线与束线
+
+- **物理方法:** 实验编排：计划、设备与文档
+- **用途:** 在束线和实验室设备上运行扫描与自适应实验；每次读数都以结构化文档发出。
+- **编程入口:** Python：RunEngine 与计划（bluesky）；基于 EPICS 等控制系统的设备及模拟设备（ophyd）。
+- **计算环境:** 位于控制系统网络中的计算机；模拟设备可在任意计算机运行
+- **许可:** BSD-3-Clause
+- **应用依据:** 由 NSLS-II 开发，用于同步辐射与中子设施。
+- **适用边界:** 硬件通过 EPICS 等控制系统访问；没有控制系统时只能运行模拟设备。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/bluesky/bluesky)
+- [源码许可](https://raw.githubusercontent.com/bluesky/bluesky/HEAD/LICENSE)
+- [官方项目](https://github.com/bluesky/ophyd)
+
+### Micro-Manager (pymmcore-plus)
+
+ID: `micromanager` | 实验仪器与采集, 计算成像与重建
+
+- **物理方法:** 显微镜控制：相机、位移台、快门与光源
+- **用途:** 通过 Micro-Manager 的设备适配器控制显微镜硬件并执行多维采集。
+- **编程入口:** pymmcore-plus：MMCore 的 Python API，带事件与采集引擎；设备适配器来自 Micro-Manager 安装（mmcore install）。
+- **计算环境:** 连接显微镜的计算机
+- **许可:** BSD-3-Clause（pymmcore-plus）；MMCore 为 LGPL；设备适配器各有许可
+- **应用依据:** Micro-Manager 是生命科学中广泛使用的开源显微镜控制软件。
+- **适用边界:** 硬件需要设备适配器和厂商驱动；演示配置提供模拟相机和位移台。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/pymmcore-plus/pymmcore-plus)
+- [源码许可](https://raw.githubusercontent.com/pymmcore-plus/pymmcore-plus/HEAD/LICENSE)
+- [官方项目](https://github.com/micro-manager/micro-manager)
+
+### Harvester (GenICam)
+
+ID: `harvesters` | 实验仪器与采集, 计算成像与重建
+
+- **物理方法:** GenICam 相机图像采集（GigE Vision、USB3 Vision）
+- **用途:** 通过 GenTL producer 采集机器视觉相机图像并设置相机特性。
+- **编程入口:** 基于 GenICam 参考实现的 Python API；GenTL producer 文件（.cti）由相机厂商提供。
+- **计算环境:** 连接相机的计算机
+- **许可:** Apache-2.0
+- **应用依据:** GenICam 项目发布的图像采集库。
+- **适用边界:** 需要与相机传输层对应的 GenTL producer；特性名称遵循各相机的 GenICam 描述。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/genicam/harvesters)
+- [源码许可](https://raw.githubusercontent.com/genicam/harvesters/HEAD/LICENSE.txt)
+
+### NI-DAQmx Python
+
+ID: `nidaqmx` | 实验仪器与采集
+
+- **物理方法:** 模拟与数字数据采集（NI-DAQmx）
+- **用途:** 用 NI 数据采集设备读取光电二极管与探测器电压、产生波形和触发、进行脉冲计数。
+- **编程入口:** NI-DAQmx 驱动的 Python API：任务、通道、定时与触发。
+- **计算环境:** 安装 NI-DAQmx 驱动并连接 NI 设备的 Windows 或 Linux 计算机
+- **许可:** MIT；NI-DAQmx 驱动为 NI 软件
+- **应用依据:** NI 官方为其采集硬件提供的 Python 接口。
+- **适用边界:** 须安装 NI-DAQmx 驱动；模拟设备在 Windows 的 NI MAX 中创建。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/ni/nidaqmx-python)
+- [源码许可](https://raw.githubusercontent.com/ni/nidaqmx-python/HEAD/LICENSE)
+
+### python-seabreeze
+
+ID: `seabreeze` | 实验仪器与采集
+
+- **物理方法:** 光谱仪采集（Ocean Optics / Ocean Insight）
+- **用途:** 读取 Ocean Optics USB 光谱仪的光谱，设置积分时间与触发。
+- **编程入口:** Python API，两种后端：cseabreeze（SeaBreeze C 库）与 pyseabreeze（基于 USB 的纯 Python）。
+- **计算环境:** 连接光谱仪的计算机
+- **许可:** MIT
+- **应用依据:** 光学实验室中光纤光谱仪广泛使用的社区库。
+- **适用边界:** 支持所列 Ocean Optics 型号；强度为原始计数，需做暗信号、非线性和仪器响应校正。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/ap--/python-seabreeze)
+- [源码许可](https://raw.githubusercontent.com/ap--/python-seabreeze/HEAD/LICENSE.md)
+
+### slmsuite
+
+ID: `slmsuite` | 实验仪器与采集, 波动光学与传播, 计算成像与重建
+
+- **物理方法:** 空间光调制器全息：带相机反馈的相位恢复
+- **用途:** 计算光点阵列与图案的全息图，校准波前及相机与调制器之间的映射，并驱动调制器和相机。
+- **编程入口:** Python API；Gerchberg-Saxton 及其加权变体，可在 CPU 或 GPU（CuPy）运行；调制器与相机的硬件类，含模拟设备。
+- **计算环境:** CPU 或 GPU；硬件类在连接设备的计算机上运行
+- **许可:** MIT
+- **应用依据:** 面向空间光调制器可编程光学的开源库，附完整示例。
+- **适用边界:** 硬件类需要厂商 SDK；模拟调制器和相机可在无硬件时运行算法。
+- **MCP (unverified):** 本次未核实专用 MCP
+- **Agent Skill (unverified):** 本次未核实专用 Agent Skill
+
+原始资料：
+- [项目与接口](https://github.com/holodyne/slmsuite)
+- [源码许可](https://raw.githubusercontent.com/holodyne/slmsuite/HEAD/LICENSE)
 
 ### SymPy
 

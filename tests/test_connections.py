@@ -66,7 +66,7 @@ class ConnectionTests(unittest.TestCase):
         self.assertTrue(all(missing is None for _, missing in found('thin film')))
         self.assertEqual(found('zzzz film'), [(tool, ['zzzz']) for tool, _ in found('film')])
         self.assertEqual(found('zzzz yyyy'), [])
-        self.assertEqual(len(found('')), len(catalogue.catalogue()))
+        self.assertEqual(catalogue.search('', limit=1)['total'], len(catalogue.catalogue()))
 
     def test_search_finds_a_concept_by_any_of_its_names_and_names_the_program(self):
         def ids(query, **options):

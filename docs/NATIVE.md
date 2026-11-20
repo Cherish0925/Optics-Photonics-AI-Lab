@@ -84,7 +84,7 @@ optics-photonics submit comsol --program research.py --inputs "@inputs.json"
 
 ## Automation servers and services
 
-On Windows, discovery reads the registered automation names of FRED (`FRED.Application`, `FRED.Document`), CODE V, LightTools and OptiLayer. A program of a tool bound by `progid` holds the server as `APP` for all the points it computes and releases it at the end; objects and methods are those of the vendor's automation reference, for FRED `APP.Documents.Open(path)` returning a document. The interpreter needs pywin32.
+On Windows, discovery reads the registered automation names of FRED (`FRED.Application`, `FRED.Document`), CODE V, LightTools, OptiLayer and LabVIEW (`LabVIEW.Application`). A program of a tool bound by `progid` holds the server as `APP` for all the points it computes and releases it at the end; objects and methods are those of the vendor's automation reference, for FRED `APP.Documents.Open(path)` returning a document. The interpreter needs pywin32.
 
 Tidy3D reads its API key from `SIMCLOUD_APIKEY` or the configuration that `tidy3d configure` writes; discovery reports only whether either exists. PySpeos (`ansys-speos-core`, installed from its recipe) reaches the SpeosRPC server of a licensed Speos installation. FIMMWAVE started with `-pt 5101` answers `pdPythonLib.pdApp().ConnectToApp()`; bind the folder of `pdPythonLib.py` as the SDK path.
 
@@ -126,6 +126,7 @@ The MCP server can run on the workstation that holds the software, reached from 
 | MATLAB / Simulink (`matlab`) | executable (matlab); python | — |
 | Wolfram Mathematica (`mathematica`) | executable (wolfram); python | — |
 | Maple (`maple`) | executable (maple) | — |
+| NI LabVIEW (`labview`) | automation (LabVIEW.Application) | — |
 | PhotonForge Community (`photonforge`) | python | — |
 | OSLO EDU (`osloedu`) | inside (CCL and commands within the EDU limits) | — |
 | PtyPy (`ptypy`) | python | pip |
@@ -181,6 +182,16 @@ The MCP server can run on the workstation that holds the software, reached from 
 | SRW (`srw`) | python | pip (linux-64, osx-arm64, win-64) |
 | SHADOW4 / OASYS (`shadow`) | python | pip |
 | xrt (`xrt`) | python | pip |
+| PyVISA (`pyvisa`) | python | pip |
+| PyMeasure (`pymeasure`) | python | pip |
+| pylablib (`pylablib`) | python | pip |
+| QCoDeS (`qcodes`) | python | pip |
+| Bluesky / ophyd (`bluesky`) | python | pip |
+| Micro-Manager (pymmcore-plus) (`micromanager`) | python | pip |
+| Harvester (GenICam) (`harvesters`) | python | pip |
+| NI-DAQmx Python (`nidaqmx`) | python | pip |
+| python-seabreeze (`seabreeze`) | python | pip |
+| slmsuite (`slmsuite`) | python | pip |
 | SymPy (`sympy`) | python | pip |
 | SageMath (`sage`) | python | — |
 | GNU Octave (`octave`) | executable (octave) | conda (linux-64, osx-arm64) |
