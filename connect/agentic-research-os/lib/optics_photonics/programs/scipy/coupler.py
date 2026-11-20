@@ -32,6 +32,7 @@ PROGRAM = {
         'polarization': ('te', 'te or tm'),
         'wavelength_um': ({'start': 1.5, 'stop': 1.6, 'points': 21}, 'vacuum wavelengths, or {"start", "stop", "points"}'),
     },
+    'domains': ['pic'],
     'results': 'coupler.npz/.json: even, odd and single-core effective indices, transfer length and coupling over wavelength, and the '
                'coupling along the length at the centre wavelength; the coupling and transfer length at the centre wavelength',
     'checks': 'cmt_difference: relative difference of the coupling coefficient from the coupled-mode expression (TE), small for wide gaps',

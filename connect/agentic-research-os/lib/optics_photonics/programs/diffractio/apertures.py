@@ -33,6 +33,7 @@ PROGRAM = {
         'window_um': (8000.0, 'width of the computed field'),
         'samples': (131072, 'samples across the window; finer sampling resolves the aperture edges'),
     },
+    'domains': ['wave'],
     'results': 'pattern.npz/.json with intensity over distance and x; Fresnel numbers; the far-field comparison',
     'checks': 'fraunhofer_difference: largest difference of the peak-normalized pattern from the Fraunhofer expression where N_F < 0.05',
 }

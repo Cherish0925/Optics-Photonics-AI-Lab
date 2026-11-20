@@ -4,4 +4,4 @@ Use geometric rays when wavelength is small compared with structure and coherent
 
 Transfer geometry units, surface coordinate frames, aperture stops, spectral weighting and optical-path reference. Test a lens's focal length and the paraxial determinant before extending to aberrations. For illumination, compare collected power as ray count and sampling change; count source normalization, absorption and escaped power. Export a complex pupil to a wave solver when phase or a diffraction-limited PSF matters. A rendered image alone does not specify radiometric calibration.
 
-Use software_details for the selected tool’s primary documentation and implementation links.
+Packaged programs: `optiland/lens`, `optiland/trace`, `raytracing/abcd`, `sympy/abcd`; `software_details(tool, program=NAME)` describes one. Use software_details for the selected tool’s primary documentation and implementation links.

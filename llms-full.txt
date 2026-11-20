@@ -1,6 +1,6 @@
 # Optics · Photonics — software catalogue
 
-Reviewed: 2026-10-20 | 99 tools and product families
+Reviewed: 2026-10-20 | 110 tools and product families
 
 Original descriptions and code: MIT. Linked products retain their own licenses.
 
@@ -531,6 +531,24 @@ ID: `maple` | Derivation & digital foundations
 Sources:
 - [Python interface](https://jp.maplesoft.com/support/help/maple/view.aspx?path=OpenMaple%2FPython%2FAPI)
 - [Official manual](https://www.maplesoft.com/documentation_center/maple2024/ProgrammingGuide.pdf)
+
+### NI LabVIEW
+
+ID: `labview` | Laboratory instruments & acquisition
+
+- **Physical method:** Graphical programs for instrument control and data acquisition
+- **Purpose:** Laboratory programs (VIs) that control instruments and acquire and process signals; many existing setups are written in it.
+- **Programmable interface:** Automation server on Windows (LabVIEW.Application: GetVIReference, then Call with the names and values of front-panel controls); VI Server.
+- **Compute:** Windows for the automation server; editions for macOS and Linux exist.
+- **License:** Commercial / academic subscription
+- **Application basis:** NI's long-established environment for instrument control.
+- **Limitations:** A VI is called with its front-panel controls as parameters; the VI Server must be enabled in the LabVIEW options.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [Official documentation / website](https://www.ni.com/docs/en-US/bundle/labview/page/using-activex-with-labview.html)
+- [Scripting / programming reference](https://www.ni.com/docs/en-IO/bundle/labview-api-ref/page/properties-and-methods/activex/application/getvireference.html)
 
 ## Free & open source
 
@@ -1474,6 +1492,188 @@ ID: `xrt` | X-rays & beamlines, Geometrical optics & lighting, Wave optics & pro
 Sources:
 - [API / project documentation](https://github.com/kklmn/xrt)
 - [License / usage terms](https://raw.githubusercontent.com/kklmn/xrt/HEAD/LICENSE.txt)
+
+### PyVISA
+
+ID: `pyvisa` | Laboratory instruments & acquisition
+
+- **Physical method:** Instrument messages over GPIB, USB, serial port and network (VISA)
+- **Purpose:** Control sources, power meters, spectrum analyzers, oscilloscopes and controllers with text commands and read their measurements.
+- **Programmable interface:** Python API over a vendor VISA library or the pure-Python backend PyVISA-py; PyVISA-sim simulates instruments from a description.
+- **Compute:** The computer connected to the instruments.
+- **License:** MIT
+- **Application basis:** The common Python interface to VISA instruments and the base of instrument-driver libraries.
+- **Limitations:** Commands and ranges are those of each instrument's manual; PyVISA carries the messages and does not know what a command does.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/pyvisa/pyvisa)
+- [License / usage terms](https://raw.githubusercontent.com/pyvisa/pyvisa/HEAD/LICENSE)
+
+### PyMeasure
+
+ID: `pymeasure` | Laboratory instruments & acquisition
+
+- **Physical method:** Instrument drivers and measurement procedures
+- **Purpose:** Drivers that expose the settings of many laboratory instruments as properties, and procedures that run a measurement and record its data.
+- **Programmable interface:** Python instrument classes over PyVISA; Procedure, Worker and Results run and log a measurement.
+- **Compute:** The computer connected to the instruments.
+- **License:** MIT
+- **Application basis:** Community library of instrument drivers used across physics laboratories.
+- **Limitations:** Covers the instruments that have a driver; another instrument needs a driver class of its own or plain PyVISA.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/pymeasure/pymeasure)
+- [License / usage terms](https://raw.githubusercontent.com/pymeasure/pymeasure/HEAD/LICENSE.txt)
+
+### pylablib
+
+ID: `pylablib` | Laboratory instruments & acquisition, Computational imaging
+
+- **Physical method:** Device control: cameras, stages, lasers and sensors
+- **Purpose:** Acquire frames from scientific cameras and move stages, with device classes for Andor, Hamamatsu, PCO, Thorlabs, Newport, Attocube and other makers.
+- **Programmable interface:** Python device classes over the manufacturers' libraries, serial ports and VISA.
+- **Compute:** The computer connected to the devices; cameras need the manufacturer's driver library.
+- **License:** GPL-3.0
+- **Application basis:** Open device-control library used in optics and quantum laboratories.
+- **Limitations:** Most cameras and several stages work only with the manufacturer's runtime installed; each device class lists the models it supports.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/AlexShkarin/pyLabLib)
+- [License / usage terms](https://raw.githubusercontent.com/AlexShkarin/pyLabLib/HEAD/LICENSE)
+
+### QCoDeS
+
+ID: `qcodes` | Laboratory instruments & acquisition
+
+- **Physical method:** Data acquisition framework: instruments, parameters and datasets
+- **Purpose:** Describe instruments as parameters, run measurement loops and store the data with the settings of every instrument.
+- **Programmable interface:** Python API; instrument drivers over PyVISA; measurement context with SQLite datasets and export to xarray.
+- **Compute:** The computer connected to the instruments.
+- **License:** MIT
+- **Application basis:** Developed by quantum-device laboratories with Microsoft and used for automated experiments.
+- **Limitations:** Its drivers centre on electronic and cryogenic instruments; an optical device often needs a driver written for it.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/microsoft/Qcodes)
+- [License / usage terms](https://raw.githubusercontent.com/microsoft/Qcodes/HEAD/LICENSE)
+
+### Bluesky / ophyd
+
+ID: `bluesky` | Laboratory instruments & acquisition, X-rays & beamlines
+
+- **Physical method:** Experiment orchestration: plans, devices and documents
+- **Purpose:** Run scans and adaptive experiments on beamline and laboratory devices; every reading is emitted as a structured document.
+- **Programmable interface:** Python: RunEngine and plans (bluesky); devices over EPICS and other control systems, and simulated devices (ophyd).
+- **Compute:** A computer on the network of the control system; simulated devices run anywhere.
+- **License:** BSD-3-Clause
+- **Application basis:** Developed at NSLS-II and used at synchrotron and neutron facilities.
+- **Limitations:** Hardware is reached through a control system such as EPICS; without one only the simulated devices run.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/bluesky/bluesky)
+- [License / usage terms](https://raw.githubusercontent.com/bluesky/bluesky/HEAD/LICENSE)
+- [Maintainer repository](https://github.com/bluesky/ophyd)
+
+### Micro-Manager (pymmcore-plus)
+
+ID: `micromanager` | Laboratory instruments & acquisition, Computational imaging
+
+- **Physical method:** Microscope control: cameras, stages, shutters and light sources
+- **Purpose:** Control microscope hardware through the device adapters of Micro-Manager and run multidimensional acquisitions.
+- **Programmable interface:** pymmcore-plus: the Python API of MMCore with events and an acquisition engine; the device adapters come from a Micro-Manager installation (mmcore install).
+- **Compute:** The computer connected to the microscope.
+- **License:** BSD-3-Clause (pymmcore-plus); MMCore is LGPL; device adapters carry their own licenses
+- **Application basis:** Micro-Manager is the widely used open microscope-control software of the life sciences.
+- **Limitations:** Hardware needs the device adapters and the manufacturers' drivers; the demo configuration provides a simulated camera and stage.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/pymmcore-plus/pymmcore-plus)
+- [License / usage terms](https://raw.githubusercontent.com/pymmcore-plus/pymmcore-plus/HEAD/LICENSE)
+- [Maintainer repository](https://github.com/micro-manager/micro-manager)
+
+### Harvester (GenICam)
+
+ID: `harvesters` | Laboratory instruments & acquisition, Computational imaging
+
+- **Physical method:** Image acquisition from GenICam cameras (GigE Vision, USB3 Vision)
+- **Purpose:** Acquire frames and set the features of machine-vision cameras through a GenTL producer.
+- **Programmable interface:** Python API over the GenICam reference implementation; the GenTL producer file (.cti) comes from the camera manufacturer.
+- **Compute:** The computer connected to the cameras.
+- **License:** Apache-2.0
+- **Application basis:** Image-acquisition library published within the GenICam project.
+- **Limitations:** Needs a GenTL producer for the camera's transport layer; feature names follow the GenICam description of each camera.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/genicam/harvesters)
+- [License / usage terms](https://raw.githubusercontent.com/genicam/harvesters/HEAD/LICENSE.txt)
+
+### NI-DAQmx Python
+
+ID: `nidaqmx` | Laboratory instruments & acquisition
+
+- **Physical method:** Analog and digital data acquisition (NI-DAQmx)
+- **Purpose:** Read photodiode and detector voltages, generate waveforms and triggers, and count pulses with NI data-acquisition devices.
+- **Programmable interface:** Python API of the NI-DAQmx driver: tasks, channels, timing and triggering.
+- **Compute:** Windows or Linux with the NI-DAQmx driver and an NI device.
+- **License:** MIT; the NI-DAQmx driver is NI software
+- **Application basis:** NI's own Python interface to its acquisition hardware.
+- **Limitations:** Runs only with the NI-DAQmx driver installed; simulated devices are created in NI MAX on Windows.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/ni/nidaqmx-python)
+- [License / usage terms](https://raw.githubusercontent.com/ni/nidaqmx-python/HEAD/LICENSE)
+
+### python-seabreeze
+
+ID: `seabreeze` | Laboratory instruments & acquisition
+
+- **Physical method:** Spectrometer acquisition (Ocean Optics / Ocean Insight)
+- **Purpose:** Read spectra and set integration time and triggering of Ocean Optics USB spectrometers.
+- **Programmable interface:** Python API with two backends: cseabreeze (the SeaBreeze C library) and pyseabreeze (pure Python over USB).
+- **Compute:** The computer connected to the spectrometer.
+- **License:** MIT
+- **Application basis:** Community library widely used for fiber-coupled spectrometers in optics laboratories.
+- **Limitations:** Supports the listed Ocean Optics models; intensities are raw counts until corrected for dark signal, nonlinearity and instrument response.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/ap--/python-seabreeze)
+- [License / usage terms](https://raw.githubusercontent.com/ap--/python-seabreeze/HEAD/LICENSE.md)
+
+### slmsuite
+
+ID: `slmsuite` | Laboratory instruments & acquisition, Wave optics & propagation, Computational imaging
+
+- **Physical method:** Spatial light modulator holography: phase retrieval with camera feedback
+- **Purpose:** Compute holograms for spot arrays and patterns, calibrate the wavefront and the mapping between camera and modulator, and drive modulators and cameras.
+- **Programmable interface:** Python API; Gerchberg-Saxton and weighted variants on CPU or GPU (CuPy); hardware classes for modulators and cameras, with simulated ones.
+- **Compute:** CPU or GPU; hardware classes run on the computer connected to the devices.
+- **License:** MIT
+- **Application basis:** Open library for programmable optics with spatial light modulators, with a documented set of examples.
+- **Limitations:** Hardware classes need the manufacturers' SDKs; the simulated modulator and camera run the algorithms without hardware.
+- **MCP (unverified):** Dedicated MCP not verified in this review
+- **Agent Skill (unverified):** Dedicated agent Skill not verified in this review
+
+Sources:
+- [API / project documentation](https://github.com/holodyne/slmsuite)
+- [License / usage terms](https://raw.githubusercontent.com/holodyne/slmsuite/HEAD/LICENSE)
 
 ### SymPy
 

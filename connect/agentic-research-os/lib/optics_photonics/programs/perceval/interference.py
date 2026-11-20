@@ -29,6 +29,7 @@ PROGRAM = {
         'g2': (0.0, 'second-order correlation of the source at zero delay'),
         'transmittance': (1.0, 'probability that a photon survives the interferometer'),
     },
+    'domains': ['quantum'],
     'results': 'probabilities.json and outputs.npz/.json with the probability of each output pattern; coincidence and bunching probabilities',
     'checks': 'permanent_difference for perfect photons; hom_difference for two photons on a beam splitter',
 }

@@ -21,6 +21,7 @@
 --   "radius": [0.2, "hole radius in periods; 0 leaves the slab uniform"],
 --   "frequency": [{"start": 0.25, "stop": 0.6, "points": 141}, "frequencies in c/a: a list, or {start, stop, points}"],
 --   "harmonics": [80, "plane-wave harmonics retained"]},
+--  "domains": ["periodic"],
 --  "results": "spectrum.npz/.json: transmittance and reflectance over frequency; the deepest transmission minimum and its frequency, the mean transmittance",
 --  "checks": "energy_error: largest |1 - R - T|; airy_difference: largest difference of the slab without holes from the Airy formula"}
 

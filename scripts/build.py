@@ -62,8 +62,20 @@ def write_routes():
         file.write_text(text[:start] + '\n' + route_table(lang) + '\n' + text[end:], encoding='utf-8')
 
 
+def write_domain_programs():
+    """Each domain reference of the research Skill ends with the packaged programs of its domain."""
+    from optics_photonics import catalogue
+    for domain, *_ in json.loads((ROOT / 'data/domains.en.json').read_text(encoding='utf-8')):
+        file = ROOT / 'skills/optical-research/references' / (domain + '.md')
+        lines = file.read_text(encoding='utf-8').rstrip('\n').split('\n')
+        if not lines[-1].startswith(('Packaged programs: ', 'Use software_details')):
+            raise SystemExit(f'{file.name} ends with its line of packaged programs')
+        file.write_text('\n'.join(lines[:-1] + [catalogue.domain_line(domain)]) + '\n', encoding='utf-8')
+
+
 def main():
     write_routes()
+    write_domain_programs()
     subprocess.run([sys.executable,str(ROOT/"scripts/build_connect.py")],check=True)
     sets={}
     for lang in ('zh','en'):
@@ -75,12 +87,12 @@ def main():
         subprocess.run([sys.executable,str(ROOT/'src/render.py'),lang],check=True)
     counts=dict(collections.Counter(x['group'] for x in sets['en']))
     source_count=len({s['url'] for d in sets['en'] for s in d['sources']})
-    write_json(ROOT/'data/manifest.json',{'schema_version':'1.0','reviewed':REVIEWED,'project':'https://github.com/Cherish0925/Optics-Photonics-AI-Lab','description_license':'MIT','languages':['en','zh'],'entries':len(sets['en']),'domains':14,'groups':counts,'primary_source_urls':source_count,'resource_urls_including_connectors':len(collect_resources(sets['en'])),'catalogues':{lang:RAW+f'data/catalogue.{lang}.json' for lang in ('en','zh')}})
+    write_json(ROOT/'data/manifest.json',{'schema_version':'1.0','reviewed':REVIEWED,'project':'https://github.com/Cherish0925/Optics-Photonics-AI-Lab','description_license':'MIT','languages':['en','zh'],'entries':len(sets['en']),'domains':len(domains),'groups':counts,'primary_source_urls':source_count,'resource_urls_including_connectors':len(collect_resources(sets['en'])),'catalogues':{lang:RAW+f'data/catalogue.{lang}.json' for lang in ('en','zh')}})
     llms=f'''# Optics · Photonics
 
 > Independent optical and photonic research software: native programs, background calculations, simulation sessions, MCP, Skills and Agent plugins.
 
-Reviewed: 2026-10-20. Schema version: 1.0. {len(sets['en'])} tools / product families in 14 task domains.
+Reviewed: 2026-10-20. Schema version: 1.0. {len(sets['en'])} tools / product families in {len(domains)} task domains.
 
 ## Foundations
 

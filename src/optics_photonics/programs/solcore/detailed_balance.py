@@ -31,6 +31,7 @@ PROGRAM = {
         'temperature_k': (300.0, 'cell temperature'),
         'wavelength_nm': ({'start': 280, 'stop': 4000, 'points': 3721}, 'wavelength grid of the spectrum'),
     },
+    'domains': ['film'],
     'results': 'cells.npz/.json with efficiency, Voc, Jsc, fill factor, maximum power and the back-mirror efficiency over band gap; the best band gap',
     'checks': 'jsc_difference and voc_difference: largest relative differences from the currents integrated here for emission through both surfaces',
 }

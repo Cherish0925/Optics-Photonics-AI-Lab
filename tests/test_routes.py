@@ -159,8 +159,32 @@ class Bridges(unittest.TestCase):
         self.assertEqual(programs.catalog()['quantumoptics']['jaynes_cummings']['language'], 'julia')
         self.assertEqual(programs.details('s4', 'crystal_slab')['language'], 'lua')
         self.assertEqual(languages.family('octave'), 'matlab')
+        self.assertIs(programs.catalog()['matlab']['bragg_grating'], programs.catalog()['octave']['bragg_grating'])
+        self.assertEqual(programs.source('matlab', 'bragg_grating'), programs.source('octave', 'bragg_grating'))
+        self.assertEqual(languages.functions_first('a = f(1);\nfunction y = f(x)\n  y = x;\nend\n'),
+                         '1;\nfunction y = f(x)\n  y = x;\nend\n\na = f(1);\n')
+        self.assertEqual(languages.functions_first('a = 1;\n'), 'a = 1;\n')
         with self.assertRaisesRegex(ValueError, 'runs in its software'):
             programs.run('s4', 'crystal_slab', {}, Path('unused'))
+
+    def test_native_octave_source_order_is_preserved_and_declared_matlab_helpers_are_adapted(self):
+        helper = 'function y = twice(x)\n y = 2 * x;\nend\n'
+        leading = 'x = INPUTS.x;\n'
+        result = 'RESULT = struct("value", twice(x));\n'
+        scripts = ('RESULT = INPUTS.x;\n', '1;\n' + helper + leading + result,
+                   leading + helper + result, leading + 'RESULT = x;\n' + helper,
+                   '% PROGRAM\n% {"inputs": null}\n' + leading + helper + result)
+        for source in scripts:
+            with self.subTest(source=source), workspace() as folder:
+                languages.prepare('octave', source, {'x': 3}, Path(folder))
+                self.assertEqual((Path(folder) / 'optics_program.m').read_text(encoding='utf-8'), source)
+        declared = '% MATLAB-compatible program.\n% PROGRAM\n% {"inputs": {}}\n' + leading + result + helper
+        with workspace() as folder:
+            languages.prepare('octave', declared, {'x': 3}, Path(folder))
+            written = (Path(folder) / 'optics_program.m').read_text(encoding='utf-8')
+            self.assertEqual(written, '1;\n' + helper.rstrip() + '\n\n' + declared[:-len(helper)])
+            languages.prepare('matlab', declared, {'x': 3}, Path(folder))
+            self.assertEqual((Path(folder) / 'optics_program.m').read_text(encoding='utf-8'), declared)
 
     def test_arrays_returned_by_a_script_are_saved_with_their_description(self):
         with workspace() as folder:
@@ -238,9 +262,33 @@ class Bridges(unittest.TestCase):
             self.skipTest('octave-cli is not installed')
         prefix = Path(executable).resolve().parents[1]
         env = {'OCTAVE_HOME': str(prefix)} if (prefix / 'conda-meta').is_dir() else {}
-        result = self.run_language('octave', executable, "RESULT = struct('s', sum(INPUTS.n), 'name', INPUTS.name, 'out', OUTPUT_DIR);\n"
-                                   'function y = unused(x)\n y = x;\nend\n', {'n': [1, 2, 3], 'name': "it's"}, env)
-        self.assertEqual((result['s'], result['name']), (6, "it's"))
+        helper = 'function y = twice(x)\n y = 2 * x;\nend\n'
+        leading = 'total = sum(INPUTS.n);\n'
+        result = "RESULT = struct('s', twice(total), 'name', INPUTS.name, 'out', OUTPUT_DIR);\n"
+        declared = '% MATLAB-compatible program.\n% PROGRAM\n% {"inputs": {}}\n'
+        # Native scripts keep their order; only declared MATLAB scripts have trailing helpers moved first.
+        for source in ('1;\n' + helper + leading + result, leading + helper + result,
+                       declared + leading + result + helper):
+            with self.subTest(source=source):
+                measured = self.run_language('octave', executable, source, {'n': [1, 2, 3], 'name': "it's"}, env)
+                self.assertEqual((measured['s'], measured['name']), (12, "it's"))
+
+    def test_octave_bragg_grating_reaches_the_closed_form(self):
+        executable = found('OPTICS_TEST_OCTAVE', 'octave-cli')
+        if not executable:
+            self.skipTest('octave-cli is not installed')
+        with workspace() as folder:
+            home = Path(folder) / 'home'
+            native.bind('octave', executable=executable, path=home)
+            reply = studies.submit('octave', action='bragg_grating', inputs={'sections': 50}, wait=25, path=home)
+            self.assertEqual(reply['state'], 'succeeded', reply)
+            checks = reply['result']['checks']
+            self.assertLess(checks['energy_error'], 1e-10)
+            self.assertLess(checks['uniform_difference'], 1e-10)
+            self.assertLess(abs(checks['delay_difference']), 1e-3)
+            self.assertAlmostEqual(reply['result']['peak_reflectance'], math.tanh(reply['result']['coupling_times_length']) ** 2, places=4)
+            delay = jobs.read_array(reply['run_id'], 'calculate/attempt-1/spectrum.npz', member='delay_ps', path=home)
+            self.assertEqual((delay['description']['unit'], delay['axes'][0]['unit']), ('ps', 'nm'))
 
     def test_lua_program(self):
         executable = found('OPTICS_TEST_LUA', 'lua', 'lua5.4', 'lua5.3')

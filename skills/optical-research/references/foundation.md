@@ -4,4 +4,4 @@ Use SymPy/Sage for symbolic derivation; SciPy for numerical optimization and int
 
 Make units, coordinate frames, complex dtype and array axes explicit at software interfaces. Record material provenance and interpolation domain. Preserve the assumptions of a symbolic simplification before substituting numeric values. Scaling and conditioning often matter more than optimizer choice. For automatic differentiation, compare a few directional derivatives with an independent numerical change when custom operations or discontinuous geometry are introduced. Record precision, solver version, model files and random seed with results; use HDF5/NPZ/FITS/GDS or CSV for the corresponding scientific data rather than flattening arrays into chat text.
 
-Use software_details for the selected tool’s primary documentation and implementation links.
+Packaged programs: `scipy/fit_gaussian`; `software_details(tool, program=NAME)` describes one. Use software_details for the selected tool’s primary documentation and implementation links.

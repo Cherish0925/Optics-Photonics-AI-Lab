@@ -35,6 +35,7 @@ PROGRAM = {
         'vector': (True, 'also solve the exact vector modes (TE, TM, HE, EH)'),
         'n2_m2_per_W': (2.6e-20, 'nonlinear index of the core for gamma; 2.6e-20 m^2/W for fused silica'),
     },
+    'domains': ['fiber'],
     'results': 'modes.npz/.json: effective indices of every guided LP and vector mode over wavelength, and the fundamental mode\'s '
                'group index, dispersion, beta2, mode field diameter, effective area and gamma; profiles.npz/.json: radial LP fields at the '
                'first wavelength; the modes at the first and last wavelength, the LP11 cutoff wavelength and the zero-dispersion wavelength',

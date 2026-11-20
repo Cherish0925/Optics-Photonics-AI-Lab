@@ -34,6 +34,7 @@ PROGRAM = {
         'max_order': (4, 'largest m + n of the transverse modes listed'),
         'samples': (400, 'beam samples along the round trip'),
     },
+    'domains': ['laser'],
     'results': 'resonator.npz/.json: beam radius and wavefront curvature along the round trip; stability, waists, spot sizes on the '
                'mirrors, round-trip Gouy phase, free spectral range, transverse mode spacing and TEM_mn frequency offsets',
     'checks': 'two_mirror_difference: largest relative difference of the waist, the spot sizes on both mirrors and the transverse '

@@ -59,11 +59,47 @@ class GuideCase(unittest.TestCase):
         self.assertEqual([r['uri'] for r in listed['result']['resources']], ['optics://guides/' + t for t in mcp.guides()])
         self.assertEqual(film['result']['contents'][0]['text'], mcp.guide('film'))
         self.assertIn('error', outside)
+        for resource in listed['result']['resources']:
+            self.assertTrue(8 < len(resource['description']) <= 240, resource)
+
+    def test_prompts_start_each_kind_of_work_with_existing_tools(self):
+        requests = [{'jsonrpc': '2.0', 'id': 1, 'method': 'prompts/list'},
+                    {'jsonrpc': '2.0', 'id': 2, 'method': 'prompts/get', 'params': {'name': 'study', 'arguments': {
+                        'problem': 'ring resonator Q', 'parameters': 'gap 100 to 300 nm'}}},
+                    {'jsonrpc': '2.0', 'id': 3, 'method': 'prompts/get', 'params': {'name': 'study', 'arguments': {'problem': 'x'}}},
+                    {'jsonrpc': '2.0', 'id': 4, 'method': 'prompts/get', 'params': {'name': 'unknown'}},
+                    {'jsonrpc': '2.0', 'id': 5, 'method': 'initialize', 'params': {'protocolVersion': '2025-11-25'}}]
+        output = io.StringIO()
+        mcp.serve(io.StringIO('\n'.join(map(json.dumps, requests))), output)
+        listed, study, incomplete, unknown, started = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual([item['name'] for item in listed['result']['prompts']], list(mcp.PROMPTS))
+        text = study['result']['messages'][0]['content']['text']
+        self.assertIn('Calculation: ring resonator Q. Parameters: gap 100 to 300 nm', text)
+        self.assertIn('needs: parameters', incomplete['error']['message'])
+        self.assertIn('Prompts: calculate', unknown['error']['message'])
+        self.assertIn('prompts', started['result']['capabilities'])
+        for name, (about, arguments, body) in mcp.PROMPTS.items():
+            self.assertEqual(set(re.findall(r'\{(\w+)\}', body)), set(arguments), name)
+            for token in re.findall(r'\b[a-z]+(?:_[a-z]+)+\b', body):
+                self.assertIn(token, NAMES, f'{name} mentions {token}')
+            for topic in re.findall(r'read_guide ([a-z-]+)', body):
+                self.assertIn(topic, mcp.guides(), name)
 
     def test_packaged_skills_match_the_source(self):
         for copy in ('connect/agentic-research-os/skills', 'connect/agentic-research-os/lib/optics_photonics/resources/skills'):
             for file in (ROOT / 'skills').rglob('*.md'):
                 self.assertEqual((ROOT / copy / file.relative_to(ROOT / 'skills')).read_bytes(), file.read_bytes(), (copy, file.name))
+
+    def test_prompt_arguments_remain_literal_and_require_text(self):
+        text = mcp.prompt('study', {'problem': 'fit the literal {parameters}', 'parameters': 'gap 100 to 300 nm'})
+        self.assertIn('Calculation: fit the literal {parameters}. Parameters: gap 100 to 300 nm',
+                      text['messages'][0]['content']['text'])
+        for value in (None, '', '  '):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'needs: problem'):
+                mcp.prompt('calculate', {'problem': value})
+        for value in (False, 0, ['lens'], {'task': 'lens'}):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'needs text for: problem'):
+                mcp.prompt('calculate', {'problem': value})
 
 
 class ArgumentCase(unittest.TestCase):

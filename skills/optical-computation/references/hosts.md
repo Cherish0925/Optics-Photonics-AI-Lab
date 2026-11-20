@@ -6,4 +6,6 @@
 
 **Packages.** `optics-photonics connect HOST --output DIR` writes a package for `agentic-research-os`, `codex`, `claude`, `deepseek`, `qiushi`, `mcp` or `portable` (Agent Plugins); follow `DIR/INSTALL.md`. Research OS installs the directory containing `plugin.json` and activates the returned revision; DeepSeek uses the Cordis overlay or bundle; other hosts register the stdio command from `mcp.json`. Native host and MCP packages accept `--python PATH` to select the connector interpreter (Python 3.10+). Portable packages and `connect codex/claude --managed-python` use uv to select Python on the destination machine. GitHub marketplace packages also require uv on that machine. Scientific tools keep their own environments.
 
+**Prompts and guides.** A host that shows MCP prompts lists six starting points: `calculate`, `study`, `reproduce`, `connect`, `measure`, `continue`. The guides are also MCP resources, `optics://guides/TOPIC`.
+
 **Updates.** Install a new version into a new directory. Configuration, scientific environments and research records stay under `OPTICS_HOME` (default `~/.optics-photonics`) and are used by the new version.

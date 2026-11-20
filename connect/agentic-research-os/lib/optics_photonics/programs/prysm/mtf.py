@@ -31,6 +31,7 @@ PROGRAM = {
         'Q': (2, 'padding factor of the focal-plane transform; 2 samples the PSF at Nyquist'),
         'frequencies': ([10, 30, 50, 100], 'spatial frequencies in cycles/mm whose MTF is reported'),
     },
+    'domains': ['imaging', 'wave'],
     'results': 'mtf.npz/.json with the MTF along x and y and the diffraction limit over frequency; the PSF; Strehl ratio',
     'checks': 'diffraction_limit_difference: largest |MTF - analytic MTF| without aberrations',
 }

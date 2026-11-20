@@ -1062,6 +1062,41 @@
     "stage": "成熟工具"
   },
   {
+    "id": "labview",
+    "name": "NI LabVIEW",
+    "group": "paid",
+    "cats": [
+      "lab"
+    ],
+    "method": "用于仪器控制与数据采集的图形化程序",
+    "summary": "控制仪器、采集并处理信号的实验室程序（VI）；大量现有实验装置用它编写。",
+    "api": "Windows 上的自动化服务器（LabVIEW.Application：GetVIReference，再以前面板控件的名称和值调用 Call）；VI Server。",
+    "license": "商业 / 学术订阅授权",
+    "compute": "自动化服务器在 Windows 上；另有 macOS 与 Linux 版本",
+    "usage": "NI 长期提供的仪器控制环境。",
+    "limit": "调用 VI 时以前面板控件作为参数；须在 LabVIEW 选项中启用 VI Server。",
+    "sources": [
+      {
+        "label": "官方文档",
+        "url": "https://www.ni.com/docs/en-US/bundle/labview/page/using-activex-with-labview.html"
+      },
+      {
+        "label": "官方接口",
+        "url": "https://www.ni.com/docs/en-IO/bundle/labview-api-ref/page/properties-and-methods/activex/application/getvireference.html"
+      }
+    ],
+    "route": "api",
+    "stage": "成熟工具",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    }
+  },
+  {
     "id": "photonforge",
     "name": "PhotonForge Community",
     "group": "limited",
@@ -3039,6 +3074,370 @@
       {
         "label": "源码许可",
         "url": "https://raw.githubusercontent.com/kklmn/xrt/HEAD/LICENSE.txt"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "pyvisa",
+    "name": "PyVISA",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "GPIB、USB、串口与网络仪器消息（VISA）",
+    "summary": "用文本指令控制光源、功率计、光谱分析仪、示波器和控制器，并读取测量值。",
+    "api": "Python API；使用厂商 VISA 库或纯 Python 后端 PyVISA-py；PyVISA-sim 按描述文件模拟仪器。",
+    "license": "MIT",
+    "compute": "连接仪器的计算机",
+    "usage": "VISA 仪器通用的 Python 接口，也是仪器驱动库的基础。",
+    "limit": "指令与量程以各仪器手册为准；PyVISA 只传递消息，不了解指令含义。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/pyvisa/pyvisa"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/pyvisa/pyvisa/HEAD/LICENSE"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "pymeasure",
+    "name": "PyMeasure",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "仪器驱动与测量流程",
+    "summary": "把多种实验仪器的设置封装为属性的驱动，以及执行测量并记录数据的流程。",
+    "api": "基于 PyVISA 的 Python 仪器类；Procedure、Worker 与 Results 执行并记录测量。",
+    "license": "MIT",
+    "compute": "连接仪器的计算机",
+    "usage": "物理实验室广泛使用的社区仪器驱动库。",
+    "limit": "只覆盖已有驱动的仪器；其他仪器需自行编写驱动类或直接使用 PyVISA。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/pymeasure/pymeasure"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/pymeasure/pymeasure/HEAD/LICENSE.txt"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "pylablib",
+    "name": "pylablib",
+    "group": "open",
+    "cats": [
+      "lab",
+      "imaging"
+    ],
+    "method": "设备控制：相机、位移台、激光器与传感器",
+    "summary": "采集科学相机图像并驱动位移台，含 Andor、Hamamatsu、PCO、Thorlabs、Newport、Attocube 等厂商的设备类。",
+    "api": "基于厂商库、串口和 VISA 的 Python 设备类。",
+    "license": "GPL-3.0",
+    "compute": "连接设备的计算机；相机需要厂商驱动库",
+    "usage": "光学与量子实验室使用的开源设备控制库。",
+    "limit": "多数相机和部分位移台需安装厂商运行库；各设备类列出其支持的型号。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/AlexShkarin/pyLabLib"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/AlexShkarin/pyLabLib/HEAD/LICENSE"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "qcodes",
+    "name": "QCoDeS",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "数据采集框架：仪器、参数与数据集",
+    "summary": "把仪器描述为参数，运行测量循环，并把数据连同各仪器的设置一起保存。",
+    "api": "Python API；基于 PyVISA 的仪器驱动；测量上下文、SQLite 数据集并可导出 xarray。",
+    "license": "MIT",
+    "compute": "连接仪器的计算机",
+    "usage": "由量子器件实验室与 Microsoft 共同开发，用于自动化实验。",
+    "limit": "驱动以电子与低温仪器为主；光学设备常需自行编写驱动。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/microsoft/Qcodes"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/microsoft/Qcodes/HEAD/LICENSE"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "bluesky",
+    "name": "Bluesky / ophyd",
+    "group": "open",
+    "cats": [
+      "lab",
+      "xray"
+    ],
+    "method": "实验编排：计划、设备与文档",
+    "summary": "在束线和实验室设备上运行扫描与自适应实验；每次读数都以结构化文档发出。",
+    "api": "Python：RunEngine 与计划（bluesky）；基于 EPICS 等控制系统的设备及模拟设备（ophyd）。",
+    "license": "BSD-3-Clause",
+    "compute": "位于控制系统网络中的计算机；模拟设备可在任意计算机运行",
+    "usage": "由 NSLS-II 开发，用于同步辐射与中子设施。",
+    "limit": "硬件通过 EPICS 等控制系统访问；没有控制系统时只能运行模拟设备。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/bluesky/bluesky"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/bluesky/bluesky/HEAD/LICENSE"
+      },
+      {
+        "label": "官方项目",
+        "url": "https://github.com/bluesky/ophyd"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "micromanager",
+    "name": "Micro-Manager (pymmcore-plus)",
+    "group": "open",
+    "cats": [
+      "lab",
+      "imaging"
+    ],
+    "method": "显微镜控制：相机、位移台、快门与光源",
+    "summary": "通过 Micro-Manager 的设备适配器控制显微镜硬件并执行多维采集。",
+    "api": "pymmcore-plus：MMCore 的 Python API，带事件与采集引擎；设备适配器来自 Micro-Manager 安装（mmcore install）。",
+    "license": "BSD-3-Clause（pymmcore-plus）；MMCore 为 LGPL；设备适配器各有许可",
+    "compute": "连接显微镜的计算机",
+    "usage": "Micro-Manager 是生命科学中广泛使用的开源显微镜控制软件。",
+    "limit": "硬件需要设备适配器和厂商驱动；演示配置提供模拟相机和位移台。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/pymmcore-plus/pymmcore-plus"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/pymmcore-plus/pymmcore-plus/HEAD/LICENSE"
+      },
+      {
+        "label": "官方项目",
+        "url": "https://github.com/micro-manager/micro-manager"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "harvesters",
+    "name": "Harvester (GenICam)",
+    "group": "open",
+    "cats": [
+      "lab",
+      "imaging"
+    ],
+    "method": "GenICam 相机图像采集（GigE Vision、USB3 Vision）",
+    "summary": "通过 GenTL producer 采集机器视觉相机图像并设置相机特性。",
+    "api": "基于 GenICam 参考实现的 Python API；GenTL producer 文件（.cti）由相机厂商提供。",
+    "license": "Apache-2.0",
+    "compute": "连接相机的计算机",
+    "usage": "GenICam 项目发布的图像采集库。",
+    "limit": "需要与相机传输层对应的 GenTL producer；特性名称遵循各相机的 GenICam 描述。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/genicam/harvesters"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/genicam/harvesters/HEAD/LICENSE.txt"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "nidaqmx",
+    "name": "NI-DAQmx Python",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "模拟与数字数据采集（NI-DAQmx）",
+    "summary": "用 NI 数据采集设备读取光电二极管与探测器电压、产生波形和触发、进行脉冲计数。",
+    "api": "NI-DAQmx 驱动的 Python API：任务、通道、定时与触发。",
+    "license": "MIT；NI-DAQmx 驱动为 NI 软件",
+    "compute": "安装 NI-DAQmx 驱动并连接 NI 设备的 Windows 或 Linux 计算机",
+    "usage": "NI 官方为其采集硬件提供的 Python 接口。",
+    "limit": "须安装 NI-DAQmx 驱动；模拟设备在 Windows 的 NI MAX 中创建。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/ni/nidaqmx-python"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/ni/nidaqmx-python/HEAD/LICENSE"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "seabreeze",
+    "name": "python-seabreeze",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "光谱仪采集（Ocean Optics / Ocean Insight）",
+    "summary": "读取 Ocean Optics USB 光谱仪的光谱，设置积分时间与触发。",
+    "api": "Python API，两种后端：cseabreeze（SeaBreeze C 库）与 pyseabreeze（基于 USB 的纯 Python）。",
+    "license": "MIT",
+    "compute": "连接光谱仪的计算机",
+    "usage": "光学实验室中光纤光谱仪广泛使用的社区库。",
+    "limit": "支持所列 Ocean Optics 型号；强度为原始计数，需做暗信号、非线性和仪器响应校正。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/ap--/python-seabreeze"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/ap--/python-seabreeze/HEAD/LICENSE.md"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "本次未核实专用 MCP"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "本次未核实专用 Agent Skill"
+    },
+    "stage": "成熟工具"
+  },
+  {
+    "id": "slmsuite",
+    "name": "slmsuite",
+    "group": "open",
+    "cats": [
+      "lab",
+      "wave",
+      "imaging"
+    ],
+    "method": "空间光调制器全息：带相机反馈的相位恢复",
+    "summary": "计算光点阵列与图案的全息图，校准波前及相机与调制器之间的映射，并驱动调制器和相机。",
+    "api": "Python API；Gerchberg-Saxton 及其加权变体，可在 CPU 或 GPU（CuPy）运行；调制器与相机的硬件类，含模拟设备。",
+    "license": "MIT",
+    "compute": "CPU 或 GPU；硬件类在连接设备的计算机上运行",
+    "usage": "面向空间光调制器可编程光学的开源库，附完整示例。",
+    "limit": "硬件类需要厂商 SDK；模拟调制器和相机可在无硬件时运行算法。",
+    "sources": [
+      {
+        "label": "项目与接口",
+        "url": "https://github.com/holodyne/slmsuite"
+      },
+      {
+        "label": "源码许可",
+        "url": "https://raw.githubusercontent.com/holodyne/slmsuite/HEAD/LICENSE"
       }
     ],
     "route": "api",

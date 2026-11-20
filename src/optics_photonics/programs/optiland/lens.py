@@ -41,6 +41,7 @@ PROGRAM = {
         'image_solve': (True, 'move the image surface to the paraxial focus'),
         'rings': (8, 'rings of the hexapolar pupil grid of the spot diagrams'),
     },
+    'domains': ['ray'],
     'results': 'lens.npz/.json: Seidel and transverse coefficients of every surface, spot coordinates per field and wavelength, '
                'RMS spot radii; first-order data, Seidel sums and RMS spot radius per field',
     'checks': 'focal_length_difference: EFL from Optiland minus an independent paraxial trace, relative; '
@@ -79,7 +80,7 @@ for f in fields:
 for w in wavelengths:
     system.wavelengths.add(value=w, is_primary=w == primary)
 if p['image_solve']:
-    system.image_solve()
+    system.updater.image_solve()
 
 
 def scalar(value):

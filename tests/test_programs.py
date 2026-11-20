@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from optics_photonics import catalogue, environments, jobs, programs  # noqa: E402
+from optics_photonics import catalogue, environments, jobs, languages, programs  # noqa: E402
 from support import workspace  # noqa: E402
 
 SCIENCE = os.environ.get('OPTICS_SCIENCE_TESTS') == '1'
@@ -20,6 +20,9 @@ def installed(module):
         return importlib.util.find_spec(module) is not None
     except ModuleNotFoundError:  # a submodule of a missing package
         return False
+
+
+DOMAINS = {row[0] for row in json.loads((Path(__file__).resolve().parents[1] / 'data/domains.en.json').read_text(encoding='utf-8'))}
 
 
 class DeclarationCase(unittest.TestCase):
@@ -46,6 +49,7 @@ class DeclarationCase(unittest.TestCase):
                     self.assertTrue(spec['title'].endswith('.'))
                     self.assertGreater(len(spec['about']), 100)
                     self.assertTrue(spec['results'])
+                    self.assertTrue(spec['domains'] and set(spec['domains']) <= DOMAINS, spec.get('domains'))
                     for key, (default, about) in spec['inputs'].items():
                         self.assertTrue(about.strip(), key)
                         json.dumps(default, allow_nan=False)
@@ -54,7 +58,7 @@ class DeclarationCase(unittest.TestCase):
                     if spec.get('language'):
                         # A program in the software's own language: that software has an executable route in the language.
                         route = next(r for r in connections[tool]['routes'] if r['route'] == 'executable')
-                        self.assertEqual(route['language'], spec['language'])
+                        self.assertEqual(languages.family(route['language']), spec['language'])
                         continue
                     ast.parse(source)
                     self.assertIn('parameters(PROGRAM, INPUTS)', source)
@@ -63,7 +67,32 @@ class DeclarationCase(unittest.TestCase):
         import re
         text = (Path(__file__).resolve().parents[1] / 'skills/optical-computation/references/programs.md').read_text(encoding='utf-8')
         listed = set(re.findall(r'^\| `([\w-]+/\w+)`', text, re.M))
-        self.assertEqual(listed, {tool + '/' + name for tool, items in programs.catalog().items() for name in items})
+        # A program shared within a language family is listed once, under the tool that holds its file.
+        self.assertEqual(listed, {spec['file'].parent.name + '/' + name for items in programs.catalog().values() for name, spec in items.items()})
+
+    def test_a_domain_holds_the_programs_that_declare_it(self):
+        self.assertEqual(catalogue.domain_programs('bio'), {'scipy': ['tissue_layers']})
+        found = catalogue.search('', domain='bio')['items']
+        self.assertEqual((found[0]['id'], found[0]['program']['name']), ('scipy', 'tissue_layers'))
+        # Software outside the domain appears only through a program of the domain that matches the query.
+        self.assertEqual(catalogue.search('fiber modes', domain='bio')['total'], 0)
+        self.assertEqual([(item['id'], item['program']['name']) for item in catalogue.search('second harmonic', domain='laser')['items']],
+                         [('scipy', 'second_harmonic')])
+        # Each domain reference of the research Skill ends with the programs of its domain, as build.py writes it.
+        folder = Path(__file__).resolve().parents[1] / 'skills/optical-research/references'
+        for domain in DOMAINS:
+            self.assertEqual((folder / (domain + '.md')).read_text(encoding='utf-8').rstrip('\n').split('\n')[-1], catalogue.domain_line(domain), domain)
+        every = {tool + '/' + name for domain in DOMAINS for tool, names in catalogue.domain_programs(domain).items() for name in names}
+        self.assertEqual(every, {tool + '/' + name for tool, items in programs.catalog().items() for name in items})
+
+    def test_both_readmes_list_every_program(self):
+        import re
+        files = {spec['file'].parent.name + '/' + name for items in programs.catalog().values() for name, spec in items.items()}
+        for name in ('README.md', 'README.zh-CN.md'):
+            text = (Path(__file__).resolve().parents[1] / name).read_text(encoding='utf-8')
+            rows = [line for line in text.splitlines() if line.startswith('| ') and ' · `' in line]
+            self.assertEqual(set(re.findall(r'`([\w-]+/\w+)`', '\n'.join(rows))), files, name)
+            self.assertIn(f'{len(files)} ', text)
 
     def test_inputs_replace_defaults_and_unknown_names_list_the_accepted_ones(self):
         spec = programs.catalog()['tmm']['spectrum']
@@ -75,7 +104,7 @@ class DeclarationCase(unittest.TestCase):
 
     def test_details_list_programs_and_return_one_source(self):
         listed = environments.details('scipy')['execution']
-        self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes'])
+        self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonances', 'resonator', 'second_harmonic', 'slab_modes', 'tissue_layers'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
         self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
         self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
@@ -95,6 +124,31 @@ class DeclarationCase(unittest.TestCase):
         self.assertEqual(native['programs'], [])
         self.assertIn('solve_project', native['session_adapter']['actions'])
         self.assertEqual(catalogue.search('tmm')['items'][0]['programs'], ['spectrum'])
+
+    def test_mcp_details_state_each_fact_once(self):
+        from optics_photonics import mcp
+        brief = mcp.invoke('software_details', {'tool': 'scipy'})
+        full = environments.details('scipy')   # the Python interface keeps every field of earlier releases
+        self.assertLess(len(json.dumps(brief)), 5000)
+        self.assertGreater(len(json.dumps(full)), 2 * len(json.dumps(brief)))
+        nlse = next(item for item in brief['execution']['programs'] if item['name'] == 'nlse')
+        # Titles and input names; program=NAME brings defaults, meanings, physics and checks.
+        self.assertEqual(nlse, {'name': 'nlse', 'title': programs.catalog()['scipy']['nlse']['title'],
+                                'inputs': list(programs.catalog()['scipy']['nlse']['inputs'])})
+        self.assertIn('program=NAME', brief['execution']['program_details'])
+        for absent in ('mcp', 'skill', 'stage', 'route'):
+            self.assertNotIn(absent, brief)   # the same for every software, or saying that nothing was found
+            self.assertIn(absent, full)
+        self.assertNotIn('environment', brief['connection'])
+        self.assertEqual(brief['routes'], full['routes'])
+        # What 0.7 clients read stays in its place, with the program's title as the description.
+        operation = brief['execution']['operations'][0]
+        self.assertEqual((operation['name'], operation['inputs_example']), ('fit_gaussian', programs.inputs(programs.catalog()['scipy']['fit_gaussian'])))
+        self.assertTrue(brief['execution']['native_program'])
+        solver = mcp.invoke('software_details', {'tool': 'lumerical'})
+        self.assertEqual(solver['upstream']['mcp']['kind'], 'official')
+        self.assertIn('solve_project', solver['execution']['session_adapter']['actions'])
+        self.assertNotIn('program_details', solver['execution'])
 
     def test_submission_checks_the_program_and_its_inputs(self):
         with workspace() as home:
@@ -385,6 +439,96 @@ class ProgramPhysicsCase(unittest.TestCase):
         spectrum = data.load(offset/'pulse.npz')
         self.assertAlmostEqual(spectrum['frequency_THz'].values[np.argmax(spectrum['spectrum'].values[0])], 0.5)
 
+    def test_tissue_transport_reaches_the_known_slab_and_half_space(self):
+        # van de Hulst's matched slab, and Giovanelli's half space of index 1.5 with isotropic scattering (total reflectance 0.2600).
+        slab = self.run_program('scipy', 'tissue_layers', {'packets': 200000, 'layers': [
+            {'mu_a_per_mm': 1.0, 'mu_s_per_mm': 9.0, 'g': 0.75, 'n': 1.0, 'thickness_mm': 0.2}]})
+        self.assertLess(abs(slab['diffuse_reflectance'] - 0.09739), 4 * slab['diffuse_reflectance_error'])
+        self.assertLess(abs(slab['transmittance'] - 0.66096), 4 * slab['transmittance_error'])
+        self.assertLess(abs(slab['checks']['balance']), 1e-6)
+        self.assertLess(abs(slab['checks']['reference_reflectance']), 4 * slab['checks']['reference_error'][0])
+        thick = self.run_program('scipy', 'tissue_layers', {'packets': 100000, 'layers': [
+            {'mu_a_per_mm': 1.0, 'mu_s_per_mm': 9.0, 'g': 0.0, 'n': 1.5, 'thickness_mm': 30}]})
+        self.assertAlmostEqual(thick['specular_reflectance'], 0.04, places=12)
+        self.assertLess(abs(thick['specular_reflectance'] + thick['diffuse_reflectance'] - 0.2600), 4 * thick['diffuse_reflectance_error'])
+        self.assertEqual(thick['transmittance'], 0)
+        # A clear layer between two scattering ones only refracts and reflects.
+        stack = self.run_program('scipy', 'tissue_layers', {'packets': 20000, 'layers': [
+            {'mu_a_per_mm': 0.5, 'mu_s_per_mm': 5.0, 'g': 0.8, 'n': 1.4, 'thickness_mm': 0.5},
+            {'mu_a_per_mm': 0.0, 'mu_s_per_mm': 0.0, 'g': 0.0, 'n': 1.33, 'thickness_mm': 0.3},
+            {'mu_a_per_mm': 0.5, 'mu_s_per_mm': 5.0, 'g': 0.8, 'n': 1.4, 'thickness_mm': 0.5}]})
+        self.assertEqual(stack['absorbed'][1], 0)
+        self.assertLess(abs(stack['checks']['balance']), 1e-6)
+
+    def test_resonances_of_a_spectrum_give_q_extinction_and_free_spectral_range(self):
+        import numpy as np
+        result = self.run_program('scipy', 'resonances')
+        self.assertEqual(result['count'], 2)
+        self.assertLess(abs(result['checks']['q_difference']), 0.02)
+        self.assertLess(abs(result['checks']['fsr_difference']), 1e-3)
+        self.assertAlmostEqual(result['group_index'][0], 4.2, places=2)
+        self.assertAlmostEqual(result['resonances'][0]['extinction_db'], 20 * math.log10(0.0298 / 0.01), delta=0.3)
+        # The same spectrum from a file in dB with a header line, and its complement as peaks.
+        saved = np.load(Path(self.folder.name) / f'scipy-resonances-{self.count}' / 'resonances.npz')
+        file = Path(self.folder.name) / 'spectrum.csv'
+        with file.open('w', encoding='utf-8') as stream:
+            stream.write('wavelength (nm),transmission (dB)\n')
+            stream.writelines(f'{x!r},{10 * math.log10(y)!r}\n' for x, y in zip(saved['wavelength_nm'].tolist(), saved['transmission'].tolist()))
+        from_file = self.run_program('scipy', 'resonances', {'file': str(file), 'decibel': True, 'round_trip_um': 2 * math.pi * 20})
+        self.assertAlmostEqual(from_file['mean_Q'] / result['mean_Q'], 1, places=6)
+        self.assertAlmostEqual(from_file['group_index'][0], result['group_index'][0], places=6)
+        self.assertIsNone(from_file['checks']['q_difference'])
+        peaks = self.run_program('scipy', 'resonances', {'wavelength_nm': saved['wavelength_nm'].tolist(),
+                                                         'transmission': (1 - saved['transmission']).tolist(), 'peaks': True, 'min_depth': 0.5})
+        self.assertAlmostEqual(peaks['resonances'][0]['wavelength_nm'], result['resonances'][0]['wavelength_nm'], places=4)
+        with self.assertRaisesRegex(ValueError, 'No resonance deeper'):
+            self.run_program('scipy', 'resonances', {'wavelength_nm': list(range(1500, 1560)), 'transmission': [1.0] * 60})
+
+    def test_resonance_windows_and_resolution_use_the_local_wavelength_grid(self):
+        import numpy as np
+        # A densely sampled remote band must not shrink the fit window of a well-resolved resonance.
+        wavelength = np.concatenate([np.linspace(1500, 1510, 10001), np.linspace(1540, 1560, 1001)])
+        transmission = 1 - 0.8 * 0.1 ** 2 / ((wavelength - 1550) ** 2 + 0.1 ** 2)
+        result = self.run_program('scipy', 'resonances', {'wavelength_nm': wavelength.tolist(), 'transmission': transmission.tolist()})
+        self.assertEqual(result['count'], 1)
+        resonance = result['resonances'][0]
+        self.assertAlmostEqual(resonance['wavelength_nm'], 1550, places=7)
+        self.assertAlmostEqual(resonance['width_pm'], 200, places=5)
+        self.assertAlmostEqual(resonance['samples_per_width'], 10, places=5)
+        json.dumps(result, allow_nan=False)
+
+    def test_adjacent_resonances_do_not_enter_each_others_fit_windows(self):
+        import numpy as np
+        wavelength = np.linspace(1548, 1552, 4001)
+        centres = (1549.5, 1550.5)
+        transmission = 1 - sum(0.4 * 0.1 ** 2 / ((wavelength - centre) ** 2 + 0.1 ** 2) for centre in centres)
+        result = self.run_program('scipy', 'resonances', {'wavelength_nm': wavelength.tolist(), 'transmission': transmission.tolist()})
+        self.assertEqual(result['count'], 2)
+        for resonance, centre in zip(result['resonances'], centres):
+            self.assertAlmostEqual(resonance['wavelength_nm'], centre, delta=0.002)
+            # The small residual bias is from the neighbour's tail; an independent Lorentzian is not a multi-peak model.
+            self.assertAlmostEqual(resonance['width_pm'], 200, delta=5)
+        self.assertAlmostEqual(result['fsr_nm'][0], 1.0, delta=0.003)
+
+    def test_tissue_fluence_integrates_paths_across_interfaces_and_clear_layers(self):
+        import numpy as np
+        # One depth bin straddles two absorbing media: its fluence is the integral of Beer-Lambert intensity,
+        # not total absorption divided by the coefficient at the bin centre.
+        self.run_program('scipy', 'tissue_layers', {'packets': 100000, 'depth_bins': 1, 'layers': [
+            {'mu_a_per_mm': 0.1, 'mu_s_per_mm': 0.0, 'g': 0.0, 'n': 1.0, 'thickness_mm': 0.4},
+            {'mu_a_per_mm': 10.0, 'mu_s_per_mm': 0.0, 'g': 0.0, 'n': 1.0, 'thickness_mm': 0.6}]})
+        stored = np.load(Path(self.folder.name) / f'scipy-tissue_layers-{self.count}' / 'transport.npz')
+        expected = (1 - np.exp(-0.04)) / 0.1 + np.exp(-0.04) * (1 - np.exp(-6)) / 10
+        self.assertAlmostEqual(stored['fluence_rate'][0], expected, delta=0.003)
+        # A matched transparent layer has unit fluence in every bin even though no absorption event occurs.
+        clear = self.run_program('scipy', 'tissue_layers', {'packets': 10, 'depth_bins': 7, 'layers': [
+            {'mu_a_per_mm': 0.0, 'mu_s_per_mm': 0.0, 'g': 0.0, 'n': 1.0, 'thickness_mm': 2.0}]})
+        stored = np.load(Path(self.folder.name) / f'scipy-tissue_layers-{self.count}' / 'transport.npz')
+        np.testing.assert_allclose(stored['fluence_rate'], np.ones(7), atol=1e-12)
+        self.assertEqual(clear['transmittance'], 1.0)
+        self.assertEqual(clear['absorbed'], [0.0])
+        json.dumps(clear, allow_nan=False)
+
     def test_ray_optics_and_polarization(self):
         abcd = self.run_program('raytracing', 'abcd', {'elements': [{'space_m': 0.1}, {'focal_length_m': 0.05}, {'space_m': 0.1}], 'ray': [0.001, 0]})
         self.assertAlmostEqual(abcd['ray_out'][0], -0.001, places=12)
@@ -595,6 +739,123 @@ class InverseDesignCase(unittest.TestCase):
         self.assertGreater(transmission['end'], 0.9)
         self.assertGreater(transmission['binary'], 0.9)
         self.assertLess(transmission['binary'], 1 + 1e-6)   # normalized by a straight waveguide: nothing gains power
+
+
+@environment('ngsolve')
+class FiniteElementCase(unittest.TestCase):
+    def test_an_index_matched_cylinder_has_zero_scattering_and_finite_checks(self):
+        for polarization in ('tm', 'te'):
+            result = calculate('ngsolve', 'scattering', {'index': 1.0, 'polarization': polarization, 'grid': 0})
+            for name in ('Q_sca', 'Q_abs', 'Q_ext'):
+                self.assertAlmostEqual(result[name], 0.0, delta=1e-12)
+            self.assertLess(result['checks']['field_difference'], 1e-12)
+            self.assertLess(abs(result['checks']['efficiency_difference']), 1e-12)
+            json.dumps(result, allow_nan=False)
+
+    def test_a_cylinder_scatters_as_its_exact_series_in_both_polarizations(self):
+        for inputs in ({}, {'polarization': 'te'}, {'polarization': 'te', 'index': [0.14, 3.0], 'radius_um': 0.05, 'wavelength_um': 0.4,
+                                                     'air_um': 0.4, 'layer_um': 0.4, 'elements_per_wavelength': 10, 'grid': 0}):
+            result = calculate('ngsolve', 'scattering', inputs)
+            self.assertLess(result['checks']['field_difference'], 1e-3, inputs)
+            self.assertLess(abs(result['checks']['efficiency_difference']), 1e-3, inputs)
+            # Scattering and absorption add up to the extinction of the optical theorem.
+            self.assertAlmostEqual(result['Q_ext'], result['series']['Q_ext'], places=3)
+
+
+@environment('srwpy')
+class UndulatorCase(unittest.TestCase):
+    def test_harmonics_lie_at_the_undulator_equation(self):
+        result = calculate('srw', 'undulator', {'cone_points': 21})
+        self.assertLess(abs(result['checks']['fundamental_difference']), 1e-3)
+        self.assertTrue(1.0 < result['checks']['flux_ratio'] < 1.06, result['checks'])
+        third = result['harmonics'][1]
+        self.assertEqual(third['harmonic'], 3)
+        self.assertAlmostEqual(third['energy_ev'] / third['formula_ev'], 1, places=3)
+        twice = calculate('srw', 'undulator', {'periods': 200, 'distance_m': 100, 'points': 6001, 'cone_points': 0})
+        self.assertLess(twice['checks']['flux_ratio'], result['checks']['flux_ratio'])   # the end poles weigh less in a longer device
+
+
+@environment('tidy3d')
+class ModeSolverCase(unittest.TestCase):
+    def test_a_silicon_wire_guides_a_quasi_te_mode_and_the_slab_matches_its_dispersion_relation(self):
+        result = calculate('tidy3d', 'modes', {'modes': 2, 'steps_per_wavelength': 20})
+        first, second = result['modes']
+        self.assertTrue(2.3 < first['n_eff'] < 2.6 and first['te_fraction'] > 0.9 and first['guided'], first)
+        self.assertLess(second['te_fraction'], 0.2)
+        self.assertGreater(first['group_index'], first['n_eff'])
+        self.assertLess(abs(result['checks']['slab_difference']), 5e-3)
+
+
+@environment('pyvisa_sim')
+class InstrumentCase(unittest.TestCase):
+    def test_the_simulated_source_returns_what_it_was_given_and_reports_a_refused_value(self):
+        result = calculate('pyvisa', 'sweep', {'values': [1500, 1550.125, 1600]})
+        self.assertEqual((result['steps'], result['last'], result['checks']['readback_difference']), (3, [1600.0, 1600.0], 0.0))
+        self.assertIn('Tunable source', result['identification'])
+        with self.assertRaisesRegex(ValueError, 'holds no number'):
+            calculate('pyvisa', 'sweep', {'values': [1800]})   # beyond the range of the simulated source
+
+
+@environment('slmsuite')
+class HologramCase(unittest.TestCase):
+    def test_weighting_makes_the_spots_equal_and_the_phase_reproduces_them(self):
+        result = calculate('slmsuite', 'spot_array', {'pixels': 256, 'rows': 3, 'columns': 4, 'levels': 0})
+        self.assertLess(result['checks']['transform_difference'], 1e-4)
+        self.assertLess(abs(result['checks']['power_error']), 1e-9)
+        self.assertGreater(result['uniformity'], result['stages']['start']['uniformity'])
+        self.assertGreater(result['uniformity'], 0.95)
+        self.assertGreater(result['efficiency'], 0.8)
+        again = calculate('slmsuite', 'spot_array', {'pixels': 256, 'rows': 3, 'columns': 4, 'levels': 0})
+        self.assertEqual(again['efficiency'], result['efficiency'])   # the seed fixes the starting phase
+        weighted = calculate('slmsuite', 'spot_array', {'pixels': 256, 'rows': 2, 'columns': 3, 'weights': [[1, 2, 4], [4, 2, 1]], 'pitch': 20})
+        self.assertGreater(weighted['stages']['method']['uniformity'], 0.95)
+        # Three spots in a line with unequal outer powers need light in further orders; the iteration stops short and says so.
+        line = calculate('slmsuite', 'spot_array', {'pixels': 256, 'rows': 1, 'columns': 3, 'weights': [[1, 2, 4]], 'pitch': 20})
+        self.assertLess(line['uniformity'], 0.9)
+        with self.assertRaisesRegex(ValueError, 'whole pixels'):
+            calculate('slmsuite', 'spot_array', {'rows': 4, 'pitch': 15})
+
+
+@environment('bluesky')
+class ScanCase(unittest.TestCase):
+    def test_a_scan_finds_the_peak_and_the_second_scan_is_centred_on_it(self):
+        result = calculate('bluesky', 'scan', {'centre': -0.7, 'width': 0.5, 'points': 41})
+        first, second = result['scans']
+        self.assertLess(abs(result['checks']['centre_difference']), 5 * second['centre_error'] + 1e-3)
+        self.assertAlmostEqual(sum(second['range']) / 2, first['centre'], places=9)
+        self.assertEqual(first['documents'], 41 + 3)   # start, descriptor, one event per position, stop
+
+
+class BraggGratingCase(unittest.TestCase):
+    def test_zero_visibility_has_no_reflected_band_or_delay(self):
+        import shutil
+        from optics_photonics import native, studies
+        executable = os.environ.get('OPTICS_TEST_OCTAVE') or shutil.which('octave-cli') or shutil.which('octave')
+        if not executable:
+            self.skipTest('Octave is not installed')
+        with workspace() as folder:
+            home = Path(folder) / 'home'
+            native.bind('octave', executable=executable, path=home)
+            for visibility in (0.0, 1.0):
+                reply = studies.submit('octave', action='bragg_grating', inputs={'visibility': visibility, 'sections': 20}, wait=25, path=home)
+                self.assertEqual(reply['state'], 'succeeded', reply)
+                result = reply['result']
+                self.assertLess(result['checks']['energy_error'], 1e-10)
+                self.assertLess(result['checks']['uniform_difference'], 1e-10)
+                self.assertLess(abs(result['checks']['peak_difference']), 1e-10)
+                json.dumps(result, allow_nan=False)
+                if visibility:
+                    self.assertGreater(result['peak_reflectance'], 0.5)
+                    self.assertGreater(result['bandwidth_nm'], 0)
+                    self.assertLess(abs(result['checks']['delay_difference']), 1e-3)
+                    self.assertTrue(math.isfinite(result['delay_slope_ps_per_nm']))
+                else:
+                    self.assertEqual(result['peak_reflectance'], 0.0)
+                    for name in ('peak_wavelength_nm', 'bandwidth_nm', 'delay_slope_ps_per_nm'):
+                        self.assertIsNone(result[name])
+                    self.assertIsNone(result['checks']['delay_difference'])
+                    delay = jobs.read_array(reply['run_id'], 'calculate/attempt-1/spectrum.npz', member='delay_ps', path=home)
+                    self.assertTrue(delay['values'] and all(value == 'nan' for value in delay['values']))
 
 
 @unittest.skipUnless(SCIENCE and installed('meep'), 'Meep and MPB come from conda-forge')

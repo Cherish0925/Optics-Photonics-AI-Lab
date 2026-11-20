@@ -13,6 +13,7 @@ PROGRAM = {
         'length_um': (20, 'waveguide length in micrometres'),
         'width_um': (0.5, 'waveguide width in micrometres'),
     },
+    'domains': ['pic'],
     'results': 'waveguide.gds and the ports of the component',
 }
 p = parameters(PROGRAM, INPUTS)

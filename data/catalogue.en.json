@@ -1062,6 +1062,41 @@
     "stage": "Published implementation"
   },
   {
+    "id": "labview",
+    "name": "NI LabVIEW",
+    "group": "paid",
+    "cats": [
+      "lab"
+    ],
+    "method": "Graphical programs for instrument control and data acquisition",
+    "summary": "Laboratory programs (VIs) that control instruments and acquire and process signals; many existing setups are written in it.",
+    "api": "Automation server on Windows (LabVIEW.Application: GetVIReference, then Call with the names and values of front-panel controls); VI Server.",
+    "license": "Commercial / academic subscription",
+    "compute": "Windows for the automation server; editions for macOS and Linux exist.",
+    "usage": "NI's long-established environment for instrument control.",
+    "limit": "A VI is called with its front-panel controls as parameters; the VI Server must be enabled in the LabVIEW options.",
+    "sources": [
+      {
+        "label": "Official documentation / website",
+        "url": "https://www.ni.com/docs/en-US/bundle/labview/page/using-activex-with-labview.html"
+      },
+      {
+        "label": "Scripting / programming reference",
+        "url": "https://www.ni.com/docs/en-IO/bundle/labview-api-ref/page/properties-and-methods/activex/application/getvireference.html"
+      }
+    ],
+    "route": "api",
+    "stage": "Published implementation",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    }
+  },
+  {
     "id": "photonforge",
     "name": "PhotonForge Community",
     "group": "limited",
@@ -3039,6 +3074,370 @@
       {
         "label": "License / usage terms",
         "url": "https://raw.githubusercontent.com/kklmn/xrt/HEAD/LICENSE.txt"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "pyvisa",
+    "name": "PyVISA",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "Instrument messages over GPIB, USB, serial port and network (VISA)",
+    "summary": "Control sources, power meters, spectrum analyzers, oscilloscopes and controllers with text commands and read their measurements.",
+    "api": "Python API over a vendor VISA library or the pure-Python backend PyVISA-py; PyVISA-sim simulates instruments from a description.",
+    "license": "MIT",
+    "compute": "The computer connected to the instruments.",
+    "usage": "The common Python interface to VISA instruments and the base of instrument-driver libraries.",
+    "limit": "Commands and ranges are those of each instrument's manual; PyVISA carries the messages and does not know what a command does.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/pyvisa/pyvisa"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/pyvisa/pyvisa/HEAD/LICENSE"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "pymeasure",
+    "name": "PyMeasure",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "Instrument drivers and measurement procedures",
+    "summary": "Drivers that expose the settings of many laboratory instruments as properties, and procedures that run a measurement and record its data.",
+    "api": "Python instrument classes over PyVISA; Procedure, Worker and Results run and log a measurement.",
+    "license": "MIT",
+    "compute": "The computer connected to the instruments.",
+    "usage": "Community library of instrument drivers used across physics laboratories.",
+    "limit": "Covers the instruments that have a driver; another instrument needs a driver class of its own or plain PyVISA.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/pymeasure/pymeasure"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/pymeasure/pymeasure/HEAD/LICENSE.txt"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "pylablib",
+    "name": "pylablib",
+    "group": "open",
+    "cats": [
+      "lab",
+      "imaging"
+    ],
+    "method": "Device control: cameras, stages, lasers and sensors",
+    "summary": "Acquire frames from scientific cameras and move stages, with device classes for Andor, Hamamatsu, PCO, Thorlabs, Newport, Attocube and other makers.",
+    "api": "Python device classes over the manufacturers' libraries, serial ports and VISA.",
+    "license": "GPL-3.0",
+    "compute": "The computer connected to the devices; cameras need the manufacturer's driver library.",
+    "usage": "Open device-control library used in optics and quantum laboratories.",
+    "limit": "Most cameras and several stages work only with the manufacturer's runtime installed; each device class lists the models it supports.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/AlexShkarin/pyLabLib"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/AlexShkarin/pyLabLib/HEAD/LICENSE"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "qcodes",
+    "name": "QCoDeS",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "Data acquisition framework: instruments, parameters and datasets",
+    "summary": "Describe instruments as parameters, run measurement loops and store the data with the settings of every instrument.",
+    "api": "Python API; instrument drivers over PyVISA; measurement context with SQLite datasets and export to xarray.",
+    "license": "MIT",
+    "compute": "The computer connected to the instruments.",
+    "usage": "Developed by quantum-device laboratories with Microsoft and used for automated experiments.",
+    "limit": "Its drivers centre on electronic and cryogenic instruments; an optical device often needs a driver written for it.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/microsoft/Qcodes"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/microsoft/Qcodes/HEAD/LICENSE"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "bluesky",
+    "name": "Bluesky / ophyd",
+    "group": "open",
+    "cats": [
+      "lab",
+      "xray"
+    ],
+    "method": "Experiment orchestration: plans, devices and documents",
+    "summary": "Run scans and adaptive experiments on beamline and laboratory devices; every reading is emitted as a structured document.",
+    "api": "Python: RunEngine and plans (bluesky); devices over EPICS and other control systems, and simulated devices (ophyd).",
+    "license": "BSD-3-Clause",
+    "compute": "A computer on the network of the control system; simulated devices run anywhere.",
+    "usage": "Developed at NSLS-II and used at synchrotron and neutron facilities.",
+    "limit": "Hardware is reached through a control system such as EPICS; without one only the simulated devices run.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/bluesky/bluesky"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/bluesky/bluesky/HEAD/LICENSE"
+      },
+      {
+        "label": "Maintainer repository",
+        "url": "https://github.com/bluesky/ophyd"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "micromanager",
+    "name": "Micro-Manager (pymmcore-plus)",
+    "group": "open",
+    "cats": [
+      "lab",
+      "imaging"
+    ],
+    "method": "Microscope control: cameras, stages, shutters and light sources",
+    "summary": "Control microscope hardware through the device adapters of Micro-Manager and run multidimensional acquisitions.",
+    "api": "pymmcore-plus: the Python API of MMCore with events and an acquisition engine; the device adapters come from a Micro-Manager installation (mmcore install).",
+    "license": "BSD-3-Clause (pymmcore-plus); MMCore is LGPL; device adapters carry their own licenses",
+    "compute": "The computer connected to the microscope.",
+    "usage": "Micro-Manager is the widely used open microscope-control software of the life sciences.",
+    "limit": "Hardware needs the device adapters and the manufacturers' drivers; the demo configuration provides a simulated camera and stage.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/pymmcore-plus/pymmcore-plus"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/pymmcore-plus/pymmcore-plus/HEAD/LICENSE"
+      },
+      {
+        "label": "Maintainer repository",
+        "url": "https://github.com/micro-manager/micro-manager"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "harvesters",
+    "name": "Harvester (GenICam)",
+    "group": "open",
+    "cats": [
+      "lab",
+      "imaging"
+    ],
+    "method": "Image acquisition from GenICam cameras (GigE Vision, USB3 Vision)",
+    "summary": "Acquire frames and set the features of machine-vision cameras through a GenTL producer.",
+    "api": "Python API over the GenICam reference implementation; the GenTL producer file (.cti) comes from the camera manufacturer.",
+    "license": "Apache-2.0",
+    "compute": "The computer connected to the cameras.",
+    "usage": "Image-acquisition library published within the GenICam project.",
+    "limit": "Needs a GenTL producer for the camera's transport layer; feature names follow the GenICam description of each camera.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/genicam/harvesters"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/genicam/harvesters/HEAD/LICENSE.txt"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "nidaqmx",
+    "name": "NI-DAQmx Python",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "Analog and digital data acquisition (NI-DAQmx)",
+    "summary": "Read photodiode and detector voltages, generate waveforms and triggers, and count pulses with NI data-acquisition devices.",
+    "api": "Python API of the NI-DAQmx driver: tasks, channels, timing and triggering.",
+    "license": "MIT; the NI-DAQmx driver is NI software",
+    "compute": "Windows or Linux with the NI-DAQmx driver and an NI device.",
+    "usage": "NI's own Python interface to its acquisition hardware.",
+    "limit": "Runs only with the NI-DAQmx driver installed; simulated devices are created in NI MAX on Windows.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/ni/nidaqmx-python"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/ni/nidaqmx-python/HEAD/LICENSE"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "seabreeze",
+    "name": "python-seabreeze",
+    "group": "open",
+    "cats": [
+      "lab"
+    ],
+    "method": "Spectrometer acquisition (Ocean Optics / Ocean Insight)",
+    "summary": "Read spectra and set integration time and triggering of Ocean Optics USB spectrometers.",
+    "api": "Python API with two backends: cseabreeze (the SeaBreeze C library) and pyseabreeze (pure Python over USB).",
+    "license": "MIT",
+    "compute": "The computer connected to the spectrometer.",
+    "usage": "Community library widely used for fiber-coupled spectrometers in optics laboratories.",
+    "limit": "Supports the listed Ocean Optics models; intensities are raw counts until corrected for dark signal, nonlinearity and instrument response.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/ap--/python-seabreeze"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/ap--/python-seabreeze/HEAD/LICENSE.md"
+      }
+    ],
+    "route": "api",
+    "mcp": {
+      "kind": "unverified",
+      "text": "Dedicated MCP not verified in this review"
+    },
+    "skill": {
+      "kind": "unverified",
+      "text": "Dedicated agent Skill not verified in this review"
+    },
+    "stage": "Published implementation"
+  },
+  {
+    "id": "slmsuite",
+    "name": "slmsuite",
+    "group": "open",
+    "cats": [
+      "lab",
+      "wave",
+      "imaging"
+    ],
+    "method": "Spatial light modulator holography: phase retrieval with camera feedback",
+    "summary": "Compute holograms for spot arrays and patterns, calibrate the wavefront and the mapping between camera and modulator, and drive modulators and cameras.",
+    "api": "Python API; Gerchberg-Saxton and weighted variants on CPU or GPU (CuPy); hardware classes for modulators and cameras, with simulated ones.",
+    "license": "MIT",
+    "compute": "CPU or GPU; hardware classes run on the computer connected to the devices.",
+    "usage": "Open library for programmable optics with spatial light modulators, with a documented set of examples.",
+    "limit": "Hardware classes need the manufacturers' SDKs; the simulated modulator and camera run the algorithms without hardware.",
+    "sources": [
+      {
+        "label": "API / project documentation",
+        "url": "https://github.com/holodyne/slmsuite"
+      },
+      {
+        "label": "License / usage terms",
+        "url": "https://raw.githubusercontent.com/holodyne/slmsuite/HEAD/LICENSE"
       }
     ],
     "route": "api",

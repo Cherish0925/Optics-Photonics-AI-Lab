@@ -30,6 +30,7 @@ PROGRAM = {
         'bands': (8, 'number of bands'),
         'resolution': (32, 'grid points per period'),
     },
+    'domains': ['periodic'],
     'results': 'bands.npz/.json with frequency over polarization, path position and band; kx and ky; complete gaps',
     'checks': 'gaps between consecutive bands with their gap-midgap ratio',
 }

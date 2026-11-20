@@ -7,7 +7,7 @@ An independent package for optical software, native research programs, backgroun
 The connector supports Python 3.10+ on Windows, macOS and Linux. Each solver uses its own supported Python version, operating system and license. Different tools may use different environments.
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/optics_photonics-0.9.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.10.0/optics_photonics-0.10.0-py3-none-any.whl"
 optics-photonics info tmm
 optics-photonics prepare tmm
 optics-photonics run tmm spectrum --inputs "@inputs.json"
@@ -174,4 +174,4 @@ MCP exposes `register_software` and `registered_software`; `software_details` re
 
 `optics-photonics connect portable --output DIR` creates an Agent Plugins package with root plugin.json, mcp.json and skills/.
 Portable packages use a bare `uv` command and plugin-relative paths, so moving or updating a package does not retain paths from its author’s computer. `connect codex --managed-python` and `connect claude --managed-python` generate similarly movable native packages. Local packages generated without that option retain the selected Python.
-The `read_guide` tool and the MCP resources `optics://guides/TOPIC` return both Skills and each of their references on demand.
+The `read_guide` tool and the MCP resources `optics://guides/TOPIC` return both Skills and each of their references on demand. A host that shows MCP prompts lists six starting points, each a complete instruction for one kind of work: `calculate`, `study`, `reproduce`, `connect`, `measure` and `continue`. Tool annotations state which tools only read and which run programs or replace settings.

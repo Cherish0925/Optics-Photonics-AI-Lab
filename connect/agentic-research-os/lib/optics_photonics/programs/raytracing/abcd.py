@@ -13,6 +13,7 @@ PROGRAM = {
         'elements': ([{'space_m': 0.1}, {'focal_length_m': 0.05}, {'space_m': 0.1}], 'elements in order: {space_m} or {focal_length_m}'),
         'ray': ([0.001, 0], 'input ray [height in m, angle in rad]'),
     },
+    'domains': ['ray'],
     'results': 'matrix [[A, B], [C, D]] with units, output ray, determinant',
     'checks': 'determinant: 1 for a system between equal indices',
 }

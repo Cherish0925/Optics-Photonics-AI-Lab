@@ -34,6 +34,7 @@ PROGRAM = {
         'arm_length_um': (100.0, 'length of the shorter interferometer arm'),
         'arm_difference_um': (50.0, 'length difference between the interferometer arms'),
     },
+    'domains': ['pic'],
     'results': 'transmission.npz/.json with the power at each port over wavelength and the analytic values; dips with extinction, width and loaded Q; free spectral range',
     'checks': 'analytic_difference: largest |T_sax - T_analytic|; fsr_error: relative difference from lambda^2 / (ng L)',
 }

@@ -14,9 +14,9 @@
 | OP-03 | NPY/NPZ 局部读取及其 PNG 图像、步骤之间传文件位置、按目录列出结果、TypeScript 文件传输 | 持久文件索引及更多科学数据格式 |
 | OP-04 / OP-08 | 数组的单位、坐标与约定；HCIPy → POPPY 光瞳到成像的数据交换；超表面单元 → 超透镜焦斑 | 更多科学量；电路路径中的版图和三维器件求解器 |
 | OP-12 | 已完成 episode 索引、重试与改变进程数后的续接、单独记录求解错误 | 共享数据集及异步学习器集成 |
-| OP-14 / OP-15 | 可移动的原生与便携包、自动选择 Python、按需读取指南、精简 Skills | 随宿主版本演进继续运行实际接入流程 |
-| OP-05 | 59 项软件的安装配方（pip 由 uv 安装；conda-forge 由 micromamba 安装，含 GNU Octave、Julia；Julia 软件包由 Pkg 安装），提交时先自动准备环境，一个解释器连接其中所有可用软件；目录中每个软件的通路（python、session、带语言的 executable、Windows 自动化、在线服务、仅界面内），在 PATH、安装目录、环境变量和 Windows 注册表中查找，MATLAB、Octave、Julia、Wolfram Language、Maple、Lua、Lumerical 脚本程序，以及调用本机可执行程序的 Python 程序 | 独立分发的接入包；卸载与升级；在有许可证的安装上运行 MATLAB、Wolfram、Maple、Lumerical 的桥接 |
-| OP-07 | 32 项软件的 48 个封装程序（Python，以及其他软件自身的语言 Julia、Lua），写明输入，并与解析极限或另一求解器对照，安装配方工作流在各平台运行它们（ADDA 的程序在绑定 adda 可执行程序后运行）；refractiveindex.info 折射率数据 | 其余带配方软件的程序（Tidy3D、ceviche、pyGDM2、rayoptics、xrt 等） |
+| OP-14 / OP-15 | 可移动的原生与便携包、自动选择 Python、按需读取指南、精简 Skills、MCP 提示与工具标注 | 随宿主版本演进继续运行实际接入流程 |
+| OP-05 | 69 项软件的安装配方（pip 由 uv 安装；conda-forge 由 micromamba 安装，含 GNU Octave、Julia；Julia 软件包由 Pkg 安装），提交时先自动准备环境，一个解释器连接其中所有可用软件；目录中每个软件的通路（python、session、带语言的 executable、Windows 自动化、在线服务、仅界面内），在 PATH、安装目录、环境变量和 Windows 注册表中查找，MATLAB、Octave、Julia、Wolfram Language、Maple、Lua、Lumerical 脚本程序，以及调用本机可执行程序的 Python 程序；实验仪器领域（PyVISA、PyMeasure、pylablib、QCoDeS、Bluesky、Micro-Manager、Harvester、NI-DAQmx、python-seabreeze、slmsuite、LabVIEW），仪器同其他软件一样由程序驱动 | 独立分发的接入包；卸载与升级；在有许可证的安装上运行 MATLAB、Wolfram、Maple、Lumerical 的桥接；在真实硬件上运行仪器程序 |
+| OP-07 | 39 项软件的 57 个封装程序（Python，以及其他软件自身的语言 Julia、Lua，以及供 Octave 和 MATLAB 运行的 MATLAB 语言），写明输入，并与解析极限或另一求解器对照，安装配方工作流在各平台运行它们（ADDA 的程序在绑定 adda 可执行程序后运行）；refractiveindex.info 折射率数据 | 其余带配方软件的程序（pyGDM2、rayoptics、xrt、Mitsuba 等） |
 | OP-11 | 参数扫描作为并行步骤运行，汇总成表，可追加更细的扫描，`resume_run` 保留已完成的参数点；在一个进程内优化输入（差分进化、Nelder–Mead），边算边保存历史和最优一次计算的文件 | 单个长程序内部的断点；代理模型与多目标搜索 |
 | OP-06 / OP-09 / OP-10 / OP-13 / OP-16 | COMSOL、Lumerical、OpticStudio、CST 的会话适配器；COMSOL、Lumerical、CST 可执行程序的批处理通路 | 在有许可证的工作站上完成商业软件研究、远端任务、目录状态 |
 

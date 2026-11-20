@@ -17,6 +17,7 @@ PROGRAM = {
         'intensity': (1, 'incident intensity'),
         'elements': ([{'type': 'polarizer', 'azimuth_deg': 45}], 'elements in order: type polarizer, quarter_waveplate or half_waveplate, with azimuth_deg'),
     },
+    'domains': ['wave'],
     'results': 'output intensity, Jones amplitudes [x, y] as [real, imag], and Stokes parameters S0..S3',
     'checks': 'malus: for a single polarizer, I0 cos^2 of the angle between polarization and polarizer',
 }

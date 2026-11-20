@@ -30,6 +30,7 @@ PROGRAM = {
         'points': (2048, 'time samples'),
         'saved_positions': (21, 'positions along the fiber at which the field is saved'),
     },
+    'domains': ['fiber'],
     'results': 'pulse.npz/.json with power over position and time, and spectrum over position and frequency; widths; characteristic lengths',
     'checks': 'energy_error for a lossless fiber; dispersive_width_error or soliton_shape_error when the analytic limit applies',
 }

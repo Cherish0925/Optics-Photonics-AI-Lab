@@ -31,6 +31,7 @@ PROGRAM = {
         'orders': (41, 'Fourier orders retained'),
         'grid': (512, 'samples of the permittivity over one period'),
     },
+    'domains': ['periodic'],
     'results': 'efficiency.npz/.json with reflected and transmitted efficiency per order over wavelength; totals',
     'checks': 'energy_error: largest |1 - R - T| when every medium is lossless',
 }

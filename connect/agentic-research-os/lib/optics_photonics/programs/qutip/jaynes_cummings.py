@@ -25,6 +25,7 @@ PROGRAM = {
         'n_max': (10, 'Fock space cutoff; must exceed photons + 1'),
         'times': ({'stop': 20, 'points': 401}, 'times from 0: {"stop": .., "points": ..} or a list'),
     },
+    'domains': ['quantum'],
     'results': 'dynamics.npz/.json with emitter population and mean photon number over time; dressed-state frequencies and widths',
     'checks': 'one_excitation_error: largest difference from the analytic one-excitation solution (when photons is 0)',
 }

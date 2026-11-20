@@ -23,6 +23,7 @@ PROGRAM = {
         'resolution': (200, 'grid points per micrometre'),
         'decay': (1e-9, 'run until the transmitted field has decayed by this factor'),
     },
+    'domains': ['em', 'film'],
     'results': 'spectrum.npz/.json with R, T and the transfer-matrix R_tmm, T_tmm over wavelength_um',
     'checks': 'energy_error: largest |1 - R - T|; tmm_difference: largest |R - R_tmm|',
 }

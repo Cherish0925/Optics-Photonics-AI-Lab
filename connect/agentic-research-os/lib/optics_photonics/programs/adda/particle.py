@@ -31,6 +31,7 @@ PROGRAM = {
         'medium_index': (1.0, 'index of the surrounding medium'),
         'dipoles_per_wavelength': (15, 'dipoles per wavelength inside the particle'),
     },
+    'domains': ['scatter'],
     'results': 'particle.npz/.json: S11 over the scattering angle from ADDA and, for a sphere, Mie theory; extinction, scattering and '
                'absorption efficiencies, the size parameter and the number of dipoles',
     'checks': 'mie_difference: relative difference of the extinction efficiency from Mie theory (sphere); s11_difference: relative '

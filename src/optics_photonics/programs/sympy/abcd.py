@@ -13,6 +13,7 @@ PROGRAM = {
         'distance_before': ('a', 'symbol name of the distance before the lens'),
         'distance_after': ('b', 'symbol name of the distance after the lens'),
     },
+    'domains': ['ray'],
     'results': 'matrix entries and determinant as SymPy expressions, and the imaging condition B = 0 solved for the distance after',
 }
 p = parameters(PROGRAM, INPUTS)

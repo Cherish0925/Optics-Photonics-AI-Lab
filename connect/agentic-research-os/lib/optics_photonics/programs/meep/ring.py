@@ -32,6 +32,7 @@ PROGRAM = {
         'run_after_source': (300, 'time after the pulse, in um/c, over which Harminv fits'),
         'max_error': (1e-3, 'largest accepted Harminv relative error'),
     },
+    'domains': ['pic', 'em'],
     'results': 'modes with frequency, wavelength_um, Q, imag_frequency (negative: decay) and error; fields.npz/.json with permittivity and final field',
     'checks': 'largest_error: the largest Harminv error among the reported modes',
 }

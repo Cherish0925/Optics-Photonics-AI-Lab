@@ -39,6 +39,7 @@ PROGRAM = {
         'step': (0.05, 'Adam step size in density units'),
         'seed': (0, 'seed of the random direction of the gradient check'),
     },
+    'domains': ['pic', 'em'],
     'results': 'bend.npz/.json: final density and permittivity of the design, permittivity and |Ez| of the binary device, transmission over '
                'the iterations; transmission at the start, at the end and of the binary design',
     'checks': 'gradient_difference: relative difference between the adjoint and a finite-difference directional derivative at the start',

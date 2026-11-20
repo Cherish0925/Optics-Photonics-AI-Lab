@@ -138,15 +138,21 @@ def software(tool, language='en', path=None):
 
 
 REPEATED = ('interface', 'sources', 'upstream', 'native_program', 'routes')
+# A brief reply shows these fields of a catalogue entry and leaves out of its connection record what the entry
+# already states and the sentences that are the same for every software.
+ENTRY = ('id', 'name', 'group', 'cats', 'method', 'summary', 'api', 'license', 'compute', 'usage', 'limit', 'sources')
+UNIFORM = ('execution', 'environment', 'session_adapter')
 
 
-def details(tool, language='en', path=None, program=None, source=True):
-    """One software entry with its connection and what it can run; each fact appears once.
+def details(tool, language='en', path=None, program=None, source=True, brief=False):
+    """One software entry with its connection, its routes and what it can run.
 
     With program, that packaged program's physics, inputs, results and checks. source=False omits its text;
     Python callers retain the earlier source-including default, while MCP requests source only when needed.
+    brief=True, which MCP also requests, states each fact once: the programs by name with the names of their
+    inputs, an upstream MCP server or Skill only where one was located, and no sentence common to all software.
     """
-    from . import operations, programs
+    from . import operations, programs, routes
     item = software(tool, language, path)
     if program is not None:
         spec = programs.details(tool, program)
@@ -161,8 +167,17 @@ def details(tool, language='en', path=None, program=None, source=True):
     if item.get('origin') != 'local':
         # connections.json repeats these catalogue fields so that the file can be read on its own.
         item = {**item, 'connection': {key: value for key, value in item['connection'].items() if key not in REPEATED}}
-    from . import routes
-    return {**item, 'routes': routes.routes(tool, path), 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
+    found = routes.routes(tool, path)
+    if not brief:
+        return {**item, 'routes': found, 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
+    if item.get('origin') != 'local':
+        located = {kind: item[kind] for kind in ('mcp', 'skill') if item[kind]['kind'] != 'unverified'}
+        item = {**{key: item[key] for key in ENTRY}, **({'upstream': located} if located else {}),
+                'connection': {key: value for key, value in item['connection'].items() if key not in UNIFORM}}
+    listed = programs.listing(tool)
+    hint = {'program_details': 'software_details(tool, program=NAME) gives the physics, input defaults and meanings, '
+                               'results and checks'} if listed else {}
+    return {**item, 'routes': found, 'execution': {'programs': listed, **hint, **operations.details(tool, brief=True)}}
 
 
 def registered(path=None):
