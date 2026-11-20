@@ -25,6 +25,7 @@ Each is an ordinary native program in `optics_photonics/programs/TOOL/`: Python,
 | `poppy/psf` | PSF on a detector with Zernike aberrations; Strehl | HCIPy |
 | `lightpipes/gaussian` | Gaussian beam propagation (Forvard or Fresnel); complex field | w(z) |
 | `diffractio/apertures` | Rayleigh-Sommerfeld diffraction of a slit, double slit or grating from near to far field | Fraunhofer expression |
+| `slmsuite/spot_array` | Phase hologram that splits a beam into an array of focal spots by Gerchberg-Saxton and its weighted variants: efficiency and uniformity, also with the phase levels of a modulator; phase and focal-plane intensity | separate Fourier transform of the phase; total power |
 | `prysm/mtf` | MTF along x and y with Zernike aberrations; PSF; Strehl | diffraction-limited MTF |
 | `scipy/slab_modes` | Guided modes of any layered slab, TE or TM, by finite differences | symmetric-slab dispersion relation |
 | `scipy/fiber_modes` | Step-index fiber: effective indices of every LP and exact vector (TE, TM, HE, EH) mode over wavelength; LP11 cutoff; group index, dispersion, β2, mode field diameter, effective area and γ of the fundamental mode, with material dispersion | Bessel roots to 13 digits; MPB for vector modes; closed-form confinement |

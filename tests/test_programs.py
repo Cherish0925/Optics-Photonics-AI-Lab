@@ -694,6 +694,26 @@ class InstrumentCase(unittest.TestCase):
             calculate('pyvisa', 'sweep', {'values': [1800]})   # beyond the range of the simulated source
 
 
+@environment('slmsuite')
+class HologramCase(unittest.TestCase):
+    def test_weighting_makes_the_spots_equal_and_the_phase_reproduces_them(self):
+        result = calculate('slmsuite', 'spot_array', {'pixels': 256, 'rows': 3, 'columns': 4, 'levels': 0})
+        self.assertLess(result['checks']['transform_difference'], 1e-4)
+        self.assertLess(abs(result['checks']['power_error']), 1e-9)
+        self.assertGreater(result['uniformity'], result['stages']['start']['uniformity'])
+        self.assertGreater(result['uniformity'], 0.95)
+        self.assertGreater(result['efficiency'], 0.8)
+        again = calculate('slmsuite', 'spot_array', {'pixels': 256, 'rows': 3, 'columns': 4, 'levels': 0})
+        self.assertEqual(again['efficiency'], result['efficiency'])   # the seed fixes the starting phase
+        weighted = calculate('slmsuite', 'spot_array', {'pixels': 256, 'rows': 2, 'columns': 3, 'weights': [[1, 2, 4], [4, 2, 1]], 'pitch': 20})
+        self.assertGreater(weighted['stages']['method']['uniformity'], 0.95)
+        # Three spots in a line with unequal outer powers need light in further orders; the iteration stops short and says so.
+        line = calculate('slmsuite', 'spot_array', {'pixels': 256, 'rows': 1, 'columns': 3, 'weights': [[1, 2, 4]], 'pitch': 20})
+        self.assertLess(line['uniformity'], 0.9)
+        with self.assertRaisesRegex(ValueError, 'whole pixels'):
+            calculate('slmsuite', 'spot_array', {'rows': 4, 'pitch': 15})
+
+
 @environment('bluesky')
 class ScanCase(unittest.TestCase):
     def test_a_scan_finds_the_peak_and_the_second_scan_is_centred_on_it(self):
