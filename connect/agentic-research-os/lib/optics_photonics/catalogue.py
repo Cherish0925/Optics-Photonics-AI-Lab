@@ -295,11 +295,11 @@ def search(query='', domain=None, license_group=None, offset=0, limit=20, langua
         missing = [] if count == len(terms) else [label for (label, _), weight in zip(terms, weights) if not weight]
         program = {'name': program, 'title': programs.catalog()[item['id']][program]['title']} if program else None
         matches.append({k: item[k] for k in ('id', 'name', 'group', 'cats', 'summary')} |
-                       {'routes': route_kinds(item['id']), 'programs': list(programs.catalog().get(item['id'], {})),
-                        'operations': list(programs.catalog().get(item['id'], {})),   # the name of programs in 0.7
-                        'install': 'conda' if connection.get('conda') else 'pip' if connection.get('pip') else 'julia' if connection.get('julia') else 'manual'} |
-                       ({'upstream_mcp': item['mcp']['kind']} if item['mcp']['kind'] != 'unverified' else {}) |
-                       ({'program': program} if program else {}) | ({'missing': missing} if missing else {}))
+                       {'connection': connection['kind'], 'routes': route_kinds(item['id']), 'programs': list(programs.catalog().get(item['id'], {})),
+                        'operations': list(programs.catalog().get(item['id'], {})),
+                        'install': 'conda' if connection.get('conda') else 'pip' if connection.get('pip') else 'julia' if connection.get('julia') else 'manual',
+                        'upstream_mcp': item['mcp']['kind']} | ({'program': program} if program else {}) |
+                       ({'missing': missing} if missing else {}))
     found = {'total': len(matches), 'items': matches[offset:offset + limit],
              'next_offset': offset + limit if offset + limit < len(matches) else None}
     if terms and not matches:

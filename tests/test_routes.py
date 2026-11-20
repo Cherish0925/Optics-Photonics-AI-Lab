@@ -6,6 +6,7 @@ OPTICS_TEST_LUA, OPTICS_TEST_S4 and OPTICS_TEST_ADDA; the other cases use the
 running Python as the installed executable.
 """
 import json
+import io
 import math
 import os
 from pathlib import Path
@@ -16,10 +17,11 @@ import sys
 import types
 import unittest
 from unittest.mock import patch
+from contextlib import redirect_stdout
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from optics_photonics import catalogue, environments, jobs, languages, native, routes, studies, worker  # noqa: E402
+from optics_photonics import catalogue, cli, environments, jobs, languages, native, routes, studies, worker  # noqa: E402
 from support import workspace  # noqa: E402
 
 KINDS = {'python', 'session', 'executable', 'automation', 'service', 'inside'}
@@ -133,7 +135,7 @@ class Bridges(unittest.TestCase):
         value = {'a': 1.5, 'b': [1, 2], 'c': 'x"$\\', 'd': None, 'e': True, 'f': [1, 'two']}
         self.assertEqual(languages.julia(value),
                          'Dict{String,Any}("a" => 1.5, "b" => [1, 2], "c" => "x\\"\\$\\\\", "d" => nothing, "e" => true, "f" => Any[1, "two"])')
-        self.assertEqual(languages.lua(value), '{["a"] = 1.5, ["b"] = {1, 2}, ["c"] = "x\\"$\\\\", ["d"] = nil, ["e"] = true, ["f"] = {1, "two"}}')
+        self.assertEqual(languages.lua(value), 'JSON.object{["a"] = 1.5, ["b"] = JSON.array{1, 2}, ["c"] = "x\\"$\\\\", ["d"] = JSON.null, ["e"] = true, ["f"] = JSON.array{1, "two"}}')
         self.assertEqual(languages.lsf('m', [[1, 2], [3, 4.5]]), 'm = [1, 2; 3, 4.5];')
         self.assertEqual(languages.lsf('flag', True), 'flag = 1;')
         for bad in ({'k': 1}, [[1], [1, 2]], 'a"b'):
@@ -195,6 +197,26 @@ class Bridges(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'without RESULT'):
                 languages.result(target)
 
+    def test_script_arrays_reject_ragged_rows_without_reshaping_the_values(self):
+        from optics_photonics import arrays
+        with workspace() as folder:
+            result = {'save': {'file': 'field', 'arrays': {'E': {'values': [[1, 2], [3], [4, 5, 6]]}}}}
+            with self.assertRaisesRegex(ValueError, 'E: array rows must have the same shape'):
+                languages.described(result, folder)
+            self.assertIn('save', result)
+            self.assertFalse((Path(folder) / 'field.npz').exists())
+            result['save']['arrays'] = {'empty': {'values': [[], []]}, 'scalar': {'values': 3}}
+            languages.described(result, folder)
+            self.assertEqual(arrays.read(Path(folder) / 'field.npz', member='empty')['shape'], [2, 0])
+            self.assertEqual(arrays.read(Path(folder) / 'field.npz', member='scalar')['values'], 3)
+
+    def test_lumerical_result_uses_the_same_return_contract_as_other_languages(self):
+        with workspace() as folder:
+            value = {'RESULT': {'transmission': 0.9}}
+            (Path(folder) / languages.RESULT_FILE).write_text(json.dumps(value))
+            self.assertEqual(languages.result(folder, 'lsf'), value['RESULT'])
+            self.assertEqual(languages.result(folder, 'lua'), value)
+
     def run_language(self, name, executable, script, inputs, env=None):
         with workspace() as folder:
             target = Path(folder)
@@ -251,6 +273,15 @@ class Bridges(unittest.TestCase):
                                    {'n': [1, 2.5], 'name': 'q"\\'})
         self.assertEqual(result, {'s': 3.5, 'name': 'q"\\', 'list': [1, 2.5], 'empty': []})
 
+    def test_lua_round_trip_preserves_nulls_empty_objects_and_sparse_results(self):
+        executable = found('OPTICS_TEST_LUA', 'lua', 'lua5.4', 'lua5.3')
+        if not executable:
+            self.skipTest('lua is not installed')
+        inputs = {'missing': None, 'samples': [1, None, 3], 'object': {}, 'list': [], 'text': '\0' + '123 μm'}
+        result = self.run_language('lua', executable,
+                                   'RESULT = {inputs = INPUTS, object = JSON.object{}, sparse = {[1] = 1, [3] = 3}}', inputs)
+        self.assertEqual(result, {'inputs': inputs, 'object': {}, 'sparse': [1, None, 3]})
+
 
 DRIVER = '''
 from pathlib import Path
@@ -262,6 +293,17 @@ RESULT = {'written': (OUTPUT_DIR / 'made.txt').read_text(), 'code': code, 'threa
 
 
 class Execution(unittest.TestCase):
+    def test_workflow_accepts_long_inline_scripts_and_adjacent_script_files(self):
+        with workspace() as folder:
+            file = Path(folder) / 'workflow.json'
+            long_script = 'RESULT = "' + 'a' * 400 + '"'
+            file.write_text(json.dumps([{'id': 'inline', 'tool': 's4', 'script': long_script},
+                                        {'id': 'file', 'tool': 's4', 'script': 'slab.lua'}]))
+            (Path(folder) / 'slab.lua').write_text('RESULT = 3')
+            with patch.object(jobs, 'submit', return_value={}) as submit, redirect_stdout(io.StringIO()):
+                cli.main(['submit-workflow', str(file)])
+            self.assertEqual([step['script'] for step in submit.call_args.args[0]], [long_script, 'RESULT = 3'])
+
     def test_a_python_program_drives_a_bound_executable(self):
         with workspace() as folder:
             home = Path(folder) / 'home'
@@ -273,7 +315,8 @@ class Execution(unittest.TestCase):
             files = jobs.files(reply['run_id'], path=home)['files']
             self.assertTrue(any(item['file'].endswith('made.log') for item in files))
             # A sweep of a driver program computes its points in one process each group.
-            reply = studies.submit('adda', source=DRIVER, sweep={'value': [1, 2, 3]}, path=home)
+            # The positional Python call keeps the sweep argument of earlier releases.
+            reply = studies.submit('adda', {}, '', DRIVER, {'value': [1, 2, 3]}, path=home)
             done = jobs.status(reply['run_id'], wait=25, path=home)
             self.assertEqual(done['state'], 'succeeded', done)
             table = studies.table(reply['run_id'], values=['written'], path=home)

@@ -182,7 +182,13 @@ class ToolListCase(unittest.TestCase):
         self.assertLessEqual(mcp.READ_ONLY | mcp.OPEN_WORLD, set(tools))
         self.assertTrue(tools['read_array']['annotations']['readOnlyHint'])
         self.assertFalse(tools['submit_calculation']['annotations']['readOnlyHint'])
-        self.assertEqual([name for name, item in tools.items() if item['annotations']['destructiveHint']], ['cancel_run'])
+        for name in ('submit_calculation', 'submit_workflow', 'sample_episodes', 'resume_run', 'run_status'):
+            self.assertFalse(tools[name]['annotations']['readOnlyHint'], name)
+            self.assertTrue(tools[name]['annotations']['destructiveHint'], name)
+            self.assertTrue(tools[name]['annotations']['openWorldHint'], name)
+        for name in ('cancel_run', 'compute_resources', 'register_software', 'bind_environment', 'bind_native_software', 'sweep_results'):
+            self.assertTrue(tools[name]['annotations']['destructiveHint'], name)
+        self.assertFalse(tools['download_result']['annotations']['destructiveHint'])  # exclusive creation, no overwrite
         for item in tools.values():
             self.assertNotIn('\n', item['description'])
             self.assertNotIn('  ', item['description'])

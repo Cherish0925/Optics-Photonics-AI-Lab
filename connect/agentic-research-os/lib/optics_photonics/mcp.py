@@ -68,9 +68,8 @@ TOOLS = [
         Find optical software and packaged programs by physical problem, method or name, in English or Chinese; synonyms and
         abbreviations of one concept match (PSF, point spread function, 点扩散函数). Best matches first. An item names the
         packaged program that fits as program, ready for submit_calculation(tool, action); its routes (how the environment
-        reaches the software); install (pip, conda or julia when a recipe installs it, manual otherwise); upstream_mcp when
-        its makers or community publish an MCP server; and in missing the query terms it lacks. domain keeps the software
-        of a domain and the software with a packaged program of it.''',
+        reaches the software); install (pip, conda or julia when a recipe installs it, manual otherwise); and in missing the
+        query terms it lacks. domain keeps the software of a domain and the software with a packaged program of it.''',
          {'query': STRING, 'domain': {'enum': DOMAINS}, 'license_group': {'enum': ['open', 'paid', 'limited']},
           'offset': COUNT, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100},
           'language': {'enum': ['zh', 'en']}}),
@@ -216,18 +215,21 @@ TOOLS = [
 ]
 
 
-# Tools that change nothing let a host skip its confirmation; cancel_run alone ends work in progress.
+# Hints describe possible effects, not permission to execute. run_status can restart a queued worker;
+# submissions and resumes run user programs, while bindings and resource settings replace configuration.
 READ_ONLY = {'read_guide', 'software_search', 'software_details', 'materials', 'registered_software', 'environments',
-             'discover_native_software', 'run_status', 'result_files', 'read_result', 'read_array', 'list_runs'}
-OPEN_WORLD = {'materials', 'prepare_environment', 'submit_calculation', 'submit_workflow', 'sample_episodes'}
+             'discover_native_software', 'result_files', 'read_result', 'read_array', 'list_runs'}
+EXECUTING = {'prepare_environment', 'submit_calculation', 'submit_workflow', 'sample_episodes', 'resume_run', 'run_status'}
+SETTINGS = {'compute_resources', 'bind_environment', 'bind_native_software', 'register_software'}
+DESTRUCTIVE = EXECUTING | SETTINGS | {'cancel_run', 'sweep_results'}
+OPEN_WORLD = EXECUTING | {'materials'}
 
 
 def listed():
     """The tools as tools/list sends them."""
     return [{'name': name, 'description': description, 'inputSchema': spec,
-             'annotations': {'readOnlyHint': name in READ_ONLY, 'destructiveHint': name == 'cancel_run',
-                             'idempotentHint': name in READ_ONLY or name in ('cancel_run', 'compute_resources', 'bind_environment',
-                                                                           'bind_native_software', 'register_software'),
+             'annotations': {'readOnlyHint': name in READ_ONLY, 'destructiveHint': name in DESTRUCTIVE,
+                             'idempotentHint': name in READ_ONLY or name in SETTINGS or name == 'cancel_run',
                              'openWorldHint': name in OPEN_WORLD}}
             for name, description, spec in TOOLS]
 
@@ -317,7 +319,7 @@ def invoke(name, args, cancellation=None):
     if name == 'materials':
         from . import materials
         return materials.lookup(**args)
-    if name == 'software_details': return environments.details(**args)
+    if name == 'software_details': return environments.details(**{'source': False, 'brief': True, **args})
     if name == 'register_software': return environments.register(**args)
     if name == 'registered_software': return {'software': environments.registered()}
     if name == 'environments': return environments.page(**args)

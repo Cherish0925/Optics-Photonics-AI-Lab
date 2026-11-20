@@ -102,36 +102,53 @@ class DeclarationCase(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Unknown input thickness; this program takes: n, thickness_nm'):
             programs.parameters(spec, {'thickness': [80]})
 
-    def test_details_list_programs_and_return_one_with_its_physics_or_source(self):
-        whole = environments.details('scipy')
-        listed = whole['execution']
+    def test_details_list_programs_and_return_one_source(self):
+        listed = environments.details('scipy')['execution']
         self.assertEqual([item['name'] for item in listed['programs']], ['coupler', 'fiber_modes', 'fit_gaussian', 'laser_rates', 'metalens', 'nlse', 'resonator', 'second_harmonic', 'slab_modes', 'tissue_layers'])
         nlse = next(item for item in listed['programs'] if item['name'] == 'nlse')
-        # The listing stays short: titles and input names; one program brings defaults, physics and source.
-        self.assertEqual(nlse['inputs'], list(programs.catalog()['scipy']['nlse']['inputs']))
-        self.assertEqual(set(nlse), {'name', 'title', 'inputs'})
-        self.assertIn('program=NAME', listed['program_details'])
-        self.assertLess(len(json.dumps(whole)), 5000)
-        for absent in ('mcp', 'skill', 'stage', 'route'):
-            self.assertNotIn(absent, whole)   # facts that are the same for every software, or say that nothing was found
-        self.assertNotIn('environment', whole['connection'])
-        self.assertEqual(environments.details('lumerical')['upstream']['mcp']['kind'], 'official')
-        one = environments.details('scipy', program='nlse')
+        self.assertEqual(nlse['inputs']['length_km']['default'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0])
+        self.assertNotIn('about', nlse)   # the listing stays short; one program brings its physics and source
+        from optics_photonics import mcp
+        one = mcp.invoke('software_details', {'tool': 'scipy', 'program': 'nlse'})
         self.assertNotIn('source', one)   # the text comes on request
         self.assertIn('source=true', one['run'])
-        self.assertTrue(environments.details('scipy', program='nlse', source=True)['source'].startswith('"""Pulse propagation'))
+        source = environments.details('scipy', program='nlse')['source']  # retain the Python interface
+        self.assertTrue(source.startswith('"""Pulse propagation'))
+        self.assertEqual(mcp.invoke('software_details', {'tool': 'scipy', 'program': 'nlse', 'source': True})['source'], source)
+        self.assertNotIn('source', environments.details('scipy', program='nlse', source=False))
         self.assertEqual((one['about'], one['inputs']['length_km']['default']),
-                         (programs.catalog()['scipy']['nlse']['about'], programs.catalog()['scipy']['nlse']['inputs']['length_km'][0]))
+                         (programs.catalog()['scipy']['nlse']['about'], nlse['inputs']['length_km']['default']))
         with self.assertRaisesRegex(ValueError, 'Unknown program scipy/fft; programs of scipy: coupler, fiber_modes, fit_gaussian'):
             environments.details('scipy', program='fft')
         native = environments.details('lumerical')['execution']
         self.assertEqual(native['programs'], [])
-        self.assertNotIn('program_details', native)
         self.assertIn('solve_project', native['session_adapter']['actions'])
-        found = catalogue.search('tmm')['items'][0]
-        self.assertEqual((found['programs'], found['routes'], found['install']), (['spectrum'], ['python'], 'pip'))
-        self.assertNotIn('upstream_mcp', found)
-        self.assertEqual(catalogue.search('lumerical')['items'][0]['upstream_mcp'], 'official')
+        self.assertEqual(catalogue.search('tmm')['items'][0]['programs'], ['spectrum'])
+
+    def test_mcp_details_state_each_fact_once(self):
+        from optics_photonics import mcp
+        brief = mcp.invoke('software_details', {'tool': 'scipy'})
+        full = environments.details('scipy')   # the Python interface keeps every field of earlier releases
+        self.assertLess(len(json.dumps(brief)), 5000)
+        self.assertGreater(len(json.dumps(full)), 2 * len(json.dumps(brief)))
+        nlse = next(item for item in brief['execution']['programs'] if item['name'] == 'nlse')
+        # Titles and input names; program=NAME brings defaults, meanings, physics and checks.
+        self.assertEqual(nlse, {'name': 'nlse', 'title': programs.catalog()['scipy']['nlse']['title'],
+                                'inputs': list(programs.catalog()['scipy']['nlse']['inputs'])})
+        self.assertIn('program=NAME', brief['execution']['program_details'])
+        for absent in ('mcp', 'skill', 'stage', 'route'):
+            self.assertNotIn(absent, brief)   # the same for every software, or saying that nothing was found
+            self.assertIn(absent, full)
+        self.assertNotIn('environment', brief['connection'])
+        self.assertEqual(brief['routes'], full['routes'])
+        # What 0.7 clients read stays in its place, with the program's title as the description.
+        operation = brief['execution']['operations'][0]
+        self.assertEqual((operation['name'], operation['inputs_example']), ('fit_gaussian', programs.inputs(programs.catalog()['scipy']['fit_gaussian'])))
+        self.assertTrue(brief['execution']['native_program'])
+        solver = mcp.invoke('software_details', {'tool': 'lumerical'})
+        self.assertEqual(solver['upstream']['mcp']['kind'], 'official')
+        self.assertIn('solve_project', solver['execution']['session_adapter']['actions'])
+        self.assertNotIn('program_details', solver['execution'])
 
     def test_submission_checks_the_program_and_its_inputs(self):
         with workspace() as home:

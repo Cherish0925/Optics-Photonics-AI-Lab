@@ -160,6 +160,7 @@ def validate(steps, known=()):
         if set(s)-{'id','tool','action','source','script','inputs','after','bindings','timeout','requirements','optimize','point','points'}:
             raise ValueError('A step accepts id, tool, action, source, script, inputs, after, bindings, requirements, timeout, optimize, point and points')
         if not isinstance(s.get('script', ''), str): raise ValueError('script is the text of a program in the software\'s own language')
+        if s.get('source') and s.get('script'): raise ValueError('Give a Python source or a script in the software\'s language, not both')
         if not isinstance(s.get('tool'), str): raise ValueError('Each step needs a software tool ID')
         if not isinstance(s.get('inputs', {}), dict): raise ValueError('inputs must be an object')
         if not isinstance(s.get('after', []), list): raise ValueError('after must be a list of step IDs')
@@ -189,7 +190,7 @@ def validate(steps, known=()):
         if s.get('optimize') is not None:
             from . import optimization
             optimization.checked(s['optimize'])
-        if s.get('action') and not s.get('source'):
+        if s.get('action') and not s.get('source') and not s.get('script'):
             packaged(s)
         graph[s['id']] = s['after']
         result.append(s)

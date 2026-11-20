@@ -52,7 +52,7 @@ excited = real(expect(dagger(lower) * lower, states))
 photons = real(expect(dagger(a) * a, states))
 
 rabi = sqrt(delta^2 + 4 * g^2 * (n + 1))
-exact = [1 - 4 * g^2 * (n + 1) / rabi^2 * sin(rabi * t / 2)^2 for t in times]
+exact = rabi == 0 ? ones(length(times)) : [1 - 4 * g^2 * (n + 1) / rabi^2 * sin(rabi * t / 2)^2 for t in times]
 arrays = Dict{String,Any}(
     "time_us" => Dict("values" => times, "quantity" => "time", "unit" => "us"),
     "excited" => Dict("values" => excited, "quantity" => "population of the excited atomic state", "unit" => "1", "axes" => ["time_us"]),

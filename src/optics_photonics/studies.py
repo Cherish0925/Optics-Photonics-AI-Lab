@@ -142,8 +142,8 @@ def grouped(points, size):
     return steps
 
 
-def submit(tool, inputs=None, action='', source='', script='', sweep=None, pairing='product', optimize=None, chunk=None, name='Optical research',
-           request_id=None, run_id=None, timeout=None, requirements=None, wait=0, path=None, cancel=None):
+def submit(tool, inputs=None, action='', source='', sweep=None, pairing='product', optimize=None, chunk=None, name='Optical research',
+           request_id=None, run_id=None, timeout=None, requirements=None, wait=0, path=None, cancel=None, *, script=''):
     """One calculation, or a sweep of it, as steps of a new run or appended to run_id.
 
     wait (up to 25 seconds) returns the run's state after that time or on completion,

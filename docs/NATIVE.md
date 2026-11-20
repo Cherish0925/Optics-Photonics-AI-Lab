@@ -1,6 +1,6 @@
 # Installed software
 
-The environment reaches each catalogued software by one or more routes. A route says what the environment holds of the software and how a calculation uses it:
+The catalogue describes one or more routes for each tool. A route states the connection required and how a calculation uses it:
 
 | Route | What the environment holds | How a calculation uses it |
 | --- | --- | --- |
@@ -44,7 +44,7 @@ optics-photonics submit octave --script mode_solver.m --sweep '{"wavelength_um":
 | lua | S4 | table | `OUTPUT_DIR` | `S4 optics_main.lua` |
 | lsf | Lumerical design environments | one variable per input | `OUTPUT_DIR` | `fdtd-solutions -nw -trust-script -exit -run optics_main.lsf` |
 
-Software outside the catalogue, registered with `register-software` as a command, takes its language at binding (`bind-native TOOL --executable PATH --language julia`). The worker saves the program as `optics_program` with the language's suffix and writes a short `optics_main` in the same language: it defines INPUTS and the output folder, runs the program and writes RESULT as JSON. The executable runs in the output folder of the calculation, or of each point of a sweep, and its output goes to `script.log`. RESULT holds numbers, strings, lists and objects; complex fields and large arrays belong in files beside it. Sweeps, optimization and workflow bindings work as for Python programs. The bridges of Octave, Julia and Lua (and the MATLAB code path, through Octave) have run here against the real interpreters, and S4 built from source ran a Lua program whose slab transmission matches the Airy formula to 4e-16; those of MATLAB, Wolfram Language, Maple and Lumerical script follow the vendors' documented commands and functions and need the licensed software to run.
+Software outside the catalogue, registered with `register-software` as a command, takes its language at binding (`bind-native TOOL --executable PATH --language julia`). The worker saves the program as `optics_program` with the language's suffix and writes a short `optics_main` in the same language: it defines INPUTS and the output folder, runs the program and writes RESULT as JSON. The executable runs in the output folder of the calculation, or of each point of a sweep, and its output goes to `script.log`. RESULT holds numbers, strings, lists and objects; complex fields and large arrays belong in files beside it. Sweeps, optimization and workflow bindings work as for Python programs. The language bridges share the existing job scheduler and resource limits; their runtime checks are in `tests/test_routes.py`. Lua retains null as `JSON.null`; use `JSON.array{}` or `JSON.object{}` when an empty result must keep its type. For Lumerical, the connector unwraps the `RESULT` workspace variable saved by `jsonsave`, retaining its native matrix notation.
 
 ## Python programs that drive an executable
 

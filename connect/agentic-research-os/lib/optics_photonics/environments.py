@@ -137,16 +137,20 @@ def software(tool, language='en', path=None):
     return catalogue_software(tool, language)
 
 
-# What a software_details reply shows of a catalogue entry, and what it leaves out of its connection record:
-# fields the entry already states, and sentences that are the same for every software.
+REPEATED = ('interface', 'sources', 'upstream', 'native_program', 'routes')
+# A brief reply shows these fields of a catalogue entry and leaves out of its connection record what the entry
+# already states and the sentences that are the same for every software.
 ENTRY = ('id', 'name', 'group', 'cats', 'method', 'summary', 'api', 'license', 'compute', 'usage', 'limit', 'sources')
-OMITTED = ('interface', 'sources', 'upstream', 'native_program', 'routes', 'execution', 'environment', 'session_adapter')
+UNIFORM = ('execution', 'environment', 'session_adapter')
 
 
-def details(tool, language='en', path=None, program=None, source=False):
-    """One software entry with its connection, its routes and what it runs: programs by name with their input names.
+def details(tool, language='en', path=None, program=None, source=True, brief=False):
+    """One software entry with its connection, its routes and what it can run.
 
-    With program, that packaged program's physics, inputs, results and checks; with source also its text, to adapt.
+    With program, that packaged program's physics, inputs, results and checks. source=False omits its text;
+    Python callers retain the earlier source-including default, while MCP requests source only when needed.
+    brief=True, which MCP also requests, states each fact once: the programs by name with the names of their
+    inputs, an upstream MCP server or Skill only where one was located, and no sentence common to all software.
     """
     from . import operations, programs, routes
     item = software(tool, language, path)
@@ -156,26 +160,24 @@ def details(tool, language='en', path=None, program=None, source=False):
         reply = {'tool': tool, 'program': program, **{k: v for k, v in spec.items() if k != 'name'}}
         if source:
             return {**reply, 'source': programs.source(tool, program),
-                    'adapt': f'Submit an edited copy as {how}.' + ('' if spec.get('language') else
+                    'adapt': f'Submit an edited copy as {how}.' + (' Supply the declared inputs; scripts do not receive packaged defaults.' if spec.get('language') else
                                                                   ' parameters(PROGRAM, INPUTS) checks the inputs it declares.')}
         return {**reply, 'run': f'submit_calculation(tool, action="{program}", inputs={{...}}) replaces defaults; '
                                 f'source=true here returns the program text, to adapt and submit as {how}.'}
-    if item.get('origin') == 'local':
-        reply = dict(item)
-    else:
-        reply = {key: item[key] for key in ENTRY}
-        # An MCP server or Skill of the software's own makers or community, where one was located.
-        upstream = {kind: item[kind] for kind in ('mcp', 'skill') if item[kind]['kind'] != 'unverified'}
-        if upstream:
-            reply['upstream'] = upstream
-        reply['connection'] = {key: value for key, value in item['connection'].items() if key not in OMITTED}
-    reply['routes'] = routes.routes(tool, path)
+    if item.get('origin') != 'local':
+        # connections.json repeats these catalogue fields so that the file can be read on its own.
+        item = {**item, 'connection': {key: value for key, value in item['connection'].items() if key not in REPEATED}}
+    found = routes.routes(tool, path)
+    if not brief:
+        return {**item, 'routes': found, 'execution': {'programs': programs.details(tool), **operations.details(tool)}}
+    if item.get('origin') != 'local':
+        located = {kind: item[kind] for kind in ('mcp', 'skill') if item[kind]['kind'] != 'unverified'}
+        item = {**{key: item[key] for key in ENTRY}, **({'upstream': located} if located else {}),
+                'connection': {key: value for key, value in item['connection'].items() if key not in UNIFORM}}
     listed = programs.listing(tool)
-    # execution keeps its 0.7 fields (operations, native_program, session_adapter) beside the programs.
-    reply['execution'] = {'programs': listed, **({'program_details': 'software_details(tool, program=NAME) gives the physics, input defaults '
-                                                                     'and meanings, results and checks'} if listed else {}),
-                          **operations.details(tool)}
-    return reply
+    hint = {'program_details': 'software_details(tool, program=NAME) gives the physics, input defaults and meanings, '
+                               'results and checks'} if listed else {}
+    return {**item, 'routes': found, 'execution': {'programs': listed, **hint, **operations.details(tool, brief=True)}}
 
 
 def registered(path=None):

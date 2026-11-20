@@ -4,7 +4,7 @@
 
 # Optics-Photonics AI Lab
 
-A research environment for optics and photonics that agents and researchers install as a Python package, MCP server, plugin or Skills. It selects software from a catalogue of 110 tools for modelling, simulation, computation and laboratory instruments, reaches each by the routes it offers (Python modules, owned sessions, its own executable and language, Windows automation servers, services), runs complete native research programs in their own environments, keeps long calculations running after the agent disconnects, and returns scientific files that can be read in parts. Its physical framework is **Field + Matter + Interaction**.
+A research environment for optics and photonics, built on **Field + Matter + Interaction**. Researchers and agents can discover software in a 110-tool catalogue that reaches from simulation and computation to laboratory instruments, connect local solvers, run programs in the software's own environment, and retrieve scientific data without keeping a client connected. It is available as a Python package, MCP server, plugin or Skills.
 
 | Read | Explore the data | Build on it |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ The [English](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-
 
 | Host | Install |
 | --- | --- |
-| Agentic Research OS | Download the [Research OS package](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.8.0/Optics-Photonics-0.8.0-ResearchOS.zip), extract it and install the directory containing `plugin.json`; it carries native executors for six system/architecture combinations, MCP, the catalogue and both Skills, and uses the host's Python. Or **Extensions → Plugins → Add from link** with `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`. |
+| Agentic Research OS | Download the [Research OS package](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/Optics-Photonics-0.9.0-ResearchOS.zip), extract it and install the directory containing `plugin.json`; it carries native executors for six system/architecture combinations, MCP, the catalogue and both Skills, and uses the host's Python. Or **Extensions → Plugins → Add from link** with `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`. |
 | Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`, then `codex plugin add optics-photonics@optics-photonics` |
 | Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`, then `claude plugin install optics-photonics@optics-photonics` |
 | Qiushi | Editions built on Research OS use the package above; other editions use `optics-photonics connect qiushi` for MCP or command access. |
@@ -26,7 +26,7 @@ The [English](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-
 | Any MCP host, Python, shell | Install the wheel below and register `optics-photonics mcp` as a stdio server. |
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.8.0/optics_photonics-0.8.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/optics_photonics-0.9.0-py3-none-any.whl"
 optics-photonics prepare tmm
 optics-photonics connect agentic-research-os --output optics-plugin
 ```
@@ -45,17 +45,16 @@ The search names the tool `tmm` and its packaged program `spectrum`. The submiss
 
 ## How a calculation runs
 
-1. **Choose software.** `software_search` finds software and packaged programs by physical problem, in English or Chinese, with the synonyms and abbreviations of optical concepts ([vocabulary](data/vocabulary.json)). `software_details` gives the method, interfaces, routes, installation and programs of an entry; `register_software` adds a tool outside the catalogue.
-2. **Connect it.** 69 tools install from recipes into environments of their own, at the first submission or ahead of time with `prepare_environment`; `bind_environment` reuses an existing interpreter. Installed software is found by `discover_native_software` (PATH, the usual installation folders, variables such as `JCMROOT`, the Windows registry) and connected by `bind_native_software`, by one of the routes below ([installed software](docs/NATIVE.md)).
+1. **Choose software.** `software_search` finds software and packaged programs by physical problem, in English or Chinese, with synonyms and abbreviations of optical concepts ([vocabulary](data/vocabulary.json)); `software_details` returns the physical method, interfaces, installation source and packaged programs of each catalogue entry. `register_software` adds a tool outside the catalogue.
+2. **Connect its environment.** 69 tools have installation recipes for pip, conda-forge or Julia. `prepare_environment` installs them; submissions prepare missing environments automatically. `bind_environment` reuses an interpreter or command. `discover_native_software` and `bind_native_software` connect installed SDKs, executables and Windows automation servers. Service clients and software that requires its own interface are described separately in the [connection routes](docs/NATIVE.md).
 3. **Use measured material data.** `materials` returns n and k of 3576 refractiveindex.info pages (CC0) with references, and with `dispersion` the group index, group velocity dispersion and D; common names such as SiO2, Si, Au, N-BK7 and BBO work offline, other pages download once.
-4. **Run a packaged program or write one.** The 56 packaged programs below declare their inputs and report checks against a conservation law, an analytic limit or a second solver; each runs as it is or is adapted from its source ([programs](skills/optical-computation/references/programs.md)). A program of one's own receives `INPUTS` and `OUTPUT_DIR`, uses the software's full native API and sets `RESULT`: Python `source`, a `script` in the language of installed software, or Python that drives an installed executable with `RUN`.
-5. **Study parameters and chain steps.** `submit_calculation` returns a run ID at once, and with `wait` the result of a calculation that finishes within it. `sweep` computes every combination of input values in parallel and `sweep_results` tabulates them with the best point; `optimize` searches inputs within bounds ([parameter studies](skills/optical-computation/references/studies.md)). `submit_workflow` chains steps that receive values and files from earlier ones. `data.save` writes arrays with their units, axes and conventions, so the next program and `read_array` know what the numbers mean ([data](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)).
-6. **Continue and read results.** `run_status` waits up to 25 s per call while other requests are answered. Runs survive disconnection and are found again with `list_runs`; `resume_run` reruns unfinished steps and keeps completed ones. `result_files`, `read_result` and `read_array` return file listings, byte ranges and parts of NPY/NPZ arrays; with `image`, `read_array` draws the selection as lines or a map with coordinates, units and color bar.
-7. **Collect episodes.** `sample_episodes` runs Gymnasium-style environments in parallel solver workers and stores seeds, actions, observations and rewards for learning; an interrupted or extended collection continues without repeating completed episodes ([episodes](docs/LEARNING.md)).
+4. **Run a program.** Choose from [56 programs across 39 software libraries](skills/optical-computation/references/programs.md), inspect its declared inputs and physics, or write a program using the full native API. Python `source` and native-language `script` programs receive inputs and an output folder and return `RESULT`. `submit_calculation` supports parallel sweeps and bounded optimization; `submit_workflow` connects dependent or parallel steps. [Parameter studies](skills/optical-computation/references/studies.md) and [described arrays](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs) explain how inputs, units, coordinates and files pass between programs.
+5. **Continue and read results.** `run_status` waits up to 25 s per call; other requests on the same connection are answered meanwhile. Runs survive disconnection and are found again with `list_runs`. `result_files`, `read_result` and `read_array` return file listings, byte ranges and parts of NPY/NPZ arrays; `read_array` with `image` returns the selection drawn as a PNG, lines or a map with its coordinates, units and color bar. `resume_run` reruns unfinished steps and keeps completed ones.
+6. **Collect episodes.** `sample_episodes` runs Gymnasium-style environments in parallel solver workers and stores seeds, actions, observations and rewards for learning; an interrupted or extended collection continues without repeating completed episodes ([episodes](docs/LEARNING.md)).
 
 | Route | Software | What runs |
 | --- | --- | --- |
-| python | 77 entries: a module from a recipe (pip through uv, conda-forge, Julia's package manager) or inside an installation (JCMsuite, Photon Design) | Python `source` |
+| python | 77 entries: a module from a recipe or inside an installation (JCMsuite, Photon Design) | Python `source` |
 | session | COMSOL, Lumerical, OpticStudio, CST | Python with a session the job owns |
 | executable | MATLAB, GNU Octave, Julia, Mathematica, Maple, QuantumOptics.jl, Luna.jl, S4, COMSOL, Lumerical, CST, ADDA, MCX, MMC, pbrt | `script` in the software's language; Python that drives it with `RUN` |
 | automation | FRED, CODE V, LightTools, OptiLayer, LabVIEW (Windows) | Python holding the server as `APP` |
@@ -77,7 +76,7 @@ The search names the tool `tmm` and its packaged program `spectrum`. The submiss
 | Tissue, X-rays, photovoltaics, data | `scipy/tissue_layers` · `srw/undulator` · `solcore/detailed_balance` · `scipy/fit_gaussian` |
 | Laboratory instruments and holograms | `pyvisa/sweep` · `bluesky/scan` · `slmsuite/spot_array` |
 
-The same operations are available as `optics-photonics` commands, a Python API and a TypeScript client; an MCP host also receives six prompts (calculate, study, reproduce, connect, measure, continue) and the guides as resources. Every packaged program has run against its reference: those of Meep and MPB in their conda-forge environment, those in Octave, Julia and Lua in the real software. Three parts await licensed software or hardware: the commercial session adapters (run against SDK doubles), the MATLAB, Wolfram Language, Maple and Lumerical script bridges (written to the vendors' documented commands) and the instrument programs (run on simulated devices).
+The same operations are available through the command line, Python and TypeScript; an MCP host also receives six prompts (calculate, study, reproduce, connect, measure, continue) and the guides as resources. A catalogue route describes an interface; local bindings determine what can run on a particular host. Software licenses, platform support and service access remain those of the selected software. [Release notes](docs/RELEASE.md) record the validation performed for each release.
 
 ## Execution
 
@@ -91,7 +90,7 @@ A Rust executor owns solver processes, cancellation and deadlines. Python connec
 
 ## Catalogue
 
-- **30 commercial**, **77 open-source** and **3 free-with-restrictions** tools in 15 domains, from geometrical optics to laboratory instruments. Free clients, paid solvers, academic licenses and external PDKs are distinguished.
+- **30 commercial**, **77 open-source** and **3 free / restricted** entries in 15 domains, from geometrical optics to laboratory instruments. Free clients, paid solvers, academic licenses and external PDKs are distinguished.
 - Each entry records physical methods, use cases, programming interfaces, compute environment, license, application basis, limitations and primary sources. Reviewed **2026-10-20**.
 - API, CLI and macros are listed separately from **official / community / unverified** MCP servers and agent Skills. A documentation MCP is not treated as a solver interface.
 - Stable `id` values are shared by both languages. Agents start at [`llms.txt`](llms.txt) and read [`llms-full.txt`](llms-full.txt) or the JSON.

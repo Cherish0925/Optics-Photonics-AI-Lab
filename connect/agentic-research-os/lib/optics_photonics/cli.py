@@ -107,8 +107,11 @@ def main(argv=None):
             for step in steps if isinstance(steps,list) else []:
                 # A step may name its program file beside the workflow file instead of carrying the source text.
                 if isinstance(step,dict) and 'program' in step: step['source']=(file.parent/step.pop('program')).read_text(encoding='utf-8')
-                if isinstance(step,dict) and isinstance(step.get('script'),str) and (file.parent/step['script']).is_file() and '\n' not in step['script']:
-                    step['script']=(file.parent/step['script']).read_text(encoding='utf-8')
+                if isinstance(step,dict) and isinstance(step.get('script'),str) and '\n' not in step['script']:
+                    script_file=file.parent/step['script']
+                    try: is_file=script_file.is_file()
+                    except (OSError, ValueError): is_file=False  # inline scripts need not be valid filesystem paths
+                    if is_file: step['script']=script_file.read_text(encoding='utf-8')
             result=jobs.submit(steps,**a)
         elif command == 'array':
             target, kind = a.pop('image'), a.pop('kind')

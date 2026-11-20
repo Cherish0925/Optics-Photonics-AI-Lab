@@ -7,7 +7,7 @@ Optics & Photonics 独立提供光学软件连接、原生研究程序、后台�
 连接程序使用 Python 3.10+，支持 Windows、macOS、Linux。科学软件使用各自支持的 Python、系统与许可；可以为每个软件连接不同的环境。
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.8.0/optics_photonics-0.8.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.9.0/optics_photonics-0.9.0-py3-none-any.whl"
 optics-photonics search "thin film" --license-group open
 optics-photonics info tmm
 optics-photonics prepare tmm
@@ -171,4 +171,4 @@ environments.bind('lab-wave-model', python=sys.executable, threads=2, concurrenc
 随后用该 ID 提交完整研究程序、并行工作流或 episode 采样。C/C++、Java、Julia 等可执行程序使用 `kind='command'` 登记并绑定命令数组，沿用请求文件、输出目录和 JSON 结果接口。程序应将输出写入该任务的 OUTPUT_DIR，避免并行计算共享临时文件。登记不代替软件本身的安装与许可。
 
 `optics-photonics connect portable --output DIR` creates an Agent Plugins package with root plugin.json, mcp.json and skills/.
-`read_guide` 工具和 MCP 资源 `optics://guides/TOPIC` 按需返回两个 Skills 及其每一份参考文件。支持 MCP 提示的宿主会列出六个起点，每个都是一类工作的完整指令：`calculate`、`study`、`reproduce`、`connect`、`measure`、`continue`。工具标注区分了只读工具，宿主可以不经询问直接运行它们。
+`read_guide` 工具和 MCP 资源 `optics://guides/TOPIC` 按需返回两个 Skills 及其每一份参考文件。支持 MCP 提示的宿主会列出六个起点，每个都是一类工作的完整指令：`calculate`、`study`、`reproduce`、`connect`、`measure`、`continue`。工具标注说明哪些工具只读取，哪些会运行程序或替换设置。
