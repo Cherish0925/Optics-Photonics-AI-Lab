@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "optics-execd"
-version = "0.11.0"
+version = "0.11.1"
 dependencies = [
  "libc",
  "serde_json",

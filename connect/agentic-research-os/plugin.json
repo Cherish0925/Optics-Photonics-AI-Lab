@@ -1,6 +1,6 @@
 {
   "name": "optics-photonics",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Select optical software and research programs for lens design, wave optics, electromagnetics and photonic devices, with corresponding research and experimental methods.",
   "skills": [
     "skills/optical-computation",
