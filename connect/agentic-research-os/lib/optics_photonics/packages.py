@@ -62,6 +62,10 @@ def package(destination, host='mcp', python=None, *, managed=False):
             'mcpServers':{'optics':managed_server('portable')}})
         instructions = 'Install this directory in a host supporting Agent Plugins 1.0.0. Skills and mcp.json are discovered at the package root. Install uv (https://docs.astral.sh/uv/getting-started/installation/) on the execution host; it selects Python 3.10+ and downloads an interpreter only if needed. The package can be moved between machines. For an offline host with a selected Python, generate a native host or MCP package instead.'
     elif host == 'agentic-research-os':
+        descriptor['environment'] = json.loads((resources()/'data'/'environment.json').read_text(encoding='utf-8'))
+        descriptor['display_name'] = 'Optics-Photonics-AI-Lab'
+        descriptor['homepage'] = 'https://github.com/EnvFoundry/Optics-Photonics-AI-Lab'
+        descriptor['description'] = descriptor['environment']['presentation']['en']['summary']
         descriptor['mcpServers'] = {'optics':{'transport':'stdio','command':'${RESEARCH_PYTHON}',
             'args':['-B','${PACKAGE_ROOT}/server.py','mcp'], 'protocol_version':'2025-11-25'}}
         write(target/'plugin.json',descriptor)

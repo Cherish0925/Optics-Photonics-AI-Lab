@@ -12,12 +12,12 @@
       },
       "versions": [
         {
-          "version": "0.11.0",
-          "publishTimestamp": 1795183593,
+          "version": "0.11.1",
+          "publishTimestamp": 1795619677,
           "source": {
             "type": "git",
             "url": "https://github.com/Cherish0925/Optics-Photonics-AI-Lab",
-            "commit": "bb25f37f9b0dd9923eb0cc5c7b690e6b27837e07",
+            "commit": "a413f49f883571ac43ecfb57351eb855c287f942",
             "path": "connect/deepseek"
           }
         }

@@ -14,11 +14,13 @@
 
 [中文](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/index.zh.html)和[英文](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/index.html) HTML 是独立文件，下载后可离线打开。[完整软件目录](https://cherish0925.github.io/Optics-Photonics-AI-Lab/catalogue.zh.html)提供并排比较和 CSV/JSON 导出。
 
+宿主包附带[仓库维护的中英文说明与资源位置](data/environment.json)。宿主将 `package_path` 对应到实际安装目录；安装状态、软件位置和运行中的任务继续由各自原有的管理服务负责。刷新这些说明不会安装科研软件。
+
 ## 安装
 
 | 宿主 | 安装方式 |
 | --- | --- |
-| Agentic Research OS | 下载 [Research OS 插件包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.0/Optics-Photonics-0.11.0-ResearchOS.zip)，解压后安装包含 `plugin.json` 的目录；包内有六种系统与架构的原生执行程序、MCP、软件目录和两个 Skills，使用宿主自带的 Python。也可以在 **Extensions → Plugins → Add from link** 填入 `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`。 |
+| Agentic Research OS | 下载 [Research OS 插件包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.1/Optics-Photonics-0.11.1-ResearchOS.zip)，解压后安装包含 `plugin.json` 的目录；包内有六种系统与架构的原生执行程序、MCP、软件目录和两个 Skills，使用宿主自带的 Python。也可以在 **Extensions → Plugins → Add from link** 填入 `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`。 |
 | Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再 `codex plugin add optics-photonics@optics-photonics` |
 | Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再 `claude plugin install optics-photonics@optics-photonics` |
 | Qiushi | 基于 Research OS 的版本使用上面的插件包；其他版本用 `optics-photonics connect qiushi` 生成 MCP 或命令入口。 |
@@ -26,7 +28,7 @@
 | 其他 MCP 宿主、Python、命令行 | 安装下面的 wheel，把 `optics-photonics mcp` 注册为 stdio 服务。 |
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.0/optics_photonics-0.11.0-py3-none-any.whl"
+python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.1/optics_photonics-0.11.1-py3-none-any.whl"
 optics-photonics prepare tmm
 optics-photonics connect agentic-research-os --output optics-plugin
 ```
