@@ -23,6 +23,15 @@
   },
   "resources": [
     {
+      "kind": "getting-started",
+      "package_path": "skills/optical-research/SKILL.md",
+      "title": "Choose an optical research task",
+      "titles": {
+        "en": "Choose an optical research task",
+        "zh-CN": "选择光学研究任务"
+      }
+    },
+    {
       "kind": "catalogue",
       "package_path": "lib/optics_photonics/resources/data",
       "title": "Software catalogue and recipes",
