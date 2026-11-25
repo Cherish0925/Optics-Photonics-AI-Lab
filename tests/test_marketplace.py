@@ -14,6 +14,17 @@ from optics_photonics.packages import package, managed_server
 
 
 class MarketplaceTests(unittest.TestCase):
+    def test_research_package_declares_resources_that_survive_relocation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary) / 'plugin'
+            package(target, 'agentic-research-os')
+            moved = Path(temporary) / 'moved optics'
+            target.rename(moved)
+            value = json.loads((moved / 'plugin.json').read_text())['environment']
+            self.assertEqual(value, json.loads((ROOT / 'data/environment.json').read_text()))
+            for resource in value['resources']:
+                self.assertTrue((moved / resource['package_path']).exists(), resource)
+
     def test_published_interfaces_share_the_package_version(self):
         from optics_photonics import __version__
         for filename in ('.claude-plugin/plugin.json', '.codex-plugin/plugin.json',
