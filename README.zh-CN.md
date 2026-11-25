@@ -14,6 +14,8 @@
 
 [中文](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/index.zh.html)和[英文](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/index.html) HTML 是独立文件，下载后可离线打开。[完整软件目录](https://cherish0925.github.io/Optics-Photonics-AI-Lab/catalogue.zh.html)提供并排比较和 CSV/JSON 导出。
 
+宿主包附带[仓库维护的中英文说明与资源位置](data/environment.json)。宿主将 `package_path` 对应到实际安装目录；安装状态、软件位置和运行中的任务继续由各自原有的管理服务负责。刷新这些说明不会安装科研软件。
+
 ## 安装
 
 | 宿主 | 安装方式 |

@@ -14,6 +14,8 @@ A research environment for optics and photonics, built on **Field + Matter + Int
 
 The [English](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/index.html) and [Chinese](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/index.zh.html) HTML pages are self-contained and open offline. The [full catalogue page](https://cherish0925.github.io/Optics-Photonics-AI-Lab/catalogue.html) adds comparison and CSV/JSON export.
 
+Host packages include [publisher-maintained descriptions and resource locations](data/environment.json) in English and Chinese. The host resolves each `package_path` against the actual installed package; installation state, software locations and running tasks remain with their existing managers. Refreshing these descriptions does not install research software.
+
 ## Install
 
 | Host | Install |
