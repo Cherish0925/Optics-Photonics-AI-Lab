@@ -20,8 +20,8 @@ class MarketplaceTests(unittest.TestCase):
             package(target, 'agentic-research-os')
             moved = Path(temporary) / 'moved optics'
             target.rename(moved)
-            value = json.loads((moved / 'plugin.json').read_text())['environment']
-            self.assertEqual(value, json.loads((ROOT / 'data/environment.json').read_text()))
+            value = json.loads((moved / 'plugin.json').read_text(encoding='utf-8'))['environment']
+            self.assertEqual(value, json.loads((ROOT / 'data/environment.json').read_text(encoding='utf-8')))
             for resource in value['resources']:
                 self.assertTrue((moved / resource['package_path']).exists(), resource)
 
@@ -31,8 +31,8 @@ class MarketplaceTests(unittest.TestCase):
                          'connect/agentic-research-os/plugin.json', 'connect/deepseek/package.json',
                          'clients/typescript/package.json'):
             with self.subTest(file=filename):
-                self.assertEqual(json.loads((ROOT / filename).read_text())['version'], __version__)
-        lock = json.loads((ROOT / 'clients/typescript/package-lock.json').read_text())
+                self.assertEqual(json.loads((ROOT / filename).read_text(encoding='utf-8'))['version'], __version__)
+        lock = json.loads((ROOT / 'clients/typescript/package-lock.json').read_text(encoding='utf-8'))
         self.assertEqual(lock['version'], __version__)
         self.assertEqual(lock['packages']['']['version'], __version__)
 
@@ -59,12 +59,12 @@ class MarketplaceTests(unittest.TestCase):
             research = root / 'Research OS plugin'
             shutil.copytree(ROOT / 'connect/agentic-research-os', research)
             for folder in ('.agents/plugins', '.claude-plugin'):
-                market = json.loads((native / folder / 'marketplace.json').read_text())
+                market = json.loads((native / folder / 'marketplace.json').read_text(encoding='utf-8'))
                 self.assertEqual(market['plugins'][0]['name'], 'optics-photonics')
             specs = [
-                (native, json.loads((native / 'mcp.codex.json').read_text())['mcpServers']['optics']),
-                (native, json.loads((native / '.mcp.json').read_text())['mcpServers']['optics']),
-                (research, json.loads((research / 'plugin.json').read_text())['mcpServers']['optics']),
+                (native, json.loads((native / 'mcp.codex.json').read_text(encoding='utf-8'))['mcpServers']['optics']),
+                (native, json.loads((native / '.mcp.json').read_text(encoding='utf-8'))['mcpServers']['optics']),
+                (research, json.loads((research / 'plugin.json').read_text(encoding='utf-8'))['mcpServers']['optics']),
             ]
             for package, spec in specs:
                 with self.subTest(command=spec):
@@ -86,7 +86,7 @@ class MarketplaceTests(unittest.TestCase):
 
     def test_native_manifests_use_their_host_path_rules(self):
         for filename, host in [('mcp.codex.json','codex'),('.mcp.json','claude')]:
-            self.assertEqual(json.loads((ROOT/filename).read_text())['mcpServers']['optics'], managed_server(host))
+            self.assertEqual(json.loads((ROOT/filename).read_text(encoding='utf-8'))['mcpServers']['optics'], managed_server(host))
 
     def test_generated_native_plugins_move_without_regeneration(self):
         with tempfile.TemporaryDirectory(prefix='Optics relocation ') as temporary:
@@ -95,7 +95,7 @@ class MarketplaceTests(unittest.TestCase):
                 original, moved = root/host, root/(host+' installed')
                 package(original, host)
                 original.rename(moved)
-                spec = json.loads((moved/'.mcp.json').read_text())['mcpServers']['optics']
+                spec = json.loads((moved/'.mcp.json').read_text(encoding='utf-8'))['mcpServers']['optics']
                 arguments = [x.replace('${CLAUDE_PLUGIN_ROOT}',str(moved)) for x in spec['args']]
                 # Start from another workspace, just as a real host does.
                 cwd = moved/spec['cwd'] if 'cwd' in spec else root
@@ -114,7 +114,7 @@ class MarketplaceTests(unittest.TestCase):
                 package(original, host, managed=True)
                 original.rename(moved)
                 manifest = '.mcp.json' if host in ('codex','claude') else 'mcp.json'
-                spec = json.loads((moved/manifest).read_text())['mcpServers']['optics']
+                spec = json.loads((moved/manifest).read_text(encoding='utf-8'))['mcpServers']['optics']
                 self.assertEqual(spec['command'], 'uv')
                 self.assertNotIn(str(original), json.dumps(spec))
                 args = [x.replace('${PLUGIN_ROOT}',str(moved)).replace('${CLAUDE_PLUGIN_ROOT}',str(moved)) for x in spec['args']]
@@ -123,7 +123,7 @@ class MarketplaceTests(unittest.TestCase):
                 env = {**os.environ,'OPTICS_HOME':str(home),'UV_PYTHON_DOWNLOADS':'never'}
                 result = subprocess.run([spec['command'],*args],cwd=cwd,env=env,capture_output=True,text=True,timeout=30,check=True)
                 self.assertIn('xrt', [row['id'] for row in json.loads(result.stdout)['items']])
-            self.assertEqual((home/'notes.txt').read_text(),'Retain this research')
+            self.assertEqual((home/'notes.txt').read_text(encoding='utf-8'),'Retain this research')
 
 
 if __name__ == '__main__':
