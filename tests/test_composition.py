@@ -104,7 +104,7 @@ class CompositionTests(unittest.TestCase):
                 prepared = result['structuredContent']
                 self.assertEqual(prepared['pending'][0]['component'], 'opticstudio')
                 command = prepared['ready'][0]['command']
-                self.assertTrue(Path(command[0]).is_relative_to(Path(tmp) / 'software'))
+                self.assertTrue(Path(command[0]).is_relative_to((Path(tmp) / 'software').resolve()))
                 actual = subprocess.check_output([*command, '-c', 'from optics_fixture import square; print(square(6))'], text=True)
                 self.assertEqual(actual.strip(), '36')
                 self.assertEqual(composition.prepare(['fixture-wheel', 'opticstudio'], request_id='local-wheel')['run_id'], task)
