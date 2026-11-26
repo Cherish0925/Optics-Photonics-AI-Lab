@@ -85,14 +85,10 @@ class DeclarationCase(unittest.TestCase):
         every = {tool + '/' + name for domain in DOMAINS for tool, names in catalogue.domain_programs(domain).items() for name in names}
         self.assertEqual(every, {tool + '/' + name for tool, items in programs.catalog().items() for name in items})
 
-    def test_both_readmes_list_every_program(self):
-        import re
-        files = {spec['file'].parent.name + '/' + name for items in programs.catalog().values() for name, spec in items.items()}
+    def test_both_readmes_link_the_shared_program_reference(self):
         for name in ('README.md', 'README.zh-CN.md'):
             text = (Path(__file__).resolve().parents[1] / name).read_text(encoding='utf-8')
-            rows = [line for line in text.splitlines() if line.startswith('| ') and ' · `' in line]
-            self.assertEqual(set(re.findall(r'`([\w-]+/\w+)`', '\n'.join(rows))), files, name)
-            self.assertIn(f'{len(files)} ', text)
+            self.assertIn('skills/optical-computation/references/programs.md', text)
 
     def test_inputs_replace_defaults_and_unknown_names_list_the_accepted_ones(self):
         spec = programs.catalog()['tmm']['spectrum']

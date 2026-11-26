@@ -24,6 +24,10 @@ class MarketplaceTests(unittest.TestCase):
             self.assertEqual(value, json.loads((ROOT / 'data/environment.json').read_text(encoding='utf-8')))
             for resource in value['resources']:
                 self.assertTrue((moved / resource['package_path']).exists(), resource)
+            catalogue = json.loads((moved / 'lib/optics_photonics/resources/data/environment-catalogue.json').read_text(encoding='utf-8'))
+            for module in catalogue['modules']:
+                for resource in module['resources']:
+                    self.assertTrue((moved / resource).is_file(), (module['id'], resource))
 
     def test_published_interfaces_share_the_package_version(self):
         from optics_photonics import __version__
@@ -73,6 +77,7 @@ class MarketplaceTests(unittest.TestCase):
                             .replace('${PACKAGE_ROOT}', str(package)) for arg in spec['args']]
                     command = sys.executable if spec['command'] == '${RESEARCH_PYTHON}' else spec['command']
                     env = {key: value for key, value in os.environ.items() if key != 'PYTHONPATH'}
+                    env.update({key: value.replace('${WORKSPACE_ROOT}', str(root)) for key, value in spec.get('env', {}).items()})
                     env['OPTICS_HOME'] = str(root / 'state')
                     cwd = package / spec['cwd'] if 'cwd' in spec else root
                     process = subprocess.run([command, *args], cwd=cwd, env=env,

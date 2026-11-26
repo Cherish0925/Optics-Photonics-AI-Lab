@@ -1,7 +1,7 @@
 {
   "name": "optics-photonics",
-  "version": "0.11.2",
-  "description": "Select optical software and research programs for lens design, wave optics, electromagnetics and photonic devices, with corresponding research and experimental methods.",
+  "version": "0.11.3",
+  "description": "Choose open-source optical research modules, prepare their software on a computing host, and use the corresponding methods, programs and workflows.",
   "skills": [
     "skills/optical-computation",
     "skills/optical-research"
@@ -10,43 +10,43 @@
     "presentation": {
       "en": {
         "label": "Optics & photonics",
-        "summary": "Select optical software and research programs for lens design, wave optics, electromagnetics and photonic devices, with corresponding research and experimental methods.",
+        "summary": "Choose open-source optical research modules, prepare their software on a computing host, and use the corresponding methods, programs and workflows.",
         "capabilities": [
-          "Software & solvers",
-          "Research programs",
-          "Optical resources",
-          "Experimental methods"
+          "Research modules",
+          "Open-source solvers",
+          "Methods and programs",
+          "Optional software connections"
         ]
       },
       "zh-CN": {
         "label": "光学与光子学",
-        "summary": "选择光学软件与研究程序，开展镜头设计、波动光学、电磁与光子器件计算，并读取对应的研究和实验方法。",
+        "summary": "按研究任务选择开源光学模块，在计算主机准备所需软件，使用对应的方法、程序与工作流。",
         "capabilities": [
-          "软件与求解器",
-          "研究程序",
-          "光学资料",
-          "实验方法"
+          "研究模块",
+          "开源求解器",
+          "方法与程序",
+          "可选软件接入"
         ]
       }
     },
     "resources": [
       {
         "kind": "getting-started",
-        "package_path": "skills/optical-research/SKILL.md",
-        "title": "Choose an optical research task",
+        "package_path": "skills/optical-computation/references/start.md",
+        "title": "Start an optical task",
         "titles": {
-          "en": "Choose an optical research task",
-          "zh-CN": "选择光学研究任务"
+          "en": "Start an optical task",
+          "zh-CN": "开始光学研究任务"
         },
-        "repository_path": "skills/optical-research/SKILL.md"
+        "repository_path": "skills/optical-computation/references/start.md"
       },
       {
         "kind": "catalogue",
         "package_path": "lib/optics_photonics/resources/data/environment-catalogue.json",
-        "title": "Software catalogue and recipes",
+        "title": "Open-source research modules",
         "titles": {
-          "en": "Software catalogue and recipes",
-          "zh-CN": "软件目录与安装配方"
+          "en": "Open-source research modules",
+          "zh-CN": "开源研究模块"
         },
         "repository_path": "data/environment-catalogue.json"
       },
@@ -62,13 +62,13 @@
       },
       {
         "kind": "skills",
-        "package_path": "skills/optical-research",
-        "title": "Domain resources and methods",
+        "package_path": "skills/optical-research/SKILL.md",
+        "title": "Choose a physical model",
         "titles": {
-          "en": "Domain resources and methods",
-          "zh-CN": "领域资料与研究方法"
+          "en": "Choose a physical model",
+          "zh-CN": "选择物理模型"
         },
-        "repository_path": "skills/optical-research"
+        "repository_path": "skills/optical-research/SKILL.md"
       },
       {
         "kind": "skills",
@@ -89,6 +89,66 @@
           "zh-CN": "MCP 与插件配置"
         },
         "repository_path": "connect/agentic-research-os/plugin.json"
+      },
+      {
+        "kind": "knowledge",
+        "package_path": "skills/optical-research/references",
+        "repository_path": "skills/optical-research/references",
+        "title": "Domain methods and physical assumptions",
+        "titles": {
+          "en": "Domain methods and physical assumptions",
+          "zh-CN": "领域方法与物理假设"
+        }
+      },
+      {
+        "kind": "workflows",
+        "package_path": "skills/optical-computation/references/studies.md",
+        "repository_path": "skills/optical-computation/references/studies.md",
+        "title": "Sweeps and optimization",
+        "titles": {
+          "en": "Sweeps and optimization",
+          "zh-CN": "参数扫描与优化"
+        }
+      },
+      {
+        "kind": "workflows",
+        "package_path": "skills/optical-computation/references/continuation.md",
+        "repository_path": "skills/optical-computation/references/continuation.md",
+        "title": "Continue a calculation",
+        "titles": {
+          "en": "Continue a calculation",
+          "zh-CN": "计算续算"
+        }
+      },
+      {
+        "kind": "prompts",
+        "package_path": "lib/optics_photonics/resources/data/prompts.json",
+        "repository_path": "data/prompts.json",
+        "title": "Task prompts",
+        "titles": {
+          "en": "Task prompts",
+          "zh-CN": "任务提示词"
+        }
+      },
+      {
+        "kind": "connectors",
+        "package_path": "skills/optical-computation/references/native-software.md",
+        "repository_path": "skills/optical-computation/references/native-software.md",
+        "title": "Optional external software connections",
+        "titles": {
+          "en": "Optional external software connections",
+          "zh-CN": "可选的外部软件接入"
+        }
+      },
+      {
+        "kind": "knowledge",
+        "package_path": "lib/optics_photonics/resources/data/catalogue.en.json",
+        "repository_path": "data/catalogue.en.json",
+        "title": "Full software reference, including commercial applications",
+        "titles": {
+          "en": "Full software reference, including commercial applications",
+          "zh-CN": "完整软件参考，含商业软件说明"
+        }
       }
     ],
     "preparation": {
@@ -110,7 +170,10 @@
         "${PACKAGE_ROOT}/server.py",
         "mcp"
       ],
-      "protocol_version": "2025-11-25"
+      "protocol_version": "2025-11-25",
+      "env": {
+        "OPTICS_SOFTWARE_HOME": "${WORKSPACE_ROOT}/System/software/optics-photonics"
+      }
     }
   }
 }

@@ -1,0 +1,49 @@
+[
+  {
+    "name": "calculate",
+    "description": "Compute an optical quantity with the packaged program or the software that fits.",
+    "arguments": {
+      "problem": "what to compute, with the known values and their units"
+    },
+    "text": "Compute this in the optics research environment: {problem}\n\n        Find the software and the packaged program with software_search and read the program's inputs, physics and checks\n        with software_details(tool, program=NAME). Submit it with submit_calculation and wait; when no packaged program\n        fits, adapt the closest one or write a complete program for the software's own API. Read the main curve or map with read_array(image=\"auto\"). Use a reference or refinement when it resolves\n        a numerical uncertainty. Report the model assumptions, relevant inputs and units, result and run ID."
+  },
+  {
+    "name": "study",
+    "description": "Vary parameters of a calculation: a sweep, its table and refinement, or an optimization.",
+    "arguments": {
+      "problem": "the calculation and the quantity of interest",
+      "parameters": "the parameters to vary, with ranges and units"
+    },
+    "text": "Study how the result depends on the parameters. Calculation: {problem}. Parameters: {parameters}\n\n        Use submit_calculation with sweep for a map over the ranges\n        (sweep_results tabulates it and names the best point) or with optimize for the best value within bounds;\n        read_guide studies explains both. Refine around what the first sweep shows instead of a finer grid everywhere.\n        Report the table or optimum with units, relevant numerical accuracy and run IDs."
+  },
+  {
+    "name": "reproduce",
+    "description": "Reproduce a published result and compare the numbers.",
+    "arguments": {
+      "source": "the paper, figure, table or textbook result to reproduce"
+    },
+    "text": "Reproduce this published result in the optics research environment: {source}\n\n        State the physical model, geometry, materials and every parameter the source gives, and which ones had to be\n        assumed. Choose the software with software_search (read_guide optical-research helps to choose the model).\n        Preserve the source's material model; use materials for missing optical constants and name that assumption.\n        Compare with the published values in the same units and conventions. Where discretization affects the result,\n        refine it enough to distinguish numerical error from a physical difference. Report agreement and differences."
+  },
+  {
+    "name": "connect",
+    "description": "Connect scientific software installed on this computer and confirm that it runs.",
+    "arguments": {
+      "software": "the software to connect, by name"
+    },
+    "text": "Connect this installed software to the optics research environment: {software}\n\n        Find its ID and routes with software_search and software_details. For an existing Python environment, use\n        bind_environment; for an installed executable or SDK, use discover_native_software then bind_native_software.\n        environment_plan states what can be installed on this host; prepare_environment uses a supported recipe. Use the selected installation and available\n        license or device capacities; ask only for information that discovery and the project do not supply.\n        Run a short calculation through the chosen route, then report the version and connection.\n        read_guide native-software describes the routes."
+  },
+  {
+    "name": "measure",
+    "description": "Drive a laboratory instrument and record a measurement.",
+    "arguments": {
+      "task": "the instrument, what to set and what to read, with ranges and units"
+    },
+    "text": "Carry out this measurement with the optics research environment: {task}\n\n        Start with read_guide lab. Find the instrument library with software_search (domain lab) and use that library's\n        discovery method; pyvisa/sweep with resource \"?\" applies to VISA instruments. Reuse the experiment's controller\n        and device ownership. Execute within the equipment, actions and ranges already authorized; ask for missing\n        settings or a proposed change outside that scope. Use the existing named resource pools when several tools\n        share a device. Save settings, times and raw readings as they arrive. Apply the agreed finish or restoration\n        procedure, retain partial data after failures, and report the measurement with units and its saved files."
+  },
+  {
+    "name": "continue",
+    "description": "Pick up earlier work: what ran, what it found, what is unfinished.",
+    "arguments": {},
+    "text": "Continue the earlier work in the optics research environment.\n\n        list_runs shows the runs with their states; run_status gives the steps of one, result_files and read_result its\n        outputs. Summarize what each recent run computed and found, which runs are still running or stopped (resume_run\n        reruns unfinished steps and keeps finished ones), and propose the next step. Do not rerun what has finished."
+  }
+]

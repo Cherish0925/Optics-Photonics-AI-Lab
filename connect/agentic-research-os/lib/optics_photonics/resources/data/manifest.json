@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "reviewed": "2026-10-20",
-  "project": "https://github.com/Cherish0925/Optics-Photonics-AI-Lab",
+  "project": "https://github.com/EnvFoundry/Optics-Photonics-AI-Lab",
   "description_license": "MIT",
   "languages": [
     "en",
@@ -17,7 +17,7 @@
   "primary_source_urls": 226,
   "resource_urls_including_connectors": 230,
   "catalogues": {
-    "en": "https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/data/catalogue.en.json",
-    "zh": "https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/data/catalogue.zh.json"
+    "en": "https://raw.githubusercontent.com/EnvFoundry/Optics-Photonics-AI-Lab/main/data/catalogue.en.json",
+    "zh": "https://raw.githubusercontent.com/EnvFoundry/Optics-Photonics-AI-Lab/main/data/catalogue.zh.json"
   }
 }

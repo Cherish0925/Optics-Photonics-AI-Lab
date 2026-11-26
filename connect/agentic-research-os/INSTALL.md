@@ -1,3 +1,3 @@
-Extract the release ZIP if needed, then install the directory containing plugin.json as an Agentic Research OS plugin. Activate its returned revision in the current workspace. The package uses the host Python and carries all connector code, catalogue data and Skills. Configure scientific software on the computing host.
+Extract the release ZIP if needed, then install the directory containing plugin.json as an Agentic Research OS plugin. Enable it in the current workspace. The package carries the connector, task catalogue, Skills and guides. New scientific installations use System/software/optics-photonics; connection settings and research records use the host-configured OPTICS_HOME. Existing software is reused. Knowledge and workflows are available through the package resource entries.
 
-Optics: https://github.com/Cherish0925/Optics-Photonics-AI-Lab
+Optics: https://github.com/EnvFoundry/Optics-Photonics-AI-Lab

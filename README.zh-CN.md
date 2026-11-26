@@ -1,145 +1,80 @@
 <p align="right"><b>中文</b> · <a href="README.md">English</a></p>
 
-![Optics · Photonics — 软件、物理模型与可编程接口](docs/assets/readme-header.webp)
+![Optics · Photonics](docs/assets/readme-header.webp)
 
-# 光学与光子学研究环境
+# Optics-Photonics AI Lab
 
-以**场 + 物质 + 相互作用**为物理框架的光学与光子学研究环境。研究者和智能体可以从 110 项软件的目录中选择工具（涵盖仿真、计算和实验仪器），连接本地求解器，在软件自己的环境中运行程序，并在断开客户端后继续计算、取回科学数据。支持 Python 包、MCP 服务、插件和 Skills。
+面向光学研究的开源环境：物理方法、可编辑程序、求解器连接与持续计算。按研究任务选择模块，在计算主机上准备所需软件，再使用对应的方法和示例。
 
-| 阅读与浏览 | 数据与资料 | 参与开发 |
+[开始任务](skills/optical-computation/references/start.md) · [安装与连接](docs/CONNECT.zh-CN.md) · [下载](https://github.com/EnvFoundry/Optics-Photonics-AI-Lab/releases) · [Agent 入口](llms.txt)
+
+## 按任务选择模块
+
+产品目录包含 **27 个研究任务模块、34 项开源软件组件**，另有独立的软件视图，包含全部 **77 项开源软件**，分为四个研究领域和共用的光学基础。多个模块共用软件，例如两个模块需要 SciPy 时，只准备一套 SciPy 环境。
+
+| 领域 | 方向 | 任务示例 |
 | --- | --- | --- |
-| [中文 HTML](https://cherish0925.github.io/Optics-Photonics-AI-Lab/index.zh.html) · [English HTML](https://cherish0925.github.io/Optics-Photonics-AI-Lab/) | [中文 JSON](data/catalogue.zh.json) · [English JSON](data/catalogue.en.json) | [Agent 入口](llms.txt) · [贡献说明](CONTRIBUTING.md) |
-| [中文 Markdown](docs/catalogue.zh.md) · [English Markdown](docs/catalogue.en.md) | [资料索引](data/resources.zh.json) · [数据结构](data/schema.json) | [代码示例](examples/) · [本地开发](#本地开发) |
-| [基础框架](docs/foundations.zh.html) · [Foundations](docs/foundations.html) | [中文源文件](foundations/README.zh-CN.md) | [运行机制](docs/EXECUTION.md) · [原生软件](docs/NATIVE.zh-CN.md) |
+| 光学系统 | 几何光学、波动光学、成像 | 镜头设计、衍射、偏振、成像 |
+| 光子结构与器件 | 电磁、周期结构、薄膜、光子电路 | FDTD、能带、镀膜、波导、版图 |
+| 光与物质 | 光纤、激光、散射、量子光学、组织光学、X射线 | 脉冲传播、谐振腔、光子输运、量子动力学 |
+| 光学测量 | 实验室采集 | 仪器读数、全息图、实测光谱 |
+| 光学基础 | 符号与数值模型 | 光线矩阵、界面关系 |
 
-[中文](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/index.zh.html)和[英文](https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/index.html) HTML 是独立文件，下载后可离线打开。[完整软件目录](https://cherish0925.github.io/Optics-Photonics-AI-Lab/catalogue.zh.html)提供并排比较和 CSV/JSON 导出。
+每个模块关联软件、领域方法与可编辑程序。[模块源数据](data/modules.json) · [产品目录](data/environment-catalogue.json)。
 
-宿主包附带[仓库维护的中英文说明与资源位置](data/environment.json)。宿主将 `package_path` 对应到实际安装目录；安装状态、软件位置和运行中的任务继续由各自原有的管理服务负责。刷新这些说明不会安装科研软件。
+另有涵盖 110 项软件的[软件参考目录](docs/catalogue.zh.md)，其中包括商业软件。这是资料目录，**不是默认安装列表**。商业软件为可选接入，需要用户已有安装、许可和受支持的操作系统；环境不附带商业软件本体。
 
-## 安装
+## 安装与计算
 
-| 宿主 | 安装方式 |
-| --- | --- |
-| Agentic Research OS | 下载 [Research OS 插件包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.1/Optics-Photonics-0.11.1-ResearchOS.zip)，解压后安装包含 `plugin.json` 的目录；包内有六种系统与架构的原生执行程序、MCP、软件目录和两个 Skills，使用宿主自带的 Python。也可以在 **Extensions → Plugins → Add from link** 填入 `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`。 |
-| Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再 `codex plugin add optics-photonics@optics-photonics` |
-| Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再 `claude plugin install optics-photonics@optics-photonics` |
-| Qiushi | 基于 Research OS 的版本使用上面的插件包；其他版本用 `optics-photonics connect qiushi` 生成 MCP 或命令入口。 |
-| DeepSeek Harness | 项目索引 `https://raw.githubusercontent.com/Cherish0925/Optics-Photonics-AI-Lab/main/docs/dsh/index.json`；指定解释器时运行 `optics-photonics connect deepseek`。 |
-| 其他 MCP 宿主、Python、命令行 | 安装下面的 wheel，把 `optics-photonics mcp` 注册为 stdio 服务。 |
+连接器需要 Python 3.10+，无第三方依赖；求解器单独安装。
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.1/optics_photonics-0.11.1-py3-none-any.whl"
+python -m venv .venv
+# Linux/macOS: source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install "https://github.com/EnvFoundry/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.3/optics_photonics-0.11.3-py3-none-any.whl"
 optics-photonics prepare tmm
-optics-photonics connect agentic-research-os --output optics-plugin
+optics-photonics run tmm spectrum
 ```
 
-连接程序需要 Python 3.10+，支持 Windows、macOS 和 Linux，不依赖第三方库。GitHub 插件市场版本通过 [uv](https://docs.astral.sh/uv/getting-started/installation/) 选择执行端的 Python 3.10+，缺少时自动下载。先安装一次 uv；已有 Python 时也可以用 `optics-photonics connect HOST --python /path/to/python` 生成宿主包。Research OS 使用自带 Python。各科学软件保留自己的 Python、平台和许可。MCP 服务应运行在装有科学软件的机器上，本地或通过 SSH 均可。[接入说明](docs/CONNECT.zh-CN.md) · [交互指南](https://cherish0925.github.io/Optics-Photonics-AI-Lab/connect.zh.html) · [发布包](https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases)
+选择多个模块：`optics-photonics plan thin-film-spectra waveguide-modes` 查看当前主机上的准备方式，然后 `optics-photonics prepare-modules thin-film-spectra waveguide-modes` 开始。返回的任务号可通过 `optics-photonics status RUN_ID --wait 25` 查询。已有解释器用 `bind --python PATH` 连接；`installed` 查看准备情况；`uninstall MODULE...` 移除所选的闲置软件，共用安装与研究文件保留。
 
-### 第一个计算
+**Research OS / Origo：** 导入[发布页](https://github.com/EnvFoundry/Optics-Photonics-AI-Lab/releases)的 ResearchOS ZIP，或添加 `https://github.com/EnvFoundry/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`。在计算主机上启用，选择任务模块，再准备所需软件。包内包含连接器、目录与 Skills，不会下载全部求解器。
+
+**其他 Agent：** `optics-photonics connect HOST --output DIR` 生成 Codex、Claude、DeepSeek、Qiushi、通用插件或 MCP 配置；MCP 主机也可直接启动 `optics-photonics mcp`。[连接说明](docs/CONNECT.zh-CN.md)。
+
+## 软件、知识与结果
+
+| 内容 | 位置 |
+| --- | --- |
+| 研究任务及其软件 | `data/modules.json`；生成的 `data/environment-catalogue.json` |
+| 安装配方与外部接口 | `data/connections.json`；[原生软件](docs/NATIVE.zh-CN.md) |
+| 模型选择、假设与领域知识 | [Optical research](skills/optical-research/SKILL.md)，按需读取 15 份方向参考 |
+| 执行、工作流、数据与续算 | [Optical computation](skills/optical-computation/SKILL.md) |
+| 可编辑计算程序 | `src/optics_photonics/programs/`；[程序参考](skills/optical-computation/references/programs.md) |
+| MCP、CLI、Python、TypeScript | `src/optics_photonics/`；`clients/typescript/` |
+| 宿主包 | 生成的 `connect/`，不另写一套实现 |
+| 物理框架 | [场、物质与相互作用](foundations/README.md) |
+
+MCP 提供 calculate、study、reproduce、connect、measure、continue 六个任务提示。Agent 只读相关指南与程序，无需把整个软件目录装入上下文。
+
+计算在安装求解器的主机上运行。网页产品连接该主机；Windows 软件仍需 Windows 主机。配方分别说明平台与 Python 要求，驱动、GPU、许可遵循所选软件的要求。持久主机上的后台计算可在客户端断连后继续，结果保留数组、单位、坐标及续算文件。
+
+## 与其他环境组合
+
+通过绑定复用 SeedEnv 的合适解释器；共享仪器使用 IOP 已有控制器。通过各自接口与 Synthetic-Lab、Data Engineering、Agent Gym、AI Evaluation 交换测量、数组和轨迹。每个环境管理自身运行时与状态，安装本插件不替换其他环境。
+
+连接配置与运行记录使用 `OPTICS_HOME`，默认 `~/.optics-photonics`。软件使用 `OPTICS_SOFTWARE_HOME` 指定的目录，否则使用 `OPTICS_HOME/environments`。Research OS 将新软件放在 `System/software/optics-photonics`，状态仍保存在原有位置。已有安装继续复用；更新插件保留软件与研究记录。
+
+## 开发
 
 ```sh
-optics-photonics search "Bragg mirror"
-optics-photonics submit tmm spectrum --wait 25 --inputs '{"n": [1, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 2.35, 1.46, 1.52], "thickness_nm": [63.83, 102.74, 63.83, 102.74, 63.83, 102.74, 63.83, 102.74, 63.83, 102.74], "wavelength_nm": {"start": 450, "stop": 800, "points": 351}}'
-optics-photonics array RUN_ID calculate/attempt-1/spectrum.npz --member R --image R.png
-```
-
-搜索给出软件 `tmm` 和它的封装程序 `spectrum`。提交时第一次会把 tmm 装进它自己的环境，然后计算按 600 nm 设计的五对四分之一波长膜的反射率（600 nm 处 97.8 %），在等待时间内返回结果；若返回 `running`，用 `optics-photonics status RUN_ID --wait 25` 继续等。最后一条命令把反射率随波长画成图。智能体通过 MCP 做同样的事：`software_search`、`submit_calculation(tool, action, inputs, wait)`、`read_array(image="auto")`。
-
-Optics 连接物理模型、求解软件与测量数据；[IOP](https://github.com/EnvFoundry/IOP) 管理共享仪器、实验条件和操作序列。设备已由 IOP 控制时，研究程序复用它的客户端，让仿真与测量进入同一项研究，并保持设备控制关系一致。
-
-## 一次计算怎么进行
-
-1. **选软件。** `software_search` 按物理问题查找软件和封装程序，中英文皆可，光学概念的同义词与缩写互相匹配（[词表](data/vocabulary.json)）；`software_details` 返回每项软件的物理方法、接口、安装来源和封装程序。目录之外的本地工具用 `register_software` 加入。[独立接入包](skills/optical-computation/references/integrations.md)可通过普通 Python 分发包提供软件配方、程序和指南；`software_integrations` 列出它们，读取时不会导入求解器。
-2. **连接环境。** 69 项软件带 pip、conda-forge 或 Julia 安装配方；`prepare_environment` 提前安装，提交计算也会自动准备缺少的环境。`bind_environment` 复用已有解释器或命令；`discover_native_software` 与 `bind_native_software` 查找并连接已安装的 SDK、可执行程序和 Windows 自动化服务。在线服务客户端及需在自身界面中操作的软件分别列在[连接通路](docs/NATIVE.zh-CN.md)中。
-3. **使用实测材料数据。** `materials` 给出 refractiveindex.info 数据库 3576 页（CC0）的 n、k 和文献，带 `dispersion` 时还给出群折射率、群速度色散和色散参数 D；SiO2、Si、Au、N-BK7、BBO 等常用名称离线可用，其他页面首次使用时下载。
-4. **运行程序。** 从 [39 套软件中的 57 个程序](skills/optical-computation/references/programs.md)选择并查看输入与物理模型，或使用软件完整原生 API 编写程序。Python `source` 和软件原生语言 `script` 接收输入与输出目录，返回 `RESULT`。`submit_calculation` 支持并行扫描与有界优化，`submit_workflow` 连接依赖或并行步骤。[参数研究](skills/optical-computation/references/studies.md)与[科学数组](docs/EXECUTION.md#keep-the-meaning-of-arrays-between-programs)说明输入、单位、坐标和文件如何在程序之间传递。
-5. **继续与取回结果。** `run_status` 每次最多等待 25 秒，等待期间同一连接上的其他请求照常返回。运行不随连接断开而停止，用 `list_runs(search=..., tool=...)` 重新找到；新增任务期间，游标分页仍保持稳定。`result_files`、`read_result`、`read_array` 分别返回文件列表、字节片段和 NPY/NPZ 数组的局部；`read_array` 加 `image` 时把所选部分画成 PNG 返回：曲线或带色标的二维图，标出坐标和单位。`resume_run` 保留成功步骤和分组扫描中已完成的参数点。Python 程序可用 `CHECKPOINT` 保存显式状态与模型文件，内置优化会复用已完成的评估。[接续指南](skills/optical-computation/references/continuation.md)和[衍射实例](examples/continuation/)说明长程序内部的恢复。
-6. **采集 episode。** `sample_episodes` 在并行的软件进程中运行 Gymnasium 形式的环境，保存种子、动作、观测和奖励，供学习使用；中断或追加的采集会接着进行，不重复已完成的 episode（[接口说明](docs/LEARNING.md)）。
-
-| 通路 | 软件 | 运行什么 |
-| --- | --- | --- |
-| python | 77 项：配方安装的模块，或随软件安装的模块（JCMsuite、Photon Design） | Python `source` |
-| session | COMSOL、Lumerical、OpticStudio、CST | 持有独占会话的 Python 程序 |
-| executable | MATLAB、GNU Octave、Julia、Mathematica、Maple、QuantumOptics.jl、Luna.jl、S4、COMSOL、Lumerical、CST、ADDA、MCX、MMC、pbrt | 用软件自身语言写的 `script`；用 `RUN` 调用它的 Python 程序 |
-| automation | FRED、CODE V、LightTools、OptiLayer、LabVIEW（Windows） | 以 `APP` 持有该服务的 Python 程序 |
-| service | Tidy3D 云端、Speos 服务、FIMMWAVE | 服务的 Python 客户端 |
-| inside | 17 项只能在自身界面中运行脚本的软件 | 为它写入文件、读取它导出的文件 |
-
-| 方向 | 封装程序 |
-| --- | --- |
-| 薄膜、光栅、超表面 | `tmm/spectrum` · `grcwa/film` · `grcwa/grating` · `grcwa/metasurface` · `scipy/metalens` |
-| 电磁场与逆向设计 | `meep/stack` · `meep/ring` · `ngsolve/scattering` · `ceviche/bend` |
-| 光子晶体 | `mpb/bands` · `legume/bands` · `s4/crystal_slab` |
-| 波导、光子回路、版图 | `mpb/waveguide` · `tidy3d/modes` · `scipy/slab_modes` · `scipy/coupler` · `sax/circuit` · `gdsfactory/waveguide` · `klayout/layout` |
-| 光纤与光通信 | `scipy/fiber_modes` · `scipy/nlse` · `laserfun/supercontinuum` · `octave/bragg_grating` · `opticomm/ber` |
-| 激光器、谐振腔、非线性光学 | `scipy/resonator` · `scipy/laser_rates` · `finesse/cavity` · `scipy/second_harmonic` |
-| 散射 | `miepython/sphere` · `treams/cluster` · `adda/particle` |
-| 成像与光束 | `hcipy/psf` · `poppy/psf` · `prysm/mtf` · `lightpipes/gaussian` · `diffractio/apertures` · `scikitimage/registration` |
-| 镜头、光线、偏振 | `optiland/lens` · `optiland/trace` · `raytracing/abcd` · `sympy/abcd` · `sympy/fresnel` · `py-pol/polarization` |
-| 量子光学 | `qutip/rabi` · `qutip/jaynes_cummings` · `qutip/resonance_fluorescence` · `quantumoptics/jaynes_cummings` · `perceval/interference` · `strawberry/gaussian_state` |
-| 生物组织、X 射线、光伏 | `scipy/tissue_layers` · `srw/undulator` · `solcore/detailed_balance` |
-| 实测数据 | `scipy/resonances` · `scipy/fit_gaussian` |
-| 实验仪器与全息图 | `pyvisa/sweep` · `bluesky/scan` · `slmsuite/spot_array` |
-
-同样的操作也可通过命令行、Python 和 TypeScript 使用；MCP 宿主还会得到六个提示（calculate、study、reproduce、connect、measure、continue），各篇指南也作为资源提供。目录中的通路描述软件接口，本机绑定决定实际可运行的能力；软件许可、平台要求和服务访问权限仍以所选软件为准。[发布说明](docs/RELEASE.md)记录各版本实际完成的验证。
-
-## 运行机制
-
-Rust 执行器管理求解进程、取消和超时。Python 连接科学 SDK 并组织任务。SQLite 保存运行记录，并按本机所有运行共享的 CPU 和命名额度（GPU、软件许可证等）安排步骤。TypeScript 客户端连接 Agent 宿主。MPI 进程数、GPU 选择和集群队列仍在各软件自己的启动配置中设置。[运行机制与资源](docs/EXECUTION.md)
-
-## 统一物理基础
-
-> **光学 / 光子学 = 场 + 物质 + 相互作用**
-
-**场**指经典或量子化的电磁场及其状态；**物质**包括微观自由度、材料、器件和探测器；**相互作用**是二者之间能量、动量和信息的交换。自由传播是场的动力学，光学器件是结构化的物质，测量是设计好的场与物质相互作用。软件目录和 Skills 按这一框架组织，覆盖几何光学、波动光学、纳米光子学、光纤、激光、成像、光谱和量子光学，并保留各有效理论的适用边界。[基础框架](docs/foundations.zh.html) · [Markdown 源文件](foundations/)
-
-## 软件目录
-
-- **30 项商业软件**、**77 项开源软件**、**3 项免费但有限制**，分属 15 个领域，从几何光学到实验仪器。免费客户端、收费求解器、学术许可和外部 PDK 分别说明。
-- 每项记录物理方法、用途、编程接口、运行环境、许可、应用依据、适用边界和原始资料。资料核对日期 **2026-10-20**。
-- API、命令行和宏与**官方 / 社区 / 未核实**的 MCP 服务、Agent Skills 分开标注。文档检索类 MCP 不当作求解器接口。
-- 中英文使用同一套稳定编号 `id`。Agent 先读 [`llms.txt`](llms.txt)，再读 [`llms-full.txt`](llms-full.txt) 或 JSON。
-
-不同模型之间通过它们传递的物理量连接：
-
-| 任务链 | 模型之间传递什么 | 目录中的工具示例 |
-| --- | --- | --- |
-| 镜头 → 图像 → 反演 | 瞳面复场、像差、PSF、采样与探测器响应 | OpticStudio、CODE V、Optiland、prysm、POPPY |
-| 单胞 → 超表面 → 系统 | 复数透反射、偏振、角度和波长依赖 | torcwa、grcwa、Meep、Lumerical、Tidy3D、Diffractio |
-| 版图 → 器件 → 电路 | 工艺层、端口、参考平面和归一化 S 参数 | gdsfactory、KLayout、IPKISS、JCMsuite、SAX |
-| 脉冲 → 链路 → 接收 | 复包络、时间网格、色散、非线性与噪声 | Luna、py-fmas、RP Fiber Power、VPI、OptiCommPy |
-| 光机热 → 腔模 → 读出 | 热致形变、折射率变化、工作点和噪声谱 | COMSOL、Finesse、HCIPy |
-| 样品 → 传播 → 重建 | 实际观测量及其前向算子 | MCX、MMC、PyNX、pyDHM、HoloPy |
-| 模型 → 仪器 → 数据 | 发出的设置、带时间的原始读数、定标与不确定度 | PyVISA、pylablib、Bluesky、python-seabreeze、LabVIEW |
-
-每一处连接都要统一单位、参考系、场的约定和模型近似。
-
-## 本地开发
-
-```bash
-git clone https://github.com/Cherish0925/Optics-Photonics-AI-Lab.git
+git clone https://github.com/EnvFoundry/Optics-Photonics-AI-Lab.git
 cd Optics-Photonics-AI-Lab
-python -m pip install -e ".[rl]"
+python -m pip install -e .
 python -m unittest discover -s tests
 python scripts/build.py
 python scripts/package_marketplace.py
 ```
 
-`build.py` 根据 `data/` 重新生成 HTML、Markdown、资料索引和 Agent 文档；修改源码或 Skills 后，`package_marketplace.py` 重新生成内置的 Research OS 副本。生成的文件随仓库提交。设置 `OPTICS_SCIENCE_TESTS=1` 会运行调用科学软件库的用例。
-
-| 路径 | 内容 |
-| --- | --- |
-| `src/optics_photonics/` | 连接程序：软件目录、环境、执行、任务、结果数组、episode 采样、MCP、命令行 |
-| `native/executor/` | Rust 进程执行器 |
-| `clients/typescript/` | 供 Agent 宿主使用的 TypeScript 客户端 |
-| `skills/` | Agent Skills 与领域参考资料 |
-| `connect/` | 生成的宿主接入包 |
-| `data/` | 中英文软件目录、连接方式、领域和数据结构 |
-| `src/render.py`、`scripts/build.py` | 网页与文档生成 |
-| `examples/` | 原生程序、软件会话和 episode 示例 |
-| `foundations/` | 场 · 物质 · 相互作用框架 |
-| `AGENTS.md` | 修改本仓库时的结构说明、常用命令与约定 |
-
-## 许可
-
-本项目原创代码与目录说明采用 [MIT](LICENSE) 许可。被收录软件、外部文档、PDK 和数据遵循各自许可；内嵌字体采用 [SIL OFL 1.1](docs/assets/FONT_LICENSE.txt)。详见 [NOTICE](NOTICE)。仓库改名后，软件包名、命令、插件 ID 和本地计算环境保持不变。
+参见 [AGENTS.md](AGENTS.md) 和[开发说明](docs/DEVELOPMENT.zh-CN.md)。生成文件随仓库发布，修改其源文件后重新生成。原创代码与说明采用 [MIT](LICENSE)，引用软件与数据保留各自许可。[NOTICE](NOTICE)。
