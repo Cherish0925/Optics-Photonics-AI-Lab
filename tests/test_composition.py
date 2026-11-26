@@ -19,7 +19,12 @@ class CompositionTests(unittest.TestCase):
     def test_catalogue_references_and_read_only_plan(self):
         view = composition.catalogue_view()
         ids = {module['id'] for module in view['modules']}
-        self.assertEqual(ids, {item['id'] for item in view['components']})
+        tools = {item['id'] for item in view['components']}
+        self.assertNotIn('opticstudio', tools)
+        self.assertNotIn('codev', tools)
+        for module in view['modules']:
+            self.assertLessEqual(set(module['components']), tools)
+            self.assertTrue(module['resources'])
         for field in view['fields']:
             for direction in field['directions']:
                 self.assertLessEqual(set(direction['modules']), ids)
@@ -28,8 +33,57 @@ class CompositionTests(unittest.TestCase):
             self.assertEqual([item['action'] for item in result['actions']], ['install', 'connect'])
             self.assertFalse(environments.home().exists())
 
+    def test_domain_navigation_includes_programs_from_shared_software(self):
+        view = composition.catalogue_view()
+        directions = {row['id']: row for field in view['fields'] for row in field['directions']}
+        for domain, name in (('bio', 'tissue-transport'), ('fiber', 'fiber-propagation'), ('laser', 'lasers-resonators')):
+            self.assertIn(name, directions[domain]['modules'])
+        tissue = next(row for row in view['modules'] if row['id'] == 'tissue-transport')
+        self.assertIn('skills/optical-research/references/bio.md', tissue['resources'])
+        self.assertIn('tissue_layers', [row['name'] for row in tissue['programs']])
+        meep = next(row for row in view['components'] if row['id'] == 'meep')
+        self.assertNotIn('win-64', meep['installation']['platforms'])
+        self.assertEqual(meep['installation']['method'], 'conda')
+
+    def test_shared_software_is_resolved_once_and_kept_for_other_modules(self):
+        with workspace() as tmp, patch.dict(os.environ, {'OPTICS_HOME': tmp}):
+            environments.save({'tools': {'scipy': {'kind': 'python', 'python': sys.executable}}})
+            names = ['tissue-transport', 'measured-spectra']
+            self.assertEqual(composition.plan(names)['modules'], names)
+            self.assertEqual([row['component'] for row in composition.plan(names)['actions']], ['scipy'])
+            with patch.object(jobs, 'submit', return_value={'run_id': 'reuse'}):
+                composition.prepare(names)
+            self.assertTrue(set(names) <= set(composition.installed()['ready_modules']))
+            result = composition.remove(['tissue-transport'])
+            self.assertEqual(result['removed'], ['tissue-transport'])
+            self.assertIn('scipy', environments.read()['tools'])
+            self.assertNotIn('tissue-transport', composition.installed()['ready_modules'])
+            self.assertIn('measured-spectra', composition.installed()['ready_modules'])
+            result = composition.remove(['measured-spectra'])
+            self.assertEqual(result['removed'], ['measured-spectra'])
+            self.assertNotIn('scipy', environments.read()['tools'])
+            self.assertTrue(Path(sys.executable).exists())
+
+    def test_plan_names_the_workstation_for_windows_interfaces(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {'OPTICS_HOME': tmp}), \
+                patch('optics_photonics.routes.system', return_value='linux'):
+            result = composition.plan(['opticstudio', 'lighttools', 'labview'])
+            for action in result['actions']:
+                self.assertEqual(action['action'], 'connect')
+                self.assertIn('windows', action['instructions'])
+                self.assertIn('SSH', action['instructions'])
+            self.assertEqual(list(Path(tmp).iterdir()), [])
+
+    def test_native_ready_command_is_the_solver_not_its_python_driver(self):
+        binding = {'kind': 'executable', 'executable': sys.executable, 'python': '/missing/driver'}
+        self.assertEqual(composition.invocation('octave', binding)['command'], [sys.executable])
+        self.assertTrue(composition.available(binding))
+        binding.update(executable='/missing/solver', python=sys.executable)
+        self.assertFalse(composition.available(binding))
+
     def test_prepare_local_wheel_and_preserve_manual_connections(self):
-        with workspace() as tmp, patch.dict(os.environ, {'OPTICS_HOME': str(Path(tmp) / 'home'), 'UV': '/unavailable/uv'}):
+        with workspace() as tmp, patch.dict(os.environ, {'OPTICS_HOME': str(Path(tmp) / 'home'),
+                'OPTICS_SOFTWARE_HOME': str(Path(tmp) / 'software'), 'UV': '/unavailable/uv'}):
             wheels = Path(tmp) / 'wheels'
             wheels.mkdir()
             files = {'optics_fixture/__init__.py': 'def square(x): return x*x\n',
@@ -50,6 +104,7 @@ class CompositionTests(unittest.TestCase):
                 prepared = result['structuredContent']
                 self.assertEqual(prepared['pending'][0]['component'], 'opticstudio')
                 command = prepared['ready'][0]['command']
+                self.assertTrue(Path(command[0]).is_relative_to(Path(tmp) / 'software'))
                 actual = subprocess.check_output([*command, '-c', 'from optics_fixture import square; print(square(6))'], text=True)
                 self.assertEqual(actual.strip(), '36')
                 self.assertEqual(composition.prepare(['fixture-wheel', 'opticstudio'], request_id='local-wheel')['run_id'], task)
@@ -79,6 +134,23 @@ class CompositionTests(unittest.TestCase):
                 self.assertTrue(Path(command[0]).exists())
                 self.assertTrue((environments.home() / 'runs' / research).is_dir())
                 self.assertEqual(jobs.status(research)['state'], 'succeeded')
+
+    def test_existing_software_keeps_its_location_after_storage_is_separated(self):
+        with workspace() as tmp, patch.dict(os.environ, {'OPTICS_HOME': str(Path(tmp) / 'state'),
+                'OPTICS_SOFTWARE_HOME': str(Path(tmp) / 'software')}):
+            old = environments.home() / 'environments' / 'tmm'
+            new = environments.software_home() / 'tmm'
+            for prefix in (old, new):
+                prefix.mkdir(parents=True)
+                (prefix / 'solver').write_text('installed solver')
+            environments.save({'tools': {'tmm': {'kind': 'command', 'command': [str(old / 'solver')], 'managed': 'tmm'}}})
+            self.assertEqual(environments.environment_prefix('tmm'), old)
+            action = composition.plan(['thin-film-spectra'])['actions'][0]
+            self.assertEqual(action['action'], 'reuse')
+            self.assertEqual(action['command'], [str(old / 'solver')])
+            result = composition.remove(['tmm'])
+            self.assertEqual(result['files'], [str(old)])
+            self.assertTrue((new / 'solver').exists())
 
     def test_uninstall_shared_and_external_connections(self):
         with workspace() as tmp, patch.dict(os.environ, {'OPTICS_HOME': tmp}):

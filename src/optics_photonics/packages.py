@@ -67,9 +67,10 @@ def package(destination, host='mcp', python=None, *, managed=False):
         descriptor['homepage'] = 'https://github.com/EnvFoundry/Optics-Photonics-AI-Lab'
         descriptor['description'] = descriptor['environment']['presentation']['en']['summary']
         descriptor['mcpServers'] = {'optics':{'transport':'stdio','command':'${RESEARCH_PYTHON}',
-            'args':['-B','${PACKAGE_ROOT}/server.py','mcp'], 'protocol_version':'2025-11-25'}}
+            'args':['-B','${PACKAGE_ROOT}/server.py','mcp'], 'protocol_version':'2025-11-25',
+            'env': {'OPTICS_SOFTWARE_HOME': '${WORKSPACE_ROOT}/System/software/optics-photonics'}}}
         write(target/'plugin.json',descriptor)
-        instructions = 'Extract the release ZIP if needed, then install the directory containing plugin.json as an Agentic Research OS plugin. Activate its returned revision in the current workspace. The package uses the host Python and carries all connector code, catalogue data and Skills. Configure scientific software on the computing host.'
+        instructions = 'Extract the release ZIP if needed, then install the directory containing plugin.json as an Agentic Research OS plugin. Enable it in the current workspace. The package carries the connector, task catalogue, Skills and guides. New scientific installations use System/software/optics-photonics; connection settings and research records use the host-configured OPTICS_HOME. Existing software is reused. Knowledge and workflows are available through the package resource entries.'
     elif host in ('codex','claude'):
         folder = '.codex-plugin' if host == 'codex' else '.claude-plugin'
         # Codex resolves cwd relative to the plugin; Claude expands CLAUDE_PLUGIN_ROOT.
@@ -112,5 +113,5 @@ def package(destination, host='mcp', python=None, *, managed=False):
     else:
         write(target/'mcp.json', {'mcpServers':{'optics':server}})
         instructions = 'Register the optics stdio server from mcp.json in a compatible MCP host. Use the matching host’s own configuration format. This connector needs Python 3.10 or newer; the scientific environment may use a different interpreter.'
-    (target/'INSTALL.md').write_text(instructions+'\n\nOptics: https://github.com/Cherish0925/Optics-Photonics-AI-Lab\n', encoding='utf-8')
+    (target/'INSTALL.md').write_text(instructions+'\n\nOptics: https://github.com/EnvFoundry/Optics-Photonics-AI-Lab\n', encoding='utf-8')
     return {'directory':str(target),'host':host,'version':__version__,'skills':len(skills)}

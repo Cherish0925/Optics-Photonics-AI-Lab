@@ -22,6 +22,22 @@ def home(path=None):
     return Path(path or os.environ.get('OPTICS_HOME') or Path.home() / '.optics-photonics').expanduser().resolve()
 
 
+def software_home(path=None):
+    return Path(os.environ.get('OPTICS_SOFTWARE_HOME') or home(path) / 'environments').expanduser().resolve()
+
+
+def environment_prefix(name, path=None):
+    """Reuse existing environments when a host separates software from research state."""
+    roots = list(dict.fromkeys([software_home(path), home(path) / 'environments']))
+    for binding in read(path)['tools'].values():
+        if binding.get('managed') == name:
+            for root in roots:
+                prefix = root / name
+                if prefix.is_dir() and any(item.is_relative_to(prefix) for item in binding_paths(binding)):
+                    return prefix
+    return next((root / name for root in roots if (root / name).is_dir()), roots[0] / name)
+
+
 @contextmanager
 def editing(path=None):
     directory = home(path)
@@ -111,7 +127,6 @@ def uninstall(tools, path=None):
     if not tools or not (home(path) / 'connections.json').exists():
         return {'removed': [], 'files': [], 'retained': []}
     removed, files, retained, reasons = [], [], set(), []
-    folder = home(path) / 'environments'
     with jobs.database(path) as db, ExitStack() as locks:
         db.execute('BEGIN IMMEDIATE')
         initial = read(path)['tools']
@@ -121,12 +136,12 @@ def uninstall(tools, path=None):
         for name in names:
             managed = initial[name].get('managed')
             if isinstance(managed, str) and managed not in {'.', '..'} and Path(managed).name == managed:
-                prefix = folder / managed
-                if prefix.is_dir() and not prefix.is_symlink() and prefix.resolve().parent == folder.resolve():
+                prefix = environment_prefix(managed, path)
+                if prefix.is_dir() and not prefix.is_symlink() and prefix.resolve().parent == prefix.parent.resolve():
                     prefixes[name] = prefix
         for prefix in sorted(set(prefixes.values())):
             try:
-                locks.enter_context(locked(folder / (prefix.name + '.lock'), blocking=False))
+                locks.enter_context(locked(prefix.parent / (prefix.name + '.lock'), blocking=False))
             except OSError as error:
                 if error.errno not in {errno.EACCES, errno.EAGAIN}:
                     raise
@@ -469,7 +484,13 @@ def installable(tool, path=None):
     if item is None:
         note = software(tool, path=path)['connection'].get('installation_note')
         from . import routes
-        kinds = {route['route'] for route in routes.routes(tool, path)}
+        available_routes = routes.routes(tool, path)
+        direct = [route for route in available_routes if route['route'] in routes.RUNNABLE]
+        if direct and all(routes.platforms(route) and routes.system() not in routes.platforms(route) for route in direct):
+            systems = ', '.join(sorted({name for route in direct for name in routes.platforms(route)}))
+            raise ValueError(f'{tool}: the available connector routes run on {systems}, not {routes.system()}. '
+                             'Connect to a workstation with that software through its MCP server or SSH.')
+        kinds = {route['route'] for route in available_routes}
         then = ('bind_environment with its interpreter' if 'python' in kinds and not kinds & {'executable', 'automation', 'session'} else
                 'discover_native_software and bind_native_software' if kinds & {'executable', 'automation', 'session', 'python', 'service'} else
                 'run its own scripts in it; programs here prepare their input files and read the files it exports')
@@ -592,7 +613,7 @@ def pip_install(executable, requirements):
 
 
 def prepare(tool, *, path=None, python=None, packages=None):
-    """Install a tool's recipe, and any further packages, into its environment under OPTICS_HOME; bind the tool.
+    """Install a tool's recipe into its persistent software environment; bind the tool.
 
     The environment is created once. Preparing again finds the tool importable
     and only adds packages; another process preparing the same environment
@@ -610,9 +631,9 @@ def prepare(tool, *, path=None, python=None, packages=None):
     if item['julia'] or item['executable']:
         return prepare_executable(tool, item, configured, packages, path=path)
     name = item['environment']
-    folder = home(path) / 'environments'
+    prefix = environment_prefix(name, path)
+    folder = prefix.parent
     folder.mkdir(parents=True, exist_ok=True)
-    prefix = folder / name
     with locked(folder / (name + '.lock')):
         executable = interpreter(prefix, bool(item['conda']))
         created = not executable.exists()
@@ -658,9 +679,9 @@ def prepare_executable(tool, item, configured, packages=(), path=None):
     """
     from . import routes
     from .jobs import cores
-    folder = home(path) / 'environments'
+    prefix = environment_prefix(item['environment'], path)
+    folder = prefix.parent
     folder.mkdir(parents=True, exist_ok=True)
-    prefix = folder / item['environment']
     kept = {key: configured[key] for key in ('threads', 'concurrency', 'cwd', 'requirements', 'env')
             if configured and configured.get(key) is not None} if configured else {'concurrency': cores()}
     with locked(folder / (item['environment'] + '.lock')):

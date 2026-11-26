@@ -1,0 +1,498 @@
+{
+  "fields": [
+    {
+      "id": "optical-systems",
+      "title": "Optical systems",
+      "titles": {
+        "en": "Optical systems",
+        "zh-CN": "光学系统"
+      },
+      "domains": [
+        "ray",
+        "wave",
+        "imaging"
+      ]
+    },
+    {
+      "id": "photonic-structures",
+      "title": "Photonic structures",
+      "titles": {
+        "en": "Photonic structures",
+        "zh-CN": "光子结构与器件"
+      },
+      "domains": [
+        "em",
+        "periodic",
+        "film",
+        "pic"
+      ]
+    },
+    {
+      "id": "light-matter",
+      "title": "Light and matter",
+      "titles": {
+        "en": "Light and matter",
+        "zh-CN": "光与物质"
+      },
+      "domains": [
+        "fiber",
+        "laser",
+        "scatter",
+        "quantum",
+        "bio",
+        "xray"
+      ]
+    },
+    {
+      "id": "optical-laboratory",
+      "title": "Optical measurements",
+      "titles": {
+        "en": "Optical measurements",
+        "zh-CN": "光学测量"
+      },
+      "domains": [
+        "lab"
+      ]
+    },
+    {
+      "id": "optical-foundations",
+      "title": "Optical foundations",
+      "titles": {
+        "en": "Optical foundations",
+        "zh-CN": "光学基础"
+      },
+      "kind": "shared",
+      "domains": [
+        "foundation"
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "id": "lens-design",
+      "title": "Lens design and ray tracing",
+      "titles": {
+        "en": "Lens design and ray tracing",
+        "zh-CN": "镜头设计与光线追迹"
+      },
+      "summary": "Trace rays, image surfaces and lens aberrations.",
+      "components": [
+        "optiland",
+        "raytracing"
+      ],
+      "domains": [
+        "ray"
+      ]
+    },
+    {
+      "id": "beam-propagation",
+      "title": "Beam propagation and diffraction",
+      "titles": {
+        "en": "Beam propagation and diffraction",
+        "zh-CN": "光束传播与衍射"
+      },
+      "summary": "Propagate fields through apertures and optical planes.",
+      "components": [
+        "lightpipes",
+        "diffractio"
+      ],
+      "domains": [
+        "wave"
+      ]
+    },
+    {
+      "id": "polarization",
+      "title": "Polarization calculations",
+      "titles": {
+        "en": "Polarization calculations",
+        "zh-CN": "偏振计算"
+      },
+      "summary": "Represent and transform polarization states.",
+      "components": [
+        "py-pol"
+      ],
+      "domains": [
+        "wave",
+        "ray"
+      ]
+    },
+    {
+      "id": "image-formation",
+      "title": "Image formation and resolution",
+      "titles": {
+        "en": "Image formation and resolution",
+        "zh-CN": "成像与分辨率"
+      },
+      "summary": "Calculate point spread functions and modulation transfer.",
+      "components": [
+        "hcipy",
+        "poppy",
+        "prysm"
+      ],
+      "domains": [
+        "imaging",
+        "wave"
+      ]
+    },
+    {
+      "id": "image-analysis",
+      "title": "Image registration and analysis",
+      "titles": {
+        "en": "Image registration and analysis",
+        "zh-CN": "图像配准与分析"
+      },
+      "summary": "Align measured images and extract spatial information.",
+      "components": [
+        "scikitimage"
+      ],
+      "domains": [
+        "imaging"
+      ]
+    },
+    {
+      "id": "fdtd-simulation",
+      "title": "FDTD structures and resonators",
+      "titles": {
+        "en": "FDTD structures and resonators",
+        "zh-CN": "FDTD结构与谐振器"
+      },
+      "summary": "Solve time-domain electromagnetic propagation.",
+      "components": [
+        "meep"
+      ],
+      "domains": [
+        "em"
+      ]
+    },
+    {
+      "id": "finite-element-scattering",
+      "title": "Finite-element scattering",
+      "titles": {
+        "en": "Finite-element scattering",
+        "zh-CN": "有限元散射"
+      },
+      "summary": "Solve electromagnetic scattering on a finite-element mesh.",
+      "components": [
+        "ngsolve"
+      ],
+      "domains": [
+        "em",
+        "scatter"
+      ]
+    },
+    {
+      "id": "inverse-photonic-design",
+      "title": "Inverse photonic design",
+      "titles": {
+        "en": "Inverse photonic design",
+        "zh-CN": "光子器件逆向设计"
+      },
+      "summary": "Optimize a device using a differentiable electromagnetic model.",
+      "components": [
+        "ceviche"
+      ],
+      "domains": [
+        "em"
+      ]
+    },
+    {
+      "id": "photonic-bands",
+      "title": "Photonic bands and modes",
+      "titles": {
+        "en": "Photonic bands and modes",
+        "zh-CN": "光子能带与模式"
+      },
+      "summary": "Calculate periodic eigenmodes and band structures.",
+      "components": [
+        "mpb",
+        "legume"
+      ],
+      "domains": [
+        "periodic",
+        "em"
+      ]
+    },
+    {
+      "id": "gratings-metasurfaces",
+      "title": "Gratings and metasurfaces",
+      "titles": {
+        "en": "Gratings and metasurfaces",
+        "zh-CN": "光栅与超表面"
+      },
+      "summary": "Compute diffraction orders and use unit-cell responses in optical models.",
+      "components": [
+        "grcwa",
+        "scipy"
+      ],
+      "domains": [
+        "periodic"
+      ]
+    },
+    {
+      "id": "thin-film-spectra",
+      "title": "Thin-film spectra",
+      "titles": {
+        "en": "Thin-film spectra",
+        "zh-CN": "薄膜光谱"
+      },
+      "summary": "Calculate multilayer reflection, transmission and absorption.",
+      "components": [
+        "tmm"
+      ],
+      "domains": [
+        "film"
+      ]
+    },
+    {
+      "id": "photonic-circuits",
+      "title": "Photonic circuit simulation",
+      "titles": {
+        "en": "Photonic circuit simulation",
+        "zh-CN": "光子电路仿真"
+      },
+      "summary": "Compose device scattering matrices into a circuit.",
+      "components": [
+        "sax"
+      ],
+      "domains": [
+        "pic"
+      ]
+    },
+    {
+      "id": "photonic-layout",
+      "title": "Photonic layout",
+      "titles": {
+        "en": "Photonic layout",
+        "zh-CN": "光子版图"
+      },
+      "summary": "Create waveguide geometry and exchange layout files.",
+      "components": [
+        "gdsfactory",
+        "klayout"
+      ],
+      "domains": [
+        "pic"
+      ]
+    },
+    {
+      "id": "waveguide-modes",
+      "title": "Waveguide modes and coupling",
+      "titles": {
+        "en": "Waveguide modes and coupling",
+        "zh-CN": "波导模式与耦合"
+      },
+      "summary": "Compute guided modes, effective indices and coupling.",
+      "components": [
+        "mpb",
+        "scipy"
+      ],
+      "domains": [
+        "em",
+        "pic"
+      ]
+    },
+    {
+      "id": "fiber-propagation",
+      "title": "Fiber pulse propagation",
+      "titles": {
+        "en": "Fiber pulse propagation",
+        "zh-CN": "光纤脉冲传播"
+      },
+      "summary": "Model dispersion, nonlinear propagation and spectral broadening.",
+      "components": [
+        "scipy",
+        "laserfun"
+      ],
+      "domains": [
+        "fiber"
+      ]
+    },
+    {
+      "id": "fiber-gratings",
+      "title": "Fiber Bragg gratings",
+      "titles": {
+        "en": "Fiber Bragg gratings",
+        "zh-CN": "光纤布拉格光栅"
+      },
+      "summary": "Calculate grating reflection with an editable Octave program.",
+      "components": [
+        "octave"
+      ],
+      "domains": [
+        "fiber"
+      ]
+    },
+    {
+      "id": "lasers-resonators",
+      "title": "Lasers and resonators",
+      "titles": {
+        "en": "Lasers and resonators",
+        "zh-CN": "激光器与谐振腔"
+      },
+      "summary": "Study cavity response, laser dynamics and nonlinear conversion.",
+      "components": [
+        "finesse",
+        "scipy"
+      ],
+      "domains": [
+        "laser"
+      ]
+    },
+    {
+      "id": "particle-scattering",
+      "title": "Particle scattering",
+      "titles": {
+        "en": "Particle scattering",
+        "zh-CN": "粒子散射"
+      },
+      "summary": "Calculate scattering by spheres and coupled particles.",
+      "components": [
+        "miepython",
+        "treams"
+      ],
+      "domains": [
+        "scatter"
+      ]
+    },
+    {
+      "id": "quantum-dynamics",
+      "title": "Quantum optical dynamics",
+      "titles": {
+        "en": "Quantum optical dynamics",
+        "zh-CN": "量子光学动力学"
+      },
+      "summary": "Evolve states, cavities and dissipative quantum systems.",
+      "components": [
+        "qutip"
+      ],
+      "domains": [
+        "quantum"
+      ]
+    },
+    {
+      "id": "quantum-photonic-circuits",
+      "title": "Quantum photonic circuits",
+      "titles": {
+        "en": "Quantum photonic circuits",
+        "zh-CN": "量子光子电路"
+      },
+      "summary": "Calculate photon interference and Gaussian optical states.",
+      "components": [
+        "perceval",
+        "strawberry"
+      ],
+      "domains": [
+        "quantum"
+      ]
+    },
+    {
+      "id": "tissue-transport",
+      "title": "Tissue photon transport",
+      "titles": {
+        "en": "Tissue photon transport",
+        "zh-CN": "组织光子输运"
+      },
+      "summary": "Simulate photon transport through layered tissue.",
+      "components": [
+        "scipy"
+      ],
+      "domains": [
+        "bio"
+      ]
+    },
+    {
+      "id": "xray-sources",
+      "title": "X-ray source spectra",
+      "titles": {
+        "en": "X-ray source spectra",
+        "zh-CN": "X射线光源谱"
+      },
+      "summary": "Calculate synchrotron undulator radiation.",
+      "components": [
+        "srw"
+      ],
+      "domains": [
+        "xray"
+      ]
+    },
+    {
+      "id": "solar-cell-models",
+      "title": "Solar-cell models",
+      "titles": {
+        "en": "Solar-cell models",
+        "zh-CN": "太阳能电池模型"
+      },
+      "summary": "Calculate optical and detailed-balance photovoltaic response.",
+      "components": [
+        "solcore"
+      ],
+      "domains": [
+        "film"
+      ]
+    },
+    {
+      "id": "instrument-acquisition",
+      "title": "Instrument acquisition programs",
+      "titles": {
+        "en": "Instrument acquisition programs",
+        "zh-CN": "仪器采集程序"
+      },
+      "summary": "Acquire and fit measurements through an existing instrument connection.",
+      "components": [
+        "pyvisa",
+        "bluesky"
+      ],
+      "domains": [
+        "lab"
+      ]
+    },
+    {
+      "id": "slm-holograms",
+      "title": "SLM holograms",
+      "titles": {
+        "en": "SLM holograms",
+        "zh-CN": "SLM全息图"
+      },
+      "summary": "Calculate holograms for a prescribed optical spot array.",
+      "components": [
+        "slmsuite"
+      ],
+      "domains": [
+        "lab",
+        "wave"
+      ]
+    },
+    {
+      "id": "measured-spectra",
+      "title": "Measured spectrum analysis",
+      "titles": {
+        "en": "Measured spectrum analysis",
+        "zh-CN": "实测光谱分析"
+      },
+      "summary": "Fit resonances and extract Q, extinction and free spectral range.",
+      "components": [
+        "scipy"
+      ],
+      "domains": [
+        "imaging",
+        "lab"
+      ]
+    },
+    {
+      "id": "symbolic-optics",
+      "title": "Symbolic optical models",
+      "titles": {
+        "en": "Symbolic optical models",
+        "zh-CN": "符号光学模型"
+      },
+      "summary": "Derive ray matrices and interface relations.",
+      "components": [
+        "sympy"
+      ],
+      "domains": [
+        "foundation",
+        "ray"
+      ]
+    }
+  ]
+}

@@ -7,7 +7,7 @@ Optics & Photonics 独立提供光学软件连接、原生研究程序、后台�
 连接程序使用 Python 3.10+，支持 Windows、macOS、Linux。科学软件使用各自支持的 Python、系统与许可；可以为每个软件连接不同的环境。
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.1/optics_photonics-0.11.1-py3-none-any.whl"
+python -m pip install "https://github.com/EnvFoundry/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.3/optics_photonics-0.11.3-py3-none-any.whl"
 optics-photonics search "thin film" --license-group open
 optics-photonics info tmm
 optics-photonics prepare tmm
@@ -105,7 +105,7 @@ optics-photonics run tmm spectrum --inputs "@coating.json" --optimize '{"variabl
 
 | 宿主 | 添加来源与安装 |
 | --- | --- |
-| Agentic Research OS | **Extensions → Plugins → Add from link**，填写 `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`，安装 `optics-photonics`，激活返回的修订。 |
+| Agentic Research OS | **Extensions → Plugins → Add from link**，填写 `https://github.com/EnvFoundry/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`，安装 `optics-photonics`，激活返回的修订。 |
 | Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再执行 `codex plugin add optics-photonics@optics-photonics`。 |
 | Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`，再执行 `claude plugin install optics-photonics@optics-photonics`。 |
 
@@ -142,7 +142,7 @@ MCP 包含软件检索、材料折射率（`materials`，来自 refractiveindex.
 
 计算发生在 MCP 服务所在的计算机。远程机器可通过 SSH 启动 stdio 服务，保持连接程序与科学环境在同一台机器：`ssh -T USER@HOST /path/to/python -m optics_photonics mcp`。`read_result` 把内容传回 Agent，`read_array` 传回 NPY/NPZ 数组的一部分；`download_result` 写入服务所在机器的目标路径。TypeScript 客户端的 `download` 通过连接把文件内容传到客户端所在的机器；特别大的远端文件仍可用 SSH/SFTP 取回。
 
-更新时安装新版本并生成新的插件目录，由宿主更新和激活。科学环境、研究记录和结果保留在 `OPTICS_HOME` 或 `~/.optics-photonics`。
+更新插件时沿用持久目录。连接配置与研究记录使用 `OPTICS_HOME`，默认 `~/.optics-photonics`。软件使用 `OPTICS_SOFTWARE_HOME` 指定的目录，否则使用 `OPTICS_HOME/environments`。Research OS 将新软件放在 `System/software/optics-photonics`；已有安装原位复用。知识与工作流通过包内资源入口读取。
 
 ## 软件覆盖与扩展
 

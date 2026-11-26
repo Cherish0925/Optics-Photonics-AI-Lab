@@ -8,7 +8,7 @@ For agents and people who change the repository. To use the environment, start a
 | --- | --- |
 | `src/optics_photonics/` | The connector, standard library only. `catalogue` search · `environments` recipes and bindings · `routes`, `native`, `languages` installed software · `jobs`, `execution`, `worker` runs · `studies`, `optimization`, `sampling` · `data`, `arrays`, `pictures` · `materials` · `mcp`, `cli` |
 | `src/optics_photonics/programs/TOOL/NAME.*` | Packaged programs, one file each |
-| `data/` | Catalogue in English and Chinese, connections (recipes and routes), domains, vocabulary of search |
+| `data/` | `modules.json` defines open-source research tasks; catalogue entries, connections (recipes and routes), domains and search vocabulary supply their details |
 | `skills/` | Two Skills and their references; the MCP server serves the same files as guides |
 | `tests/`, `scripts/`, `clients/typescript/`, `native/executor/` | Cases, generators and platform runs, TypeScript client, Rust process executor |
 | `docs/` pages and catalogues, `llms*.txt`, `data/resources.*`, `data/manifest.json`, `connect/agentic-research-os/` | Generated. Change the source and regenerate |
@@ -26,7 +26,9 @@ Generated files are committed; the workflows compare them with a fresh build.
 
 ## Adding
 
-- **A packaged program.** A docstring with a one-line title, then the physics, the conventions and what the result is compared with. A `PROGRAM` dictionary: every input with its default and meaning, the `domains` it belongs to, `results`, `checks`. `p = parameters(PROGRAM, INPUTS)`; arrays through `data.save` with units and axes; `RESULT` with `checks` against a conservation law, an analytic limit or a second solver. Run it in the tool's own environment before committing, and list it in `skills/optical-computation/references/programs.md` and the two README tables; `build.py` adds it to the references of its domains. A program in another language declares the same in its leading comment (`languages.declaration`).
+- **A task module.** `data/modules.json` names the research task, its domains and open-source software components. Reuse component IDs; link the existing programs and guides through the generated catalogue. Commercial software remains in the optional software reference.
+
+- **A packaged program.** A docstring with a one-line title, then the physics, the conventions and what the result is compared with. A `PROGRAM` dictionary: every input with its default and meaning, the `domains` it belongs to, `results`, `checks`. `p = parameters(PROGRAM, INPUTS)`; arrays through `data.save` with units and axes; `RESULT` with `checks` against a conservation law, an analytic limit or a second solver. Run it in the tool's own environment before committing, and list it in `skills/optical-computation/references/programs.md`; `build.py` adds it to the references of its domains. A program in another language declares the same in its leading comment (`languages.declaration`).
 - **A catalogue entry.** The same `id` in both catalogue files, a record in `data/connections.json` with a pinned recipe or its routes, and a primary source for every claim.
 - **A domain.** `data/domains.*.json`, the list in `data/schema.json`, `skills/optical-research/references/ID.md` and its line in the research Skill.
 - **An MCP tool or argument.** `TOOLS` and `invoke` in `mcp.py`, the command in `cli.py`, the TypeScript client, and the guide that explains it. The descriptions of all tools sit in every session: keep each as short as it can be.

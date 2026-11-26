@@ -30,6 +30,15 @@ def system():
     return {'Windows': 'windows', 'Darwin': 'macos'}.get(platform.system(), 'linux')
 
 
+def platforms(route):
+    """Known operating systems for this interface; empty means unspecified."""
+    if route['route'] == 'automation':
+        return ['windows']
+    names = route.get('platforms') or list(route.get('executables', {}))
+    return list(dict.fromkeys({'darwin': 'macos', 'osx': 'macos'}.get(name.lower(), name.lower())
+                              for name in names))
+
+
 def routes(tool, path=None, record=None):
     """Every route of a tool, the first ones run unattended."""
     from . import native

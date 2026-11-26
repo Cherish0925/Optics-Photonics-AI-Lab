@@ -7,7 +7,7 @@ An independent package for optical software, native research programs, backgroun
 The connector supports Python 3.10+ on Windows, macOS and Linux. Each solver uses its own supported Python version, operating system and license. Different tools may use different environments.
 
 ```sh
-python -m pip install "https://github.com/Cherish0925/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.1/optics_photonics-0.11.1-py3-none-any.whl"
+python -m pip install "https://github.com/EnvFoundry/Optics-Photonics-AI-Lab/releases/download/optics-v0.11.3/optics_photonics-0.11.3-py3-none-any.whl"
 optics-photonics info tmm
 optics-photonics prepare tmm
 optics-photonics run tmm spectrum --inputs "@inputs.json"
@@ -34,7 +34,7 @@ optics-photonics run tmm --program research.py --inputs "@inputs.json"
 
 ### Installation recipes
 
-50 open tools carry a recipe in [connections.json](../data/connections.json); `software_search` shows each tool's route as `install`: `pip`, `conda` or `manual`.
+69 tools carry a recipe in [connections.json](../data/connections.json); `software_search` shows each tool's route as `install`: `pip`, `conda` or `manual`.
 
 - **pip.** Pinned requirements, including a fixed commit for tools published only on GitHub (laserfun, PtyPy, py-fmas). With [uv](https://docs.astral.sh/uv/) on the PATH the environment is created by uv, which also provides the Python version a recipe states (PoPPy and GDSFactory need 3.12, Strawberry Fields below 3.12); without uv the connector's own Python and pip are used.
 - **conda.** Software without usable wheels comes from conda-forge: Meep and MPB (one shared environment; no Windows build), FEniCSx, Gmsh and HoloPy. The installer is `OPTICS_CONDA`, or micromamba, mamba or conda on the PATH; otherwise the official micromamba release for this platform is downloaded once into `OPTICS_HOME/bin` and checked against its published SHA-256.
@@ -88,7 +88,7 @@ A sweep computes its points in parallel, several per process for short programs;
 
 | Host | Add source and install |
 | --- | --- |
-| Agentic Research OS | **Extensions → Plugins → Add from link**: `https://github.com/Cherish0925/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`. Install `optics-photonics`, then activate the returned revision. |
+| Agentic Research OS | **Extensions → Plugins → Add from link**: `https://github.com/EnvFoundry/Optics-Photonics-AI-Lab/tree/main/connect/agentic-research-os`. Install `optics-photonics`, then activate the returned revision. |
 | Codex | `codex plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`, then `codex plugin add optics-photonics@optics-photonics`. |
 | Claude Code | `claude plugin marketplace add Cherish0925/Optics-Photonics-AI-Lab`, then `claude plugin install optics-photonics@optics-photonics`. |
 
@@ -132,7 +132,7 @@ Computations run on the MCP host. SSH can launch the stdio server on a workstati
 
 Use a persistent computing host for long research runs. A detached worker survives the submitting process, but a host that disposes of the entire container or process group also stops its workers. For such Agent environments, connect to the scientific workstation over SSH rather than starting the calculation inside a disposable tool execution.
 
-Install a new wheel or tag and generate a new plugin directory to update. Configuration, scientific environments and research records remain under `OPTICS_HOME` or `~/.optics-photonics`.
+Update the plugin while keeping its persistent locations. Connection settings and research records use `OPTICS_HOME` (default `~/.optics-photonics`). Software uses `OPTICS_SOFTWARE_HOME` when configured, otherwise `OPTICS_HOME/environments`. Research OS places new software in `System/software/optics-photonics`; existing installations are reused in place. Knowledge and workflows are read through the package's resource entries.
 
 ## Software and extension model
 

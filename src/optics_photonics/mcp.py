@@ -226,7 +226,7 @@ TOOLS = [
         and progress first; read_guide continuation explains the program contract.''',
          {'run_id': STRING}, ['run_id']),
     tool('environment_installed', 'Read installed software.'),
-    tool('environment_plan', 'Resolve selected dependencies.',
+    tool('environment_plan', 'Plan selected research modules or software IDs on this host.',
          {'selections': STRINGS}, ['selections']),
     tool('environment_prepare', 'Install selected software.',
          {'selections': STRINGS, 'python': STRING, 'packages': STRINGS, 'request_id': STRING}, ['selections']),
@@ -263,18 +263,17 @@ PROMPTS = {
 
         Find the software and the packaged program with software_search and read the program's inputs, physics and checks
         with software_details(tool, program=NAME). Submit it with submit_calculation and wait; when no packaged program
-        fits, adapt the closest one or write a complete program for the software's own API. Read the checks of the result
-        before trusting the numbers, and look at the main curve or map with read_array(image="auto"). Report the model
-        and its assumptions, every input with its unit, the result, the checks and the run ID.'''),
+        fits, adapt the closest one or write a complete program for the software's own API. Read the main curve or map with read_array(image="auto"). Use a reference or refinement when it resolves
+        a numerical uncertainty. Report the model assumptions, relevant inputs and units, result and run ID.'''),
     'study': ('Vary parameters of a calculation: a sweep, its table and refinement, or an optimization.', {
         'problem': 'the calculation and the quantity of interest',
         'parameters': 'the parameters to vary, with ranges and units'}, '''
         Study how the result depends on the parameters. Calculation: {problem}. Parameters: {parameters}
 
-        Run one point first and read its checks. Then submit_calculation with sweep for a map over the ranges
+        Use submit_calculation with sweep for a map over the ranges
         (sweep_results tabulates it and names the best point) or with optimize for the best value within bounds;
         read_guide studies explains both. Refine around what the first sweep shows instead of a finer grid everywhere.
-        Report the table or the optimum with units, how the checks behave across the range, and the run IDs.'''),
+        Report the table or optimum with units, relevant numerical accuracy and run IDs.'''),
     'reproduce': ('Reproduce a published result and compare the numbers.', {
         'source': 'the paper, figure, table or textbook result to reproduce'}, '''
         Reproduce this published result in the optics research environment: {source}
@@ -290,7 +289,7 @@ PROMPTS = {
 
         Find its ID and routes with software_search and software_details. For an existing Python environment, use
         bind_environment; for an installed executable or SDK, use discover_native_software then bind_native_software.
-        prepare_environment installs a missing tool from its recipe. Use the selected installation and available
+        environment_plan states what can be installed on this host; prepare_environment uses a supported recipe. Use the selected installation and available
         license or device capacities; ask only for information that discovery and the project do not supply.
         Run a short calculation through the chosen route, then report the version and connection.
         read_guide native-software describes the routes.'''),
@@ -574,21 +573,13 @@ def respond(method, params):
 
 SUPPORTED = {'2025-11-25','2025-06-18','2025-03-26','2024-11-05'}
 INSTRUCTIONS = ' '.join('''
-    Optics and photonics research environment: software for modelling, simulation, computation and laboratory instruments,
-    run as background calculations that continue after disconnection.
-    Find: software_search by physical problem, in English or Chinese, names the software and the packaged program that fits;
-    software_details lists its programs and routes; request a program for its inputs and physics, and source when
-    adapting it. materials gives measured refractive indices.
-    Run: submit_calculation with action (a packaged program), source (a Python program that receives INPUTS and OUTPUT_DIR
-    and sets RESULT) or script (the same in the language of installed software). The first run installs the software from its
-    recipe; wait returns a short result in the same call; sweep and optimize study parameters; submit_workflow chains steps.
-    Read: run_status with wait, then result_files, read_result, read_array and sweep_results; read the checks of a result
-    before trusting it. list_runs searches earlier runs by name, request ID or software.
-    Installed commercial or executable software: discover_native_software, then bind_native_software.
-    software_integrations lists independently installed programs and their on-demand guides.
-    Long programs save explicit state with CHECKPOINT; read_guide continuation explains recovery through resume_run.
-    read_guide optical-computation explains execution, read_guide optical-research the choice of model and software.
-    Licenses remain those of the upstream software.'''.split())
+    Optical research on this computing host. software_search finds software and programs; software_details gives
+    the selected program's inputs and physics. environment_plan explains local installation or the workstation needed.
+    Reuse existing environments. submit_calculation runs an action, source or script and prepares a missing supported
+    recipe; submit_workflow connects steps. run_status follows work; read_array and read_result retrieve results.
+    list_runs finds earlier work; resume_run continues unfinished steps. Read only the relevant topic with read_guide:
+    start for first use, optical-research for model choice, optical-computation for execution.
+    Use the existing laboratory controller for shared devices.'''.split())
 
 
 def serve(input_stream=None, output_stream=None):

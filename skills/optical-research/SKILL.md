@@ -27,13 +27,6 @@ Read only the relevant domain reference below. Each gives the variables to trans
 - Laboratory instruments and measurements: [lab](references/lab.md).
 - Shared numerical and material tools: [foundation](references/foundation.md).
 
-A study, step by step:
-
-1. State the observable, the model and what the model leaves out.
-2. Choose a representation and program that resolve the relevant scales. For a new model or implementation, use a relevant analytic limit, packaged `checks` or published result to establish the calculation's meaning.
-3. Resolve numerical effects where they affect the conclusion. Refine the grid, harmonics, packets or time step until the observable's trend is understood; one difference between resolutions is not an uncertainty bound.
-4. Vary physical parameters with `sweep` or `optimize`, and refine around features or transitions that answer the research question.
-5. Compare alternative models, measurements or methods when they distinguish a physical explanation or expose an important approximation. Keep measurement uncertainty, numerical error and model discrepancy separate.
-6. Report the observable, assumptions, inputs and units, results and their supported uncertainty, relevant limitations, and run IDs. Preserve the source and data needed to continue the study.
+Keep the research question, model and observable together. Choose a program that resolves the relevant scales; state assumptions that could change the answer. Vary physical parameters with a sweep or optimization when needed. Use an analytic limit, numerical refinement or a comparison with measurements to resolve a specific uncertainty. Keep measurement uncertainty, numerical error and model discrepancy distinct. Record the result with units, source data and the run needed to continue. These are choices within a study, not a mandatory sequence for every call.
 
 Use the native software API when the research requires functions beyond the packaged examples. Keep equations, assumptions, material sources and units with the calculation. For installation and execution, use the optical-computation Skill. Ask a person for physical geometry, license access or experimental conditions only when they cannot be obtained from the supplied project.
